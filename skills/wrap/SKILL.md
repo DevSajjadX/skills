@@ -1,7 +1,7 @@
 ---
 name: wrap
-description: "Session wrap-up: sweep leftovers, review the diff and apply the findings, retire debt, sync docs, verify green, regroup work-branch commits, draft a short commit message, report what needs you. Arguments: commit (c) / squash (s); --p pushes after either; s --f regroups the whole branch."
-argument-hint: "[c|commit [--p]] [s|squash [--p|--f]]"
+description: "Session wrap-up: sweep leftovers, review the diff and apply the findings, retire debt, sync docs, verify green, regroup work-branch commits, draft a short commit message, report what needs you. Arguments: commit (c) / squash (s) / merge (m [branch]); --p pushes after any; s --f regroups the whole branch; m --f does that, then merges."
+argument-hint: "[c|commit [--p]] [s|squash [--p|--f]] [m|merge [branch] [--p|--f]]"
 ---
 
 # Wrap the session
@@ -10,14 +10,16 @@ Close out the session so the repo is clean, verified, and ready to commit. Work 
 
 ## Arguments
 
-`/wrap $ARGUMENTS` — bare words, any order; `--p` only after `c` or `s`, `--f` only after `s`; `--p` implies `c`. Bare `/wrap` = steps 1–9, step 7 only when its trigger fires (local scope), step 8 draft-only.
+`/wrap $ARGUMENTS` — bare words, any order; `--p` only after `c`, `s` or `m`, `--f` only after `s` or `m`; `--p` implies `c`; `m` implies `s` (and `c`, so the tree is clean to merge). Bare `/wrap` = steps 1–9, step 7 only when its trigger fires (local scope), step 8 draft-only.
 
-The model picks the arguments from what the user asked — "commit" → `c`, "push" → `--p`, "squash"/"regroup" → `s` — and runs the skill itself. Never tell the user to type `/wrap …`, and never ask permission for a plain commit or fast-forward push; the one confirmation in this skill is the `--f` force push.
+The model picks the arguments from what the user asked — "commit" → `c`, "push" → `--p`, "squash"/"regroup" → `s`, "merge" → `m` — and runs the skill itself. Never tell the user to type `/wrap …`, and never ask permission for a plain commit or fast-forward push; the one confirmation in this skill is the `--f` force push.
 
 - `commit` / `c` — step 8 commits (explicit paths). Unpushed commits are reported under Needs you, not asked about.
-- `--p` — after step 8's commit(s), push: `git push <remote> <branch>`, fast-forward only, never bare `--force`. With `s`, the regrouped commits are what gets pushed (local scope, so always a fast-forward). Remote = the upstream's (`git rev-parse --abbrev-ref @{u}` → `<remote>/<branch>`); no upstream → `-u` to the sole remote, ask if several. Remote rejects → stop and report; never force.
+- `--p` — after step 8's commit(s), push: `git push <remote> <branch>`, fast-forward only, never bare `--force`. With `s`, the regrouped commits are what gets pushed (local scope, so always a fast-forward). Remote = the upstream's (`git rev-parse --abbrev-ref @{u}` → `<remote>/<branch>`); no upstream → `-u` to the sole remote, ask if several. Remote rejects → stop and report; never force. With `m`, the branch pushed is the *target*, after step 7b's merge.
 - `squash` / `s` — step 7 runs regardless of the pattern check; local scope.
 - `s --f` — step 7 covers the whole branch since its merge-base with the default branch, pushed commits included, then pushes with `--force-with-lease` (`--p` is redundant here). Asks once before the reset. Only for branches nobody else has open work or reviews on.
+- `merge` / `m [target]` — `s`, then step 7b merges the branch into `target` (default: `$DEF` from step 2, never a hardcoded `main`) and deletes the local feature branch. Fast-forward when possible, else one merge commit; never squash-merge — the regrouped commits are the history.
+- `m --f` — `s --f` (whole-branch regroup, the one AskUserQuestion, `--force-with-lease` push), then step 7b. `--p` here pushes `target`.
 
 ## 1. Sweep
 
@@ -92,6 +94,25 @@ Mechanics of this step and the step 2 refs/`$TREE` snapshot are exercised by `te
 
 Report: old hashes gone; `git reset --hard <OLD>` (print the hash) undoes the regroup until garbage collection; whether intermediate commits were typecheck-verified (local runs: ordered for bisectability, unverified unless you ran them). After `--f`: other checkouts recover with `git fetch && git reset --hard $R/<branch>`. Plain `s` with pushed commits above `$BASE`: mention `s --f` can regroup those too.
 
+## 7b. Merge (`m` only)
+
+Runs after step 7's parity check (`git diff --quiet $OLD HEAD`) and after any `--f` push. `target` = the argument, else `$DEF`.
+
+Pre-checks — any failure → stop, report, nothing merged:
+- Current branch is not `target`; `target` exists locally (`git rev-parse --verify refs/heads/<target>`).
+- `TU=$(git rev-parse --abbrev-ref <target>@{u} 2>/dev/null)`; when set: `git fetch ${TU%%/*}` and `git merge-base --is-ancestor <target> $TU` — `target` at or behind its upstream, else stop (local-only commits on `target` are not wrap's to merge over).
+- `git status --porcelain --untracked-files=no` empty — wrap edits are committed by now; untracked wrap output is fine.
+
+Method:
+1. `FEATURE=$(git rev-parse --abbrev-ref HEAD)`; `git checkout <target>`; with upstream `git merge --ff-only @{u}` (sync first); `TARGET_OLD=$(git rev-parse HEAD)`.
+2. `git merge --ff-only $FEATURE`, else `git merge --no-ff --no-edit $FEATURE`. Never squash-merge.
+3. Step 6's gate commands on the merged result. Failure → `git reset --hard $TARGET_OLD && git checkout $FEATURE`, report, stop. Nothing is deleted or pushed.
+4. `FEATURE_SHA=$(git rev-parse $FEATURE)`; `git branch -d $FEATURE` (`-d` never force-deletes an unmerged branch). Stay on `target`. `--p` → push `target` per the `--p` rules (fast-forward only).
+
+`tests/dry-run.sh` exercises this step too (ff merge, merge commit, gate-failure rollback).
+
+Report: target and merge kind (fast-forward or merge commit); `git reset --hard <TARGET_OLD>` (print the hash) undoes the merge; `git branch <FEATURE> <FEATURE_SHA>` restores the deleted branch until garbage collection; whether `target` was pushed. After `--f`, the remote feature branch still exists — deleting it is the user's call (Needs you).
+
 ## 8. Commit message
 
 For changes still uncommitted after step 7 (with `c` after a squash, step 8 already ran inside it). Readable by humans and LLMs: `type(scope): subject` ≤ 72 chars; body a few lines — what changed and why, pointing to the docs from step 5; one united change per commit, split when changes span concerns; match recent `git log` style. Draft only; with `c`, commit with explicit paths, then push if `--p`. The commit runs as its own Bash call for the same reason.
@@ -100,7 +121,7 @@ For changes still uncommitted after step 7 (with `c` after a squash, step 8 alre
 
 End with two sections:
 
-- **Landed**: one line per meaningful change, the review verdict, the gate results, the commits made or the message draft.
+- **Landed**: one line per meaningful change, the review verdict, the gate results, the commits made or the message draft, the merge (step 7b) when `m` ran.
 - **Needs you**: anything only the user can decide or do (migrations, env vars, manual settings, debt follow-ups from step 3). "Nothing" is a valid answer.
 
 End every wrap with this help block:
@@ -112,4 +133,6 @@ End every wrap with this help block:
 /wrap s|squash   regroup local commits by concern
 /wrap s --p      regroup, commit, fast-forward push
 /wrap s --f      whole branch, then --force-with-lease (asks first)
+/wrap m [branch] regroup, then merge into branch (default: the default branch)
+/wrap m --f      whole-branch regroup + --force-with-lease, then merge
 ```

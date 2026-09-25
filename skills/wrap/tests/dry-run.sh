@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Dry run of /wrap step 2 (review snapshot) and step 7 (Squash) against a throwaway repo with a bare "remote".
+# Dry run of /wrap step 2 (review snapshot), step 7 (Squash) and step 7b (Merge) against a throwaway repo with a bare "remote".
 # Replays the skill's exact git commands for the local scope and the --f scope,
 # then provokes each guard. Prints PASS/FAIL per assertion; exit 1 on any FAIL.
 set -u
@@ -128,6 +128,62 @@ git checkout -q main
 check "guard: on default branch -> refuse" '[ "$(git rev-parse --abbrev-ref HEAD)" = "$DEF" ]'
 git checkout -q --detach
 check "guard: detached HEAD -> refuse" '[ "$(git rev-parse --abbrev-ref HEAD)" = HEAD ]'
+
+# =============================== step 7b: merge (`m`) ====================================
+# Replays the skill's merge method: pre-checks, sync target, ff-or-merge-commit, gate, delete branch.
+merge_step() { # merge_step <feature> <target> <gate cmd> -> sets MERGED (1/0), TARGET_OLD, FEATURE_SHA
+  local target=$2 tu
+  git rev-parse --verify -q "refs/heads/$target" >/dev/null || return 1
+  [ "$(git rev-parse --abbrev-ref HEAD)" != "$target" ] || return 1
+  tu=$(git rev-parse --abbrev-ref "$target@{u}" 2>/dev/null)
+  if [ -n "$tu" ]; then git fetch -q "${tu%%/*}"; git merge-base --is-ancestor "$target" "$tu" || return 1; fi
+  [ -z "$(git status --porcelain --untracked-files=no)" ] || return 1
+  git checkout -q "$target"; [ -n "$tu" ] && git merge -q --ff-only "@{u}"
+  TARGET_OLD=$(git rev-parse HEAD)
+  git merge -q --ff-only "$1" 2>/dev/null || git merge -q --no-ff --no-edit "$1"
+  if $3 >/dev/null; then FEATURE_SHA=$(git rev-parse "$1"); git branch -q -d "$1"; MERGED=1
+  else git reset -q --hard "$TARGET_OLD"; git checkout -q "$1"; MERGED=0; fi
+}
+
+# 1) happy path: regroup, then fast-forward into the default branch
+git checkout -q main; git checkout -q -b feat/m1
+commit docs/m1.md "m1" "wip: m1"; commit docs/m1.md "m1 v2" "wip: m1 v2"
+OLD=$(git rev-parse HEAD); git reset -q --soft "$(git merge-base HEAD "$DEF")" && git reset -q
+git add docs/m1.md; git commit -q -m "docs: m1"
+check "m: regroup parity before merge" 'git diff --quiet "$OLD" HEAD'
+merge_step feat/m1 "$DEF" ./check.sh
+check "m: merged and gate passed"                       '[ "${MERGED:-0}" = 1 ]'
+check "m: fast-forward (target HEAD = feature sha)"     '[ "$(git rev-parse HEAD)" = "$FEATURE_SHA" ]'
+check "m: now on target"                                '[ "$(git rev-parse --abbrev-ref HEAD)" = "$DEF" ]'
+check "m: feature branch deleted"                       '! git rev-parse --verify -q refs/heads/feat/m1 >/dev/null'
+check "m: tree identical to the feature tip"            'git diff --quiet "$FEATURE_SHA" HEAD'
+check "m: restore line works (git branch <name> <sha>)" 'git branch feat/m1 "$FEATURE_SHA" && git branch -q -D feat/m1'
+git push -q "$R" main
+
+# 2) target moved (and is at its upstream) -> merge commit, never squash
+git checkout -q -b feat/m2; commit docs/m2.md "m2" "feat: m2"
+git checkout -q main; commit docs/main2.md "main2" "chore: main moved again"; git push -q "$R" main
+git checkout -q feat/m2
+merge_step feat/m2 "$DEF" ./check.sh
+check "m: non-ff -> exactly one merge commit"           '[ "$(git rev-list --count --merges "$TARGET_OLD"..HEAD)" = 1 ]'
+check "m: merge commit has the feature tip as parent"   'git rev-parse HEAD^2 | grep -q "$FEATURE_SHA"'
+check "m: both sides present in the merged tree"        '[ -f docs/m2.md ] && [ -f docs/main2.md ]'
+check "m: feature branch deleted after merge commit"    '! git rev-parse --verify -q refs/heads/feat/m2 >/dev/null'
+git push -q "$R" main
+
+# 3) gate fails on the merged result -> target back at TARGET_OLD, feature branch kept, back on it
+git checkout -q -b feat/m3; commit ui/bad.ts "useBand(1);" "feat: bad ui"   # check.sh: useBand without api band
+merge_step feat/m3 "$DEF" ./check.sh
+check "m guard: gate failure -> not merged"             '[ "$MERGED" = 0 ]'
+check "m guard: target reset to TARGET_OLD"             '[ "$(git rev-parse "$DEF")" = "$TARGET_OLD" ]'
+check "m guard: feature branch still present"           'git rev-parse --verify -q refs/heads/feat/m3 >/dev/null'
+check "m guard: back on the feature branch"             '[ "$(git rev-parse --abbrev-ref HEAD)" = feat/m3 ]'
+
+# 4) pre-checks: target ahead of its upstream, or current branch is the target -> refuse
+git checkout -q main; git commit -q --allow-empty -m "chore: local-only on main"; git checkout -q feat/m3
+check "m guard: target ahead of upstream -> refuse"     '! merge_step feat/m3 "$DEF" ./check.sh && [ "$(git rev-parse --abbrev-ref HEAD)" = feat/m3 ]'
+git checkout -q main
+check "m guard: on the target branch -> refuse"         '! merge_step main "$DEF" ./check.sh'
 
 printf '\n%s\n' "$([ $FAILS = 0 ] && echo 'ALL PASS' || echo "$FAILS FAILED")"
 [ $FAILS = 0 ]
