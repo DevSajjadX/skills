@@ -1,6 +1,6 @@
 ---
 name: wrap
-description: "Session wrap-up: sweep leftovers, review the diff and apply the findings, retire debt, sync docs, verify green, regroup work-branch commits, draft a short commit message, report what needs you. Arguments: commit (c) / squash (s) / merge (m [branch]); --p pushes after any; s --f regroups the whole branch; m --f does that, then merges."
+description: "Session wrap-up: sweep leftovers, review the diff and apply the findings, retire debt, sync docs, verify green, regroup commits, draft a short commit message, report what needs you. Arguments: commit (c) / squash (s) / merge (m [branch]); --p pushes after any; s --f regroups the whole branch; m --f does that, then merges."
 argument-hint: "[c|commit [--p]] [s|squash [--p|--f]] [m|merge [branch] [--p|--f]]"
 ---
 
@@ -12,12 +12,14 @@ Close out the session so the repo is clean, verified, and ready to commit. Work 
 
 `/wrap $ARGUMENTS` — bare words, any order; `--p` only after `c`, `s` or `m`, `--f` only after `s` or `m`; `--p` implies `c`; `m` implies `s` (and `c`, so the tree is clean to merge). Bare `/wrap` = steps 1–9, step 7 only when its trigger fires (local scope), step 8 draft-only.
 
+**A primary that cannot run revokes its modifiers.** `--p` and `--f` are sub-orders of `c`, `s` or `m`. When the primary stops for any reason (a guard, a failed pre-check, an AskUserQuestion answered or defaulted to stop), wrap stops and reports: no modifier, and no later one-way step, a push above all. Pushing after a refused squash spends the locality the squash needed and turns a free local `reset --soft` into a force push.
+
 The model picks the arguments from what the user asked — "commit" → `c`, "push" → `--p`, "squash"/"regroup" → `s`, "merge" → `m` — and runs the skill itself. Never tell the user to type `/wrap …`, and never ask permission for a plain commit or fast-forward push; the one confirmation in this skill is the `--f` force push.
 
 - `commit` / `c` — step 8 commits (explicit paths). Unpushed commits are reported under Needs you, not asked about.
-- `--p` — after step 8's commit(s), push: `git push <remote> <branch>`, fast-forward only, never bare `--force`. With `s`, the regrouped commits are what gets pushed (local scope, so always a fast-forward). Remote = the upstream's (`git rev-parse --abbrev-ref @{u}` → `<remote>/<branch>`); no upstream → `-u` to the sole remote, ask if several. Remote rejects → stop and report; never force. With `m`, the branch pushed is the *target*, after step 7b's merge.
+- `--p` — after step 8's commit(s), push: `git push <remote> <branch>`, fast-forward only, never bare `--force`. With `s`, the regrouped commits are what gets pushed (local scope, so always a fast-forward). Remote = the upstream's (`git rev-parse --abbrev-ref @{u}` → `<remote>/<branch>`); no upstream → `-u` to the sole remote, ask if several. Remote rejects → stop and report; never force. With `m`, the branch pushed is the *target*, after step 7b's merge. Primary stopped → no push (rule above).
 - `squash` / `s` — step 7 runs regardless of the pattern check; local scope.
-- `s --f` — step 7 covers the whole branch since its merge-base with the default branch, pushed commits included, then pushes with `--force-with-lease` (`--p` is redundant here). Asks once before the reset. Only for branches nobody else has open work or reviews on.
+- `s --f` — step 7 covers the whole branch since its merge-base with the default branch, pushed commits included, then pushes with `--force-with-lease` (`--p` is redundant here). Asks once before the reset. Only for side branches nobody else has open work or reviews on; refused on the default branch (step 7).
 - `merge` / `m [target]` — `s`, then step 7b merges the branch into `target` (default: `$DEF` from step 2, never a hardcoded `main`) and deletes the local feature branch. Fast-forward when possible, else one merge commit; never squash-merge — the regrouped commits are the history.
 - `m --f` — `s --f` (whole-branch regroup, the one AskUserQuestion, `--force-with-lease` push), then step 7b. `--p` here pushes `target`.
 
@@ -34,7 +36,7 @@ Done when every modified and untracked file is accounted for (kept on purpose or
 Refs (step 7 reuses them):
 - `UP=$(git rev-parse --abbrev-ref @{u} 2>/dev/null)` (`<remote>/<branch>`); `R=${UP%%/*}`, or the sole remote when no upstream — never assume `origin`.
 - `DEF=$(git symbolic-ref --short refs/remotes/$R/HEAD 2>/dev/null)`, strip `$R/`, fall back to `main` — never hardcode.
-- `REMOTE=$(git rev-parse @{u} 2>/dev/null)`; `BASE=$(git merge-base HEAD $DEF)`; `SCOPE` = whichever of `$REMOTE`/`$BASE` is nearer HEAD (`$BASE` when no upstream or `$REMOTE` is not an ancestor of HEAD; `--f` → `$BASE`).
+- `REMOTE=$(git rev-parse @{u} 2>/dev/null)`; `BASE=$(git merge-base HEAD $DEF)`, which on `$DEF` itself is HEAD. `SCOPE`, first match: `--f` → `$BASE` (off `$DEF` only; step 7 refuses it there); `$REMOTE` an ancestor of HEAD → `$REMOTE`, so a plain run never reaches a pushed commit; off `$DEF` → `$BASE`; on `$DEF` → HEAD, and with no upstream step 7 skips saying nothing marks where the unpushed work begins.
 - `TREE=$(GIT_INDEX_FILE=$(mktemp -u) sh -c 'git read-tree HEAD && git add -A && git write-tree; rm -f "$GIT_INDEX_FILE"')` — a tree object of the working tree, untracked included, ignored excluded; the real index and tree stay untouched. It is exactly what wrap will commit, so it is what gets reviewed.
 
 `git diff --quiet $SCOPE $TREE` → nothing to review, skip. Otherwise run the `reviewing-changes` skill (Skill tool) with base `$SCOPE` and head `$TREE`. `$TREE` is not a commit, so two-argument forms only: `git diff $SCOPE $TREE`, `git grep … $TREE --`, `python3 <skill dir>/sweep.py $SCOPE $TREE`; the commit list is `git log --oneline $SCOPE..HEAD`. Claims = what the session set out to do plus every commit message in that range. Skill not installed → say so under Needs you and continue.
@@ -72,11 +74,12 @@ Done when the gates pass and the report quotes the commands run.
 
 ## 7. Squash (careful)
 
-Trigger: bare wrap with local per-task commits that don't match the default branch's pattern (read its `git log` for the last comparable body of work), or `s`. Never the default branch or a detached HEAD.
+Trigger: bare wrap with local per-task commits that don't match the default branch's pattern (read its `git log` for the last comparable body of work), or `s`. Never a detached HEAD. The guard is pushed commits, not the branch's name: plain `s` stops at `$REMOTE`, touching only commits no remote has seen, so it runs on the default branch too. `--f` reaches through pushed commits, so it is for side branches only (pre-checks).
 
 Pre-checks (refs from step 2):
 - `$REMOTE` set but not an ancestor of HEAD → stop; sync first.
 - `git rev-list --merges $BASE..HEAD` non-empty → stop; a soft reset flattens merges silently.
+- `--f` on `$DEF` → stop; `$BASE` is HEAD there, and the default branch's published history is not `--f`'s to rewrite. Report that plain `s` regroups its unpushed commits.
 
 Scope: `$SCOPE` from step 2. `--f` = `$BASE`, after ONE AskUserQuestion — proceed with force push / local-only instead / stop; auto-continues with no answer → stop, never force push without an explicit choice. Nothing committed above scope → skip.
 
@@ -115,7 +118,7 @@ Report: target and merge kind (fast-forward or merge commit); `git reset --hard 
 
 ## 8. Commit message
 
-For changes still uncommitted after step 7 (with `c` after a squash, step 8 already ran inside it). Readable by humans and LLMs: `type(scope): subject` ≤ 72 chars; body a few lines — what changed and why, pointing to the docs from step 5; one united change per commit, split when changes span concerns; match recent `git log` style. Draft only; with `c`, commit with explicit paths, then push if `--p`. The commit runs as its own Bash call for the same reason.
+For changes still uncommitted after step 7 (with `c` after a squash, step 8 already ran inside it). Readable by humans and LLMs: `type(scope): subject` ≤ 72 chars; body a few lines — what changed and why, pointing to the docs from step 5; one united change per commit, split when changes span concerns; match recent `git log` style. Draft only; with `c`, commit with explicit paths, then push if `--p` and the primary did not stop (Arguments). The commit runs as its own Bash call for the same reason.
 
 ## 9. Report
 

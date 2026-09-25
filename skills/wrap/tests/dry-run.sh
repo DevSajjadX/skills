@@ -42,12 +42,20 @@ commit ui/chip.ts    "import {band} from '../api/band'; useBand(band); // v2" "w
 UP=$(git rev-parse --abbrev-ref @{u} 2>/dev/null); R=${UP%%/*}
 DEF=$(git symbolic-ref --short "refs/remotes/$R/HEAD" 2>/dev/null); DEF=${DEF#"$R/"}; DEF=${DEF:-main}
 REMOTE=$(git rev-parse @{u}); BASE=$(git merge-base HEAD "$DEF")
+scope_for() { # step 2's SCOPE, first match; --f on DEF prints nothing and fails (step 7 refuses it)
+  local on_def=0 up; [ "$(git rev-parse --abbrev-ref HEAD)" = "$DEF" ] && on_def=1
+  up=$(git rev-parse @{u} 2>/dev/null)
+  if [ "${1:-}" = --f ]; then [ $on_def = 0 ] && git merge-base HEAD "$DEF"
+  elif [ -n "$up" ] && git merge-base --is-ancestor "$up" HEAD; then echo "$up"
+  elif [ $on_def = 0 ]; then git merge-base HEAD "$DEF"
+  else git rev-parse HEAD; fi
+}
 check "remote derived from upstream (=stylit, not origin)" '[ "$R" = stylit ]'
 check "default branch detected from remote HEAD"          '[ "$DEF" = main ]'
 check "upstream is an ancestor of HEAD"                   'git merge-base --is-ancestor "$REMOTE" HEAD'
 check "no merge commits in BASE..HEAD"                    '[ -z "$(git rev-list --merges "$BASE"..HEAD)" ]'
-check "default scope = nearer of REMOTE/BASE (REMOTE)"    'git merge-base --is-ancestor "$BASE" "$REMOTE"'
-SCOPE=$REMOTE
+SCOPE=$(scope_for)
+check "default scope = the upstream, an ancestor of HEAD" '[ "$SCOPE" = "$REMOTE" ]'
 
 # =============================== step 2: review snapshot ($TREE) =======================
 printf 'x\n' >>docs/notes.md; echo junk >untracked.tmp; echo ign >ignored.log; printf '*.log\n' >.gitignore
@@ -77,6 +85,7 @@ check "untracked file untouched by tracked-only stash"    '[ -f untracked.tmp ]'
 git checkout -q docs/notes.md; rm untracked.tmp
 
 # =============================== --f scope (whole branch + lease) ======================
+check "--f scope on a side branch = BASE"           '[ "$(scope_for --f)" = "$BASE" ]'
 OLD=$(git rev-parse HEAD)
 git reset -q --soft "$BASE" && git reset -q
 git add api/band.ts;   git commit -q -m "feat(api): band"
@@ -123,9 +132,23 @@ git checkout -q main; commit README.md "main moved" "chore: main moved"; git pus
 git checkout -q feat/x; git merge -q --no-edit main >/dev/null
 check "guard: merge commit in BASE..HEAD detected" '[ -n "$(git rev-list --merges "$(git merge-base HEAD main)"..HEAD)" ]'
 
-# 5) default branch / detached HEAD refusals
+# 5) default branch: plain `s` regroups only unpushed commits, `--f` is refused
 git checkout -q main
-check "guard: on default branch -> refuse" '[ "$(git rev-parse --abbrev-ref HEAD)" = "$DEF" ]'
+commit docs/a.md "a" "wip: a"; commit docs/b.md "b" "wip: b"; commit docs/a.md "a v2" "wip: a v2"
+PUSHED=$(git rev-parse "$R/$DEF"); OLD=$(git rev-parse HEAD)
+F=$(scope_for --f) && { git reset -q --soft "$F" && git reset -q; }
+check "guard: --f on default branch -> refused, nothing rewritten" '[ -z "$F" ] && [ "$(git rev-parse HEAD)" = "$OLD" ]'
+SCOPE=$(scope_for)
+check "default branch, plain s: scope is the upstream, not HEAD"  '[ "$SCOPE" = "$PUSHED" ]'
+git reset -q --soft "$SCOPE" && git reset -q
+git add docs/a.md; git commit -q -m "docs: a"
+git add docs/b.md; git commit -q -m "docs: b"
+check "default branch, plain s: 3 wip -> 2 concern commits"       '[ "$(git rev-list --count "$PUSHED"..HEAD)" = 2 ]'
+check "default branch, plain s: content identical to OLD"         'git diff --quiet "$OLD" HEAD'
+check "default branch, plain s: pushed commits keep their hashes" '[ "$(git rev-parse HEAD~2)" = "$PUSHED" ] && [ "$(git rev-parse "$R/$DEF")" = "$PUSHED" ]'
+git branch -q --unset-upstream
+check "default branch, no upstream: scope is HEAD, step 7 skips"  '[ "$(scope_for)" = "$(git rev-parse HEAD)" ]'
+git branch -q -u "$R/$DEF"; git reset -q --hard "$PUSHED"
 git checkout -q --detach
 check "guard: detached HEAD -> refuse" '[ "$(git rev-parse --abbrev-ref HEAD)" = HEAD ]'
 
