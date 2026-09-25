@@ -45,6 +45,22 @@ rm -f "$MARK"; expect "my-git commit -> pass"            pass "$(bash_cmd 'my-gi
 rm -f "$MARK"; expect "git log -> pass"                  pass "$(bash_cmd 'git log')"
 rm -f "$MARK"; expect "Read tool with 'git commit' path -> pass" pass "$(run PreToolUse Read file_path 'git commit')"
 
+# --- command position: only a `git commit` that runs fires, not one mentioned in written text
+rm -f "$MARK"; expect "heredoc plan listing 'git commit -m foo' -> pass" pass "$(bash_cmd $'cat > plan.md <<\'EOF\'\n# Plan\n- git commit -m foo\nEOF')"
+rm -f "$MARK"; expect "heredoc then git commit on its own line -> deny" deny "$(bash_cmd $'cat > plan.md <<\'EOF\'\n- step\nEOF\ngit commit -m y')"
+rm -f "$MARK"; expect "cd x && git commit -> deny"        deny "$(bash_cmd 'cd x && git commit -m y')"
+rm -f "$MARK"; expect "printf > f newline git commit -> deny" deny "$(bash_cmd $'printf "a" > f\ngit commit -m y')"
+rm -f "$MARK"; expect "echo \"git commit is great\" -> pass" pass "$(bash_cmd 'echo "git commit is great"')"
+
+# --- a real invocation never escapes the gate, whatever runs it
+rm -f "$MARK"; expect "\$(git commit) substitution -> deny"  deny "$(bash_cmd 'x=$(git commit -m y)')"
+rm -f "$MARK"; expect "backtick git commit -> deny"          deny "$(bash_cmd 'x=`git commit -m y`')"
+rm -f "$MARK"; expect "if ...; then git commit -> deny"      deny "$(bash_cmd 'if true; then git commit -m y; fi')"
+rm -f "$MARK"; expect "for ...; do git commit -> deny"       deny "$(bash_cmd 'for f in a; do git commit -m y; done')"
+rm -f "$MARK"; expect "xargs git commit -> deny"             deny "$(bash_cmd 'xargs git commit -m y')"
+rm -f "$MARK"; expect "sudo git commit -> deny"              deny "$(bash_cmd 'sudo git commit -m y')"
+rm -f "$MARK"; expect "{ git commit; } group -> deny"        deny "$(bash_cmd '{ git commit -m y; }')"
+
 # --- UserPromptSubmit: /wrap arms, anything else disarms
 rm -f "$MARK"
 run UserPromptSubmit "" prompt '/wrap c' >/dev/null

@@ -6,8 +6,10 @@
 #   UserPromptSubmit          — new turn disarms; a user-typed `/wrap ...` arms
 #   PostToolUse  (Skill)      — Skill(wrap) arms
 #   PreToolUse   (Bash)       — `git commit` unarmed: deny once and arm
-# The match is textual and quotes count: stripping them would let `sh -c '…git commit…'` and unbalanced
-# quotes slip through. A quoted literal costs at most one retry. Self-test: tests/gate.sh.
+# The match is textual and positional: `git commit` must sit where a command starts, meaning line
+# start, after `;` `&` `|` `(` a backtick or `{`, after a `then`/`do`/`xargs`/`sudo` style prefix, or
+# inside a `-c '…'` shell string. Prose that merely mentions it passes, a real invocation never does.
+# Self-test: tests/gate.sh.
 set -u
 INPUT=$(cat)
 EVENT=$(jq -r '.hook_event_name // ""' <<<"$INPUT")
@@ -27,7 +29,7 @@ case "$EVENT" in
     [[ "$(jq -r '.tool_name // ""' <<<"$INPUT")" == Bash ]] || exit 0
     CMD=$(jq -r '.tool_input.command // ""' <<<"$INPUT")
     # `git [global opts] commit`; global opts may carry one non-dash argument (-C dir, -c k=v)
-    RE='(^|[^[:alnum:]_/.-])git([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+commit([[:space:]]|$)'
+    RE='(^|[;&|(`{]|-c[[:space:]]+['"'"'"])[[:space:]]*([[:space:]]*(then|else|do|xargs|time|sudo|nohup|command|env)[[:space:]]+)*git([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+commit([[:space:]]|$)'
     grep -Eq "$RE" <<<"$CMD" || exit 0
     [[ -e "$MARK" ]] && exit 0
     touch "$MARK"
