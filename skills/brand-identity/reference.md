@@ -54,7 +54,7 @@ grep -l 'font-family\|<text' svg/*.svg   # must return nothing
 **Outlining real font text** (kerned via HarfBuzz; tested working):
 
 ```python
-# pip install fonttools uharfbuzz
+# run with: uv run --with fonttools --with uharfbuzz script.py
 import uharfbuzz as hb
 from fontTools.ttLib import TTFont
 from fontTools.pens.svgPathPen import SVGPathPen
@@ -99,7 +99,8 @@ rsvg-convert -w 512 in.svg > out.png
 ```
 
 ```bash
-python3 -m pip install cairosvg && python3 -c "import cairosvg; cairosvg.svg2png(url='in.svg', write_to='out.png', output_width=512)"
+# cairosvg binds the native libcairo: `brew install cairo` first, or the import fails
+uv run --with cairosvg python -c "import cairosvg; cairosvg.svg2png(url='in.svg', write_to='out.png', output_width=512)"
 ```
 
 Fallback: headless Chrome `--screenshot` on an HTML wrapper. Favicon/app set: 16, 32, 48, 180 (apple-touch), 192, 512. `.ico` via Pillow only if asked.
