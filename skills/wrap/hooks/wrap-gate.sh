@@ -8,7 +8,7 @@
 #   PreToolUse   (Bash)       — `git commit` unarmed: deny once and arm
 # The match is textual and positional: `git commit` must sit where a command starts, meaning line
 # start, after `;` `&` `|` `(` a backtick or `{`, or inside a `-c '…'` shell string, optionally behind
-# prefix words (`then`/`do`/`xargs`/`sudo`/`env`/`nice`/`timeout N`/`!`) and `VAR=value` assignments,
+# prefix words (`then`/`do`/`xargs`/`sudo`/`env`/`nice [opts]`/`timeout [opts] N`/`!`) and `VAR=value` assignments,
 # with `git` path-qualified or carrying global options (`-C "/a b"`). Prose that merely mentions it
 # passes. A textual matcher cannot cover every shell form: `eval`, aliases and `VAR="a b" git commit`
 # pass, the accepted ceiling of a soft gate. Self-test: tests/gate.sh.
@@ -32,7 +32,8 @@ case "$EVENT" in
     [[ "$(jq -r '.tool_name // ""' <<<"$INPUT")" == Bash ]] || exit 0
     CMD=$(jq -r '.tool_input.command // ""' <<<"$INPUT")
     # `[prefixes] [path/]git [global opts] commit`; a global opt may carry one argument, quoted or not (-C dir, -c k=v)
-    RE='(^|[;&|(`{]|-c[[:space:]]+['"'"'"])[[:space:]]*([[:space:]]*(then|else|do|xargs|time|sudo|nohup|command|env|nice|!|timeout[[:space:]]+[^[:space:]]+|[A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*)[[:space:]]+)*([^[:space:]]*/)?git([[:space:]]+-[^[:space:]]+([[:space:]]+("[^"]*"|'"'"'[^'"'"']*'"'"'|[^-[:space:]][^[:space:]]*))?)*[[:space:]]+commit([[:space:]]|$)'
+    OPT='([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*'
+    RE='(^|[;&|(`{]|-c[[:space:]]+['"'"'"])[[:space:]]*([[:space:]]*(then|else|do|xargs|time|sudo|nohup|command|env|nice'"$OPT"'|!|timeout'"$OPT"'[[:space:]]+[^[:space:]]+|[A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*)[[:space:]]+)*([^[:space:]]*/)?git([[:space:]]+-[^[:space:]]+([[:space:]]+("[^"]*"|'"'"'[^'"'"']*'"'"'|[^-[:space:]][^[:space:]]*))?)*[[:space:]]+commit([[:space:]]|$)'
     grep -Eq "$RE" <<<"$CMD" || exit 0
     [[ -e "$MARK" ]] && exit 0
     touch "$MARK"
