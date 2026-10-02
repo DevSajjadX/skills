@@ -1,6 +1,6 @@
 ---
 name: product-purchase-research
-description: Use when the user wants a product recommendation, comparison, or shopping research for something physical to buy — coffee gear, hardware, electronics, cases — including "which should I get" questions, price checks, and availability checks.
+description: Use when the user wants a product recommendation, comparison, or shopping research for something physical to buy — coffee gear, hardware, electronics, cases — including "which should I get" questions, price checks, and availability checks. Not for supplements, vitamins, or other nutrition products (dosing and safety questions are out of scope).
 ---
 
 # Product purchase research
