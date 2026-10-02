@@ -30,7 +30,7 @@ npx skills add vanenshi/skills --skill reviewing-changes -g -a claude-code -y
 
 Nothing to set up front. Paste a link — the skill resolves its own access, in order: a connected MCP server for that provider → the provider's CLI (`az`, `gh`, `glab`), signed in → REST with a token from the environment → plain `git` for diffs. When no path works, it names what's missing and asks how you want to connect. Azure DevOps and GitHub are exercised daily; GitLab and others ride the same ladder.
 
-`pr-summary` bundles its diff-abridging tools (`abridging.md`, `abridge.py`, `rubric.md` — ported from [boldsoftware/meat](https://github.com/boldsoftware/meat)) — no companion skills needed.
+`pr-summary` bundles its diff-abridging tools — `abridging.md`, `abridge.py`, `rubric.md`, copied from the `abridge-diff` skill in [vanenshi/skills](https://github.com/vanenshi/skills) (MIT, see [`LICENSE-abridge`](skills/pr-summary/LICENSE-abridge)), itself a port of [boldsoftware/meat](https://github.com/boldsoftware/meat) — so it needs no companion skills.
 
 ## Commit gate (wrap)
 
