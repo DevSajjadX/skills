@@ -109,14 +109,14 @@ Pre-checks — any failure → stop, report, nothing merged:
 - `git status --porcelain --untracked-files=no` empty — wrap edits are committed by now; untracked wrap output is fine.
 
 Method:
-1. `FEATURE=$(git rev-parse --abbrev-ref HEAD)`; `git checkout <target>`; with upstream `git merge --ff-only @{u}` (sync first); `TARGET_OLD=$(git rev-parse HEAD)`.
+1. `FEATURE=$(git rev-parse --abbrev-ref HEAD)`; `FEATURE_UP=$(git rev-parse --abbrev-ref $FEATURE@{u} 2>/dev/null)` (recorded now: deleting the branch drops its upstream config, and the report needs it); `git checkout <target>`; with upstream `git merge --ff-only @{u}` (sync first); `TARGET_OLD=$(git rev-parse HEAD)`.
 2. `git merge --ff-only $FEATURE`, else `git merge --no-ff --no-edit $FEATURE`. Never squash-merge.
 3. Step 6's gate commands on the merged result. Failure → `git reset --hard $TARGET_OLD && git checkout $FEATURE`, report, stop. Nothing is deleted or pushed.
-4. `FEATURE_SHA=$(git rev-parse $FEATURE)`; `git branch -d $FEATURE` (`-d` never force-deletes an unmerged branch). Stay on `target`. `--p` → push `target` per the `--p` rules (fast-forward only).
+4. `FEATURE_SHA=$(git rev-parse $FEATURE)`; `git merge-base --is-ancestor $FEATURE HEAD && git branch -D $FEATURE` — the check is the real question, is it in `target`; `-d` asks the feature's upstream instead and refuses a pushed branch with local commits. Check fails → stop, report. Stay on `target`. `--p` → push `target` per the `--p` rules (fast-forward only).
 
-`tests/dry-run.sh` exercises this step too (ff merge, merge commit, gate-failure rollback, `m` with only uncommitted work).
+`tests/dry-run.sh` exercises this step too (ff merge, merge commit, gate-failure rollback, `m` with only uncommitted work, a pushed feature).
 
-Report: target and merge kind (fast-forward or merge commit); `git reset --hard <TARGET_OLD>` (print the hash) undoes the merge; `git branch <FEATURE> <FEATURE_SHA>` restores the deleted branch until garbage collection; whether `target` was pushed. After `--f`, the remote feature branch still exists — deleting it is the user's call (Needs you).
+Report: target and merge kind (fast-forward or merge commit); `git reset --hard <TARGET_OLD>` (print the hash) undoes the merge; `git branch <FEATURE> <FEATURE_SHA>` restores the deleted branch until garbage collection; whether `target` was pushed. `FEATURE_UP` set → the remote feature branch still exists, stale unless `--f` pushed it — deleting it is the user's call (Needs you).
 
 ## 8. Commit message
 

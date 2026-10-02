@@ -192,17 +192,18 @@ check "guard: detached HEAD -> refuse" '[ "$(git rev-parse --abbrev-ref HEAD)" =
 
 # =============================== step 7b: merge (`m`) ====================================
 # Replays the skill's merge method: pre-checks, sync target, ff-or-merge-commit, gate, delete branch.
-merge_step() { # merge_step <feature> <target> <gate cmd> -> sets MERGED (1/0), TARGET_OLD, FEATURE_SHA
+merge_step() { # merge_step <feature> <target> <gate cmd> -> sets MERGED (1/0), TARGET_OLD, FEATURE_SHA, FEATURE_UP
   local target=$2 tu; MERGED=0
   git rev-parse --verify -q "refs/heads/$target" >/dev/null || return 1
   [ "$(git rev-parse --abbrev-ref HEAD)" != "$target" ] || return 1
   tu=$(git rev-parse --abbrev-ref "$target@{u}" 2>/dev/null)
   if [ -n "$tu" ]; then git fetch -q "${tu%%/*}"; git merge-base --is-ancestor "$target" "$tu" || return 1; fi
   [ -z "$(git status --porcelain --untracked-files=no)" ] || return 1
+  FEATURE_UP=$(git rev-parse --abbrev-ref "$1@{u}" 2>/dev/null)
   git checkout -q "$target"; [ -n "$tu" ] && git merge -q --ff-only "@{u}"
   TARGET_OLD=$(git rev-parse HEAD)
   git merge -q --ff-only "$1" 2>/dev/null || git merge -q --no-ff --no-edit "$1"
-  if $3 >/dev/null; then FEATURE_SHA=$(git rev-parse "$1"); git branch -q -d "$1"; MERGED=1
+  if $3 >/dev/null; then FEATURE_SHA=$(git rev-parse "$1"); git merge-base --is-ancestor "$1" HEAD && git branch -q -D "$1" || return 1; MERGED=1
   else git reset -q --hard "$TARGET_OLD"; git checkout -q "$1"; MERGED=0; fi
 }
 
@@ -250,7 +251,16 @@ check "m, uncommitted only: merged"                     '[ "$MERGED" = 1 ]'
 check "m, uncommitted only: target has the edit and the new file" '[ "$(git branch --show-current)" = "$DEF" ] && grep -q m4 README.md && [ -f docs/m4.md ]'
 git push -q "$R" main
 
-# 5) pre-checks: target ahead of its upstream, or current branch is the target -> refuse
+# 5) a pushed feature with a commit above its upstream: `branch -d` asks the upstream, not target
+git checkout -q -b feat/m5; commit docs/m5.md "m5" "feat: m5"; git push -q -u "$R" feat/m5
+commit docs/m5.md "m5 v2" "feat: m5 v2"
+merge_step feat/m5 "$DEF" ./check.sh
+check "m, pushed feature: merged and the local branch deleted" '[ "$MERGED" = 1 ] && ! git rev-parse --verify -q refs/heads/feat/m5 >/dev/null'
+check "m, pushed feature: target holds FEATURE_SHA"     'git merge-base --is-ancestor "$FEATURE_SHA" HEAD'
+check "m, pushed feature: its upstream recorded for the report" '[ "$FEATURE_UP" = "$R/feat/m5" ]'
+git push -q "$R" main
+
+# 6) pre-checks: target ahead of its upstream, or current branch is the target -> refuse
 git checkout -q main; git commit -q --allow-empty -m "chore: local-only on main"; git checkout -q feat/m3
 check "m guard: target ahead of upstream -> refuse"     '! merge_step feat/m3 "$DEF" ./check.sh && [ "$(git rev-parse --abbrev-ref HEAD)" = feat/m3 ]'
 git checkout -q main
