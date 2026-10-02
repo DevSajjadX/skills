@@ -1,13 +1,13 @@
 ---
 name: pr-summary
-description: Use when pulling one or more pull requests into the session as a summary page — a PR link or id from Azure DevOps or GitHub ("pull PR 532", "make a summary page of these two PRs", "summarize what changed in PR 482 as a page", "make an ADHD-friendly page for this PR"), a single PR or a work item's PR bundle.
+description: Use when pulling one or more pull requests into the session as a summary page — a PR link or id from Azure DevOps or GitHub ("pull PR 532", "make a summary page of these two PRs", "summarize what changed in PR 482 as a page", "make an ADHD-friendly page for this PR"), a single PR or a work item's PR bundle. Not for a code review or a terminal answer about a PR (code-review-azure / reviewing-changes).
 ---
 
 # pr-summary
 
-Turn a pull request (or a work item's PR bundle) into one published HTML summary page. The page is ADHD-friendly by design — built for a reader who loses focus fast: the whole picture on the first screen, depth behind scrolling, never a wall of code — so the PR can be understood and acted on quickly.
+Turn a pull request (or a work item's PR bundle) into one published HTML summary page. The page is ADHD-friendly by design — built for a reader who loses focus fast — so the PR can be understood and acted on quickly.
 
-**REQUIRED BACKGROUND:** the `azure-devops` skill owns the az CLI gotchas (PAT scopes, org URL format, flag parity). Azure MCP tools (`mcp__azure-devops__*`, load via ToolSearch) come first; az CLI is the fallback when MCP is absent or a call fails.
+Azure MCP tools (`mcp__azure-devops__*`, load via ToolSearch) come first; az CLI is the fallback when MCP is absent or a call fails.
 
 The deliverable is a published artifact page, never terminal text. One page carries the whole story of a change: a single PR, or every PR of one work item — one color lane per PR.
 
@@ -15,22 +15,27 @@ The deliverable is a published artifact page, never terminal text. One page carr
 
 ## Gather
 
-Resolve the provider from the URL, then resolve access in this order: a connected MCP server for that provider → its CLI (`az`, `gh`, `glab`), signed in → REST with a token from the environment → plain `git` for the diff (a fetched remote needs no provider API). When no path works, name what's missing and ask the user how they want to connect — never scrape or guess. The table shows the proven paths; any other provider (GitLab, Bitbucket, …) follows the same order for the same four needs:
+Resolve the provider from the URL, then resolve access in this order: a connected MCP server for that provider → its CLI (`az`, `gh`, `glab`), signed in → REST with a token from the environment → plain `git` for the diff (a fetched remote needs no provider API). When no path works, name what's missing and ask the user how they want to connect — never scrape or guess. The table shows the proven paths; any other provider (GitLab, Bitbucket, …) follows the same order for the same needs:
 
 | Need | Azure DevOps | GitHub |
 |---|---|---|
-| PR meta | `repo_pull_request` get, with `includeWorkItemRefs`, `includeLabels` (az: `az repos pr show`) | `gh pr view <url> --json title,body,state,author,baseRefName,headRefName,files,additions,deletions,mergedAt,url,closingIssuesReferences,statusCheckRollup` |
-| Review threads | `repo_pull_request_thread` list (az: `az devops invoke --area git --resource pullRequestThreads`) | `gh api repos/<o>/<r>/pulls/<n>/comments` and `gh pr view --json comments,reviews` |
+| PR meta | `repo_pull_request` get, with `includeWorkItemRefs`, `includeLabels` (az: `az repos pr show --id <n> --org <url>` — it takes no `--project`/`--repository`) | `gh pr view <url> --json title,body,state,author,baseRefName,headRefName,files,additions,deletions,mergedAt,url,closingIssuesReferences,statusCheckRollup` |
+| Review threads | `repo_pull_request_thread` list (az: `az devops invoke --area git --resource pullRequestThreads`) | `gh api --paginate repos/<o>/<r>/pulls/<n>/comments` and `gh pr view --json comments,reviews` |
 | Linked work item / issue | `wit_work_item` get | `closingIssuesReferences` → `gh issue view` |
-| Diff + file list | `git fetch origin <target> <source>` then `git diff origin/<target>...origin/<source>` (`--stat` for the file list and +/− counts) | `gh pr diff <url>` |
+| Bundle PRs (work item → PRs) | `wit_work_item` get with `expand: relations` → relations with `rel` `ArtifactLink` and `attributes.name` `Pull Request`; the PR id is the last `%2F` segment of `vstfs:///Git/PullRequestId/<project>%2F<repo>%2F<id>` (az: `az boards work-item show --id <n> --expand relations`) | `gh issue view <n> --json closedByPullRequestsReferences` |
+| Diff + file list | Active PR: `git fetch origin <target> <source>` then `git diff origin/<target>...origin/<source>`. Completed PR (the source branch may be deleted, and the three-dot diff is empty once merged): `git fetch origin <target>` then `git diff <lastMergeTargetCommit> <lastMergeCommit>`, both SHAs from PR meta — one range for merge, squash and rebase completions. `--stat` for the file list and +/− counts | `gh pr diff <url>` |
 
-On Azure, file lists and counts come from git, not MCP — `repo_pull_request`'s `includeChangedFiles` returns an empty summary.
+On Azure, file lists and counts come from git, not MCP — `repo_pull_request`'s `includeChangedFiles` returns an empty summary. An empty diff for a PR that changed files means the range is wrong: fix it, never build a page from it.
+
+Given one PR of a bundle, go PR → linked work item → the bundle row to collect its siblings.
+
+Verify-chip numbers come from what the PR already carries: test results in the PR description, test cases added or changed in the diff, GitHub's `statusCheckRollup`, or a PR build-policy run when the repo has one. When none gives a count, the chip is a `.meh` stating the evidence that exists (or "no test evidence on the PR"), never a made-up number.
 
 Read the entire diff before writing a word — every claim on the page traces to the diff, the PR description, a review thread, or a linked item. When the diff is too big to read row by row (~50+ changed rows), abridge it first and read that instead: follow `abridging.md` in this directory — you pick coordinates, `abridge.py` emits a trustworthy reading diff (`rubric.md` holds the judgment rules). The diff is input only: the page never carries a diff or changed-rows section — counts (files, +/−) yes, rows no. Keeping rows off the page is also what keeps generation fast and the artifact small.
 
 ## Build
 
-Copy `pr-page-template.html` (next to this file) and fill its slots. The template is the design system and the section contract: extend it when this change deserves a section it doesn't have; never restyle or re-derive what's there. Delete unused section markup, variants, and slot comments — but leave the CSS block untouched even when some selectors go unused.
+Copy `pr-page-template.html` (next to this file) and fill its slots. The template is the design system and the section contract: extend it when this change deserves a section it doesn't have; never restyle or re-derive what's there. Delete unused section markup, variants, and slot comments — but leave the CSS block untouched even when some selectors go unused. A third or later PR gets its own lane: add a `--<lane>`/`--<lane>-soft` pair to all three theme blocks and copy the `.be` / `be-lane` selectors for it — adding a lane extends the template, it doesn't restyle it.
 
 Required on every page:
 
@@ -52,13 +57,13 @@ Sections that recur — include when true:
 - **Leftovers** — named debt or handoffs exist → each named and tracked.
 - **Security** — quiet security fixes worth remembering.
 
-Diagram mechanics: flow/sequence/state diagrams go in a `<pre class="mermaid">` block inside a card — artifacts render mermaid natively, no libraries. Charts and custom diagrams are inline SVG colored with the template's CSS variables so both themes stay legible; load the `artifact-diagramming` skill (and `dataviz` for charts) when available before drawing. The template's chain already does linear step sequences — mermaid earns its place only when the shape branches or runs parallel. External chart/diagram libraries never work: the artifact CSP blocks them.
+Diagram mechanics: flow/sequence/state diagrams go in a `<pre class="mermaid">` block inside a card — artifacts render mermaid natively, no libraries. Charts and custom diagrams are inline SVG colored with the template's CSS variables so both themes stay legible; load the `artifact-diagramming` skill (and `dataviz` for charts) when available before drawing. The template's chain already does linear step sequences — mermaid earns its place only when the shape branches or runs parallel. Don't load a chart or diagram library: a PR page's charts are small enough for inline SVG, and mermaid is already native (loading a mermaid script is wrong). If a page really needs a library, the artifact-design page contract says how to load it.
 
 Voice: headings are theses ("A refresh token is enough authority to end its own session"), never labels ("Changes"). Review catches become "Caught in review" callouts — what was wrong, what it would have cost, the test that pins it — sourced from wherever the catch is recorded (threads, the PR description, a spec/ADR); threads are never transcribed as a comment feed. Numbers are real (file counts, test counts). Every label, heading, and one-liner earns its place: plain words, front-loaded, no filler.
 
-Publish with the Artifact tool: title = the page's short name, favicon stable across redeploys.
+Publish with the Artifact tool: title = the page's short name; `icon` on the first publish only, omitted on redeploys.
 
-Publishing arms a background watch on the page — republish notices, plus comment auto-replies when this session has them on. Summary pages are one-shot, nothing else edits them concurrently, so drop the watch right after: `Artifact` with `action: "unwatch"` and the page's URL (`action: "status"` lists what this session watches). Every republish arms it again — unwatch again, and never republish just to move the watch.
+Publishing arms a background watch on the page — republish notices, plus comment auto-replies when this session has them on. Summary pages are one-shot, nothing else edits them concurrently, so drop the watch right after: `ArtifactComments` with `action: "watch"`, `on: false` and the page's `url` (load the tool via ToolSearch first if it is deferred; `action: "watch"` with no `url` lists what this session watches). Every republish arms it again, so stop it again after each one, and never republish just to move the watch.
 
 ## Common mistakes
 
@@ -70,8 +75,8 @@ Publishing arms a background watch on the page — republish notices, plus comme
 | Treating the section lists as a cap | They are the floor. The PR's material decides what else the page carries — everything except code rows. |
 | A comments section transcribing threads | Distill catches into `Caught in review` callouts. |
 | Writing the page before reading the diff | Every claim traces to diff/description/threads; read (or abridge) first. |
-| Remote image URLs in the page | CSP blocks them — download with the PAT (or `gh`) and embed as `data:` URIs. |
-| Chart.js / D3 / any CDN script for a chart | CSP blocks external libraries — `<pre class="mermaid">` blocks and inline SVG only. |
+| Remote image URLs in the page | CSP blocks them — download with `az rest --url <attachment-url> --resource 499b84ac-1321-427f-aa17-267ca6975798 --output-file <name>` (uses the az login, no PAT) or `gh`, and embed as `data:` URIs. |
+| Chart.js / D3 / any CDN script for a chart | Not needed: inline SVG covers a PR page's charts and mermaid renders natively. Load a library only per the artifact-design page contract, never a mermaid library. |
 | Mermaid for a straight line of steps | The template's chain does linear better; mermaid is for branching/parallel shapes. |
 | `az boards` 401s while `az repos` works | PAT lacks the Work Items scope — extend it, `az devops login` again. |
 | Refusing a link because the "right" tool is missing | Walk the access ladder (MCP → CLI → REST token → git); ask the user only when every path fails. |

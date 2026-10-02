@@ -95,7 +95,7 @@
     border-radius: 4px;
     padding: 0.05em 0.35em;
     font-size: 0.86em;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
   }
   a { color: inherit; }
   a:focus-visible, summary:focus-visible, .navchip:focus-visible { outline: 2px solid var(--fe); outline-offset: 2px; }
@@ -345,8 +345,8 @@
   <!-- OPTIONAL: diagram, when the story's shape beats prose — branching or
        parallel flow, before/after topology, state machine. Artifacts render
        mermaid natively (no libraries). Charts/custom diagrams: inline SVG
-       colored with the CSS variables above; external chart libs are
-       CSP-blocked. Linear step sequences stay in .chain, not mermaid. -->
+       colored with the CSS variables above; no chart library needed.
+       Linear step sequences stay in .chain, not mermaid. -->
   <section id="flow">
     <h2>{{What the diagram shows}}</h2>
     <p class="sectionsub">{{One-liner: what to look at.}}</p>
