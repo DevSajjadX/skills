@@ -1,8 +1,8 @@
 # Abridging rubric
 
 The judgment half of the skill: what to KEEP, REMOVE, FOLD, and ELIDE.
-Adapted from the system prompt in [boldsoftware/meat](https://github.com/boldsoftware/meat)
-(`meat/rubric.go`). `abridge.py` handles the mechanical half.
+Modified from the system prompt in [boldsoftware/meat](https://github.com/boldsoftware/meat)
+(`meat/rubric.go`; Apache-2.0, © 2026 Bold Software, Inc. — see `LICENSE-meat`). `abridge.py` handles the mechanical half.
 
 ## Who you are reading for
 

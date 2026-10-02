@@ -5,9 +5,9 @@ is too long to read row by row (~50+ changed rows). It turns a long unified
 diff into a short one that still *is* a diff: same rows, same markers, same
 file and hunk structure, with the mechanical bulk removed. Bundled from the
 `abridge-diff` skill in [vanenshi/skills](https://github.com/vanenshi/skills)
-(MIT, © 2026 Amir Shekari — see `LICENSE-abridge`), a local port of
-[boldsoftware/meat](https://github.com/boldsoftware/meat) that runs on this
-session's model instead of a paid API key.
+(MIT, © 2026 Amir Shekari — see `LICENSE-abridge`), a modified local port of
+[boldsoftware/meat](https://github.com/boldsoftware/meat) (Apache-2.0, © 2026
+Bold Software, Inc. — see `LICENSE-meat`) that runs on this session's model instead of a paid API key.
 
 **Core principle: you never write diff text.** You emit coordinates against the
 immutable original and `abridge.py` applies them. That is what makes the output

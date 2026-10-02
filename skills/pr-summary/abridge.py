@@ -22,8 +22,8 @@ Plan JSON:
    "fold":    [[start, end], ...]}           collapse >=2 rows to one `...`
 
 Copied from the abridge-diff skill in vanenshi/skills (MIT, (c) 2026 Amir
-Shekari; see LICENSE-abridge next to this file), itself a port of
-boldsoftware/meat.
+Shekari; see LICENSE-abridge next to this file), itself a modified port of
+boldsoftware/meat (Apache-2.0, (c) 2026 Bold Software, Inc.; see LICENSE-meat).
 """
 
 from __future__ import annotations
