@@ -84,7 +84,7 @@ Pre-checks (refs from step 2):
 - `git rev-list --merges $BASE..HEAD` non-empty → stop; a soft reset flattens merges silently.
 - `--f` on `$DEF` → stop; `$BASE` is HEAD there, and the default branch's published history is not `--f`'s to rewrite. Report that plain `s` regroups its unpushed commits.
 
-Scope: `$SCOPE` from step 2. `--f` = `$BASE`, after ONE AskUserQuestion — proceed with force push / local-only instead / stop; auto-continues with no answer → stop, never force push without an explicit choice. With `c` (so also `m`), step 8's commit runs now, its push not yet: those commits join the regroup, and 7b finds a clean tree. Then nothing committed above scope → skip.
+Scope: `$SCOPE` from step 2. `--f` = `$BASE`, after ONE AskUserQuestion — proceed with force push / local-only instead / stop; auto-continues with no answer → stop, never force push without an explicit choice. With `c` (so also `--p` and `m`), step 8's commit runs now, its push not yet: those commits join the regroup, and 7b finds a clean tree. Then nothing committed above scope → skip.
 
 A soft reset regroups at file granularity — true per-concern commits come from committing per concern during the session; wrap only tidies.
 
