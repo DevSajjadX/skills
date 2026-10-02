@@ -19,22 +19,22 @@ commit() { # commit <file> <content> <message>
   mkdir -p "$(dirname "$1")"; printf '%s\n' "$2" >"$1"; git add "$1"; git commit -q -m "$3"
 }
 
-# --- fixture: remote named "stylit" (not origin), default branch main, one base commit
+# --- fixture: remote named "fork" (not origin), default branch main, one base commit
 git init -q --bare -b main "$REMOTE_DIR"
 git init -q -b main "$WORK"; cd "$WORK"
 git config user.email t@t; git config user.name t
 commit README.md "base" "chore: base"
 printf '#!/bin/sh\n# fake typecheck: ui must not reference an api symbol the api layer lacks\nif grep -q useBand ui/*.ts 2>/dev/null && ! grep -q "export const band" api/*.ts 2>/dev/null; then echo "typecheck failed"; exit 1; fi\nexit 0\n' >check.sh
 chmod +x check.sh; git add check.sh; git commit -q -m "chore: fake typecheck"
-git remote add stylit "$REMOTE_DIR"; git push -q -u stylit main
-git remote set-head stylit main
+git remote add fork "$REMOTE_DIR"; git push -q -u fork main
+git remote set-head fork main
 
 # --- work branch: 5 per-task commits across 3 concerns; first 3 pushed, last 2 local
 git checkout -q -b feat/x
 commit api/band.ts   "export const band = 1;"    "wip: api band"
 commit ui/chip.ts    "import {band} from '../api/band'; useBand(band);" "wip: chip uses band"
 commit docs/notes.md "band"                       "wip: doc band"
-git push -q -u stylit feat/x
+git push -q -u fork feat/x
 commit api/band.ts   "export const band = 2;"    "wip: api band v2"
 commit ui/chip.ts    "import {band} from '../api/band'; useBand(band); // v2" "wip: chip v2"
 
@@ -50,7 +50,7 @@ scope_for() { # step 2's SCOPE, first match; --f on DEF prints nothing and fails
   elif [ $on_def = 0 ]; then git merge-base HEAD "$DEF"
   else git rev-parse HEAD; fi
 }
-check "remote derived from upstream (=stylit, not origin)" '[ "$R" = stylit ]'
+check "remote derived from upstream (=fork, not origin)" '[ "$R" = fork ]'
 check "default branch detected from remote HEAD"          '[ "$DEF" = main ]'
 check "upstream is an ancestor of HEAD"                   'git merge-base --is-ancestor "$REMOTE" HEAD'
 check "no merge commits in BASE..HEAD"                    '[ -z "$(git rev-list --merges "$BASE"..HEAD)" ]'
@@ -78,7 +78,7 @@ git add api/band.ts;  git commit -q -m "feat(api): band v2"
 git add ui/chip.ts;   git commit -q -m "feat(ui): chip follows band v2"
 check "local regroup: 2 wip commits -> 2 concern commits" '[ "$(git rev-list --count "$REMOTE"..HEAD)" = 2 ]'
 check "local regroup: content identical to OLD"           'git diff --quiet "$OLD" HEAD'
-check "local regroup: pushed commits untouched"           '[ "$(git rev-parse "$REMOTE")" = "$(git rev-parse stylit/feat/x)" ]'
+check "local regroup: pushed commits untouched"           '[ "$(git rev-parse "$REMOTE")" = "$(git rev-parse fork/feat/x)" ]'
 git stash pop -q
 check "wrap edit restored from stash"                     'grep -q x docs/notes.md'
 check "untracked file untouched by tracked-only stash"    '[ -f untracked.tmp ]'
@@ -96,7 +96,7 @@ check "--f regroup: content identical to OLD"        'git diff --quiet "$OLD" HE
 ok=1; for sha in $(git rev-list --reverse "$BASE"..HEAD); do git checkout -q "$sha"; ./check.sh >/dev/null || ok=0; done; git checkout -q feat/x
 check "--f: every intermediate commit passes typecheck (api before ui)" '[ $ok = 1 ]'
 git push -q --force-with-lease=feat/x:"$REMOTE" "$R" feat/x
-check "--f: force-with-lease accepted, remote now at HEAD" '[ "$(git rev-parse stylit/feat/x)" = "$(git rev-parse HEAD)" ]'
+check "--f: force-with-lease accepted, remote now at HEAD" '[ "$(git rev-parse fork/feat/x)" = "$(git rev-parse HEAD)" ]'
 
 # =============================== guards ==================================================
 # 1) wrong order breaks bisectability: ui before api must fail the per-commit check
@@ -106,7 +106,7 @@ git add api/band.ts;   git commit -q -m "feat(api): band"
 git add docs/notes.md; git commit -q -m "docs: band"
 ok=1; for sha in $(git rev-list --reverse "$BASE"..HEAD); do git checkout -q "$sha"; ./check.sh >/dev/null || ok=0; done; git checkout -q feat/x
 check "guard: ui-before-api ordering is caught by the per-commit typecheck" '[ $ok = 0 ]'
-git reset -q --hard stylit/feat/x
+git reset -q --hard fork/feat/x
 
 # 2) parity failure -> reset --hard OLD
 OLD=$(git rev-parse HEAD)
@@ -119,7 +119,7 @@ git checkout -q -- .
 
 # 3) stale lease: another clone pushes first -> our lease must be rejected
 git clone -q "$REMOTE_DIR" "$OTHER"; ( cd "$OTHER" && git config user.email o@o && git config user.name o && git checkout -q feat/x && echo other >other.md && git add other.md && git commit -q -m "wip: someone else" && git push -q origin feat/x )
-cd "$WORK"; LEASE=$(git rev-parse stylit/feat/x)   # what we last saw
+cd "$WORK"; LEASE=$(git rev-parse fork/feat/x)   # what we last saw
 git commit -q --allow-empty -m "chore: local only"
 git push -q --force-with-lease=feat/x:"$LEASE" "$R" feat/x 2>/dev/null && pushed=1 || pushed=0
 check "guard: lease rejected when remote moved underneath us" '[ $pushed = 0 ]'
