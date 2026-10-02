@@ -2,7 +2,9 @@
 # Dry run of /wrap step 2 (review snapshot), step 7 (Squash) and step 7b (Merge) against a throwaway repo with a bare "remote".
 # Replays the skill's exact git commands for the local scope and the --f scope,
 # then provokes each guard. Prints PASS/FAIL per assertion; exit 1 on any FAIL.
+# The replay is a hand copy: the parity block at the end fails when SKILL.md rewords a replayed command.
 set -u
+SKILL="$(cd "$(dirname "$0")/.." && pwd)/SKILL.md"
 
 ROOT=$(mktemp -d -t wrap-dry-run)
 trap 'rm -rf "$ROOT"' EXIT
@@ -305,6 +307,36 @@ R=$(remote_name)
 check "no upstream: R is the sole remote"                          '[ "$R" = up ]'
 check "no remote HEAD ref: DEF is the remote's own HEAD, not a guess" '[ "$(def_for)" = master ] && ! git rev-parse -q --verify refs/remotes/up/HEAD >/dev/null'
 cd "$WORK"
+
+# =============================== parity: each replayed command, as SKILL.md words it ======
+# A FAIL here means SKILL.md changed a command: update the helper above that replays it, then this line.
+while IFS= read -r c; do check "SKILL.md: $c" 'grep -qF -- "$c" "$SKILL"'; done <<'EOF'
+git rev-parse --abbrev-ref @{u}
+git symbolic-ref --short refs/remotes/$R/HEAD
+git ls-remote --symref $R HEAD
+REMOTE=$(git rev-parse @{u} 2>/dev/null)
+refs/remotes/$R/<branch>
+git merge-base HEAD $DEF $R/$DEF
+U=$(git rev-list HEAD --not --remotes $DEF | tail -1)
+SCOPE=$U^
+GIT_INDEX_FILE=$(mktemp -u) sh -c 'git read-tree HEAD && git add -A && git write-tree; rm -f "$GIT_INDEX_FILE"'
+git symbolic-ref -q HEAD
+git rev-list --merges $BASE..HEAD
+S0=$(git rev-parse -q --verify refs/stash)
+git stash push -q
+git reset --soft <scope> && git reset
+git diff --quiet $OLD HEAD
+git checkout <sha> && <typecheck command>
+git push --force-with-lease=<branch>:$REMOTE $R <branch>
+git rev-parse --verify refs/heads/<target>
+git merge-base --is-ancestor <target> $TU
+git status --porcelain --untracked-files=no
+FEATURE_UP=$(git rev-parse --abbrev-ref $FEATURE@{u} 2>/dev/null)
+git merge --ff-only $FEATURE
+git merge --no-ff --no-edit $FEATURE
+git reset --hard $TARGET_OLD && git checkout $FEATURE
+git merge-base --is-ancestor $FEATURE HEAD && git branch -D $FEATURE
+EOF
 
 printf '\n%s\n' "$([ $FAILS = 0 ] && echo 'ALL PASS' || echo "$FAILS FAILED")"
 [ $FAILS = 0 ]
