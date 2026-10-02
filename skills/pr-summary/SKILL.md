@@ -35,7 +35,7 @@ Read the entire diff before writing a word — every claim on the page traces to
 
 ## Build
 
-Copy `pr-page-template.html` (next to this file) and fill its slots. The template is the design system and the section contract: extend it when this change deserves a section it doesn't have; never restyle or re-derive what's there. Delete unused section markup, variants, and slot comments — but leave the CSS block untouched even when some selectors go unused. A third or later PR gets its own lane: add a `--<lane>`/`--<lane>-soft` pair to all three theme blocks and copy the `.be` / `be-lane` selectors for it — adding a lane extends the template, it doesn't restyle it.
+Copy `pr-page-template.html` (next to this file) and fill its slots. The template is the design system and the section contract: extend it when this change deserves a section it doesn't have; never restyle or re-derive what's there. Delete unused section markup, variants, and slot comments — but leave the CSS block untouched even when some selectors go unused. A third or later PR gets its own lane: add a `--<lane>`/`--<lane>-soft` pair to all three theme blocks and copy every `be` lane selector (`.be`, `be-lane`, `[data-lane="be"]`) for it — adding a lane extends the template, it doesn't restyle it.
 
 Required on every page:
 
