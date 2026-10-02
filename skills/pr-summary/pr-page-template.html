@@ -12,7 +12,9 @@
   whatever else the PR's material offers a reader — everything except exact
   code changes (diff rows / change snippets).
   Delete only markup and comments; leave the CSS block untouched even when
-  selectors go unused.
+  selectors go unused. task-summary's template mirrors that block (`:root`
+  through `a { color: inherit; }`); the skills repo's tests/template-parity.sh
+  fails when the two copies drift.
   Lanes: one accent per PR/repo. Single PR → one lane, use .fe everywhere and
   drop the second lane's colors from nav/tldr/chips.
 -->
