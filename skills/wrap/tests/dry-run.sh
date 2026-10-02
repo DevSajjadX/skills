@@ -66,11 +66,18 @@ scope_for() { # --f: BASE, refused on DEF (prints nothing, fails); else the pare
   else u=$(git rev-list HEAD --not --remotes | tail -1); fi
   [ -n "$u" ] && git rev-parse -q --verify "$u^" || git rev-parse HEAD
 }
+prechecks() { # step 7's pre-checks bar --f on DEF (scope_for refuses that) -> fails = stop
+  local remote; git symbolic-ref -q HEAD >/dev/null || return 1
+  remote=$(remote_for)
+  [ -z "$remote" ] || git merge-base --is-ancestor "$remote" HEAD || return 1
+  [ -z "$(git rev-list --merges "$(base_for)"..HEAD)" ]
+}
 R=$(remote_name); DEF=$(def_for); REMOTE=$(remote_for); BASE=$(base_for)
 check "remote derived from upstream (=fork, not origin)" '[ "$R" = fork ]'
 check "default branch detected from remote HEAD"          '[ "$DEF" = main ]'
 check "upstream is an ancestor of HEAD"                   'git merge-base --is-ancestor "$REMOTE" HEAD'
 check "no merge commits in BASE..HEAD"                    '[ -z "$(git rev-list --merges "$BASE"..HEAD)" ]'
+check "step 7 pre-checks pass on the work branch"         'prechecks'
 SCOPE=$(scope_for)
 check "default scope = the upstream, an ancestor of HEAD" '[ "$SCOPE" = "$REMOTE" ]'
 
@@ -162,13 +169,13 @@ git commit -q --allow-empty -m "chore: local only"
 git push -q --force-with-lease=feat/x:"$LEASE" "$R" feat/x 2>/dev/null && pushed=1 || pushed=0
 check "guard: lease rejected when remote moved underneath us" '[ $pushed = 0 ]'
 git fetch -q "$R"
-check "guard: after fetch, REMOTE not ancestor of HEAD -> skill must stop" '! git merge-base --is-ancestor "$(git rev-parse @{u})" HEAD'
+check "guard: after fetch, REMOTE not ancestor of HEAD -> skill must stop" '! prechecks'
 git reset -q --hard "$R/feat/x"
 
 # 4) merge commit in range -> stop
 git checkout -q main; commit README.md "main moved" "chore: main moved"; git push -q "$R" main
 git checkout -q feat/x; git merge -q --no-edit main >/dev/null
-check "guard: merge commit in BASE..HEAD detected" '[ -n "$(git rev-list --merges "$(git merge-base HEAD main)"..HEAD)" ]'
+check "guard: merge commit in BASE..HEAD -> stop"   '! prechecks'
 
 # 5) default branch: plain `s` regroups only unpushed commits, `--f` is refused
 git checkout -q main
@@ -188,7 +195,7 @@ git branch -q --unset-upstream
 check "default branch, no upstream: scope still stops at the pushed commit" '[ "$(scope_for)" = "$PUSHED" ]'
 git branch -q -u "$R/$DEF"; git reset -q --hard "$PUSHED"
 git checkout -q --detach
-check "guard: detached HEAD -> refuse" '[ "$(git rev-parse --abbrev-ref HEAD)" = HEAD ]'
+check "guard: detached HEAD -> refuse" '! prechecks'
 
 # =============================== step 7b: merge (`m`) ====================================
 # Replays the skill's merge method: pre-checks, sync target, ff-or-merge-commit, gate, delete branch.

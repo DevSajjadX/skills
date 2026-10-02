@@ -76,9 +76,10 @@ Done when the gates pass and the report quotes the commands run.
 
 ## 7. Squash (careful)
 
-Trigger: bare wrap with local per-task commits that don't match the default branch's pattern (read its `git log` for the last comparable body of work), or `s`. Never a detached HEAD. The guard is pushed commits, not the branch's name: plain `s` stops at `$SCOPE`, touching only commits no remote has seen, so it runs on the default branch too. `--f` reaches through pushed commits, so it is for side branches only (pre-checks).
+Trigger: bare wrap with local per-task commits that don't match the default branch's pattern (read its `git log` for the last comparable body of work), or `s`. The guard is pushed commits, not the branch's name: plain `s` stops at `$SCOPE`, touching only commits no remote has seen, so it runs on the default branch too. `--f` reaches through pushed commits, so it is for side branches only (pre-checks).
 
 Pre-checks (refs from step 2):
+- Detached HEAD (`git symbolic-ref -q HEAD` fails) → stop.
 - `$REMOTE` set but not an ancestor of HEAD → stop; sync first.
 - `git rev-list --merges $BASE..HEAD` non-empty → stop; a soft reset flattens merges silently.
 - `--f` on `$DEF` → stop; `$BASE` is HEAD there, and the default branch's published history is not `--f`'s to rewrite. Report that plain `s` regroups its unpushed commits.
