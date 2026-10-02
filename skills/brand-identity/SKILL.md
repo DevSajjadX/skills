@@ -3,7 +3,7 @@ name: brand-identity
 description: Use when a client or project needs a logo — a new logo, wordmark, brand mark, monogram, logo refresh, or favicon/app-icon set — including one-line briefs like "make me a logo for X", or when the logo portion of a branding effort needs concepts to present.
 ---
 
-# Logo Design
+# Brand identity — logo design
 
 ## Overview
 
@@ -12,12 +12,13 @@ A logo delivery is a strategic recommendation, not a drawing. The three failures
 ## When to use
 
 - Any logo request: wordmark, symbol/mark, monogram, lockups, refresh, favicon/app-icon set.
-- NOT for: full brand identity boards (use `brand` / `design`), banners (`banner-design`), AI-raster "logo images" — logo masters are hand-authored vectors.
-- Pure production on an existing approved mark (favicon set, colorway, cleanup): skip to steps 7–9.
+- NOT for: color/type/imagery systems, full brand boards, banners, or AI-raster "logo images". This skill covers the logo only, and logo masters are hand-authored vectors.
+- Pure production on an existing approved mark (favicon set, colorway, cleanup): skip to steps 7–9 with the approved mark in place of the recommendation. The board holds sections 6–9 only, the Concepts / Positioning / Cliché / Rationale gates do not apply, and the spec drops its positioning line.
+- Refresh (an existing mark is supplied): after step 3, list what customers already recognize (silhouette, colors, type style, name treatment) and mark each keep / evolve / replace with a reason. Steps 4–5 diverge only on the evolve/replace items — evolution beats reset. The board shows old vs new side by side.
 
 ## Workflow
 
-1. **Brief.** Answer the 9 brief questions ([reference.md](reference.md)). If the user is reachable, ask the ≤3 questions that most change the design (audience, personality, competitors); otherwise assume plausibly and mark every guess `(assumed)`.
+1. **Brief.** Answer the 9 brief questions ([reference.md](reference.md)). If the user is reachable, ask the ≤3 questions that most change the design (audience, personality, competitors); assume the rest plausibly (all of it if the user isn't reachable) and mark every guess `(assumed)`.
 2. **Position.** One sentence: "For [audience], [name] is the [category] that [differentiator]." Every later rationale traces back to it.
 3. **Scan the landscape.** Name the industry's visual defaults and 3–5 competitor marks (knowledge or a quick search). List this industry's clichés (map in reference.md). Decide conform vs differentiate, with a reason.
 4. **Diverge.** Write 10+ idea one-liners before drawing anything. The first ones will be the literal ones — the name illustrated ("Dawnroast" → sun + cup). Those are the ideas every competitor also had; keep going past them. Group survivors into 2–3 named directions.
@@ -34,7 +35,8 @@ A logo delivery is a strategic recommendation, not a drawing. The three failures
 | Concepts | ≥3 presented on the board, from ≥2 directions, each named + idea line |
 | Positioning | sentence exists; recommendation cites it |
 | Cliché | industry clichés listed; one appears only with a named twist |
-| Fonts | `grep -l 'font-family\|<text' svg/*.svg` comes back empty; any font used is freely licensed, license noted |
+| Refresh | equity inventory (keep/evolve/replace) precedes concepts; old vs new on the board |
+| Paths only | the SVG check in reference.md comes back empty; any font used is freely licensed, license noted |
 | Small size | 16 px render inspected and survives |
 | Colorways | mono black + reverse white built and rendered |
 | Spec | HEX + job per color, clearspace, minimum sizes, 3 don'ts |
