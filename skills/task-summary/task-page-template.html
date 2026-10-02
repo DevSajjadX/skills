@@ -1,8 +1,10 @@
 <title>{{ITEM_SHORT_NAME}}</title>
 <!--
   Work item / issue page template. This file IS the design system — copy it,
-  fill the slots, delete unused sections and these comments. Same tokens as
-  pr-summary's pr-page-template.html, so both page kinds read as one family.
+  fill the slots, delete unused sections and these comments. The tokens, dark
+  mode and base CSS (`:root` through `a { color: inherit; }`) mirror
+  pr-summary's pr-page-template.html so both page kinds read as one family;
+  tests/template-parity.sh fails when the two copies drift.
 
   Slot legend:
     REQUIRED  — every page has it
@@ -10,8 +12,9 @@
   These slots are the floor, not the menu: add sections for whatever else the
   item's material offers a reader.
   The imported description renders AS-IS inside .desc — faithful import, never
-  a rewrite. Every image (description, comments, attachments) is embedded as a
-  data: URI; remote tracker URLs are CSP-blocked and render as broken boxes.
+  a rewrite — after sanitize.py has made the markup inert. Every image
+  (description, comments, attachments) is embedded as a data: URI; remote
+  tracker URLs are CSP-blocked and render as broken boxes.
 -->
 <style>
   :root {
@@ -92,7 +95,7 @@
     border-radius: 4px;
     padding: 0.05em 0.35em;
     font-size: 0.86em;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
   }
   a { color: inherit; }
   a:focus-visible, .navchip:focus-visible { outline: 2px solid var(--fe); outline-offset: 2px; }
@@ -207,8 +210,9 @@
     </div>
   </header>
 
-  <!-- REQUIRED: the item's description, AS-IS. Do not rewrite, reorder, or
-       summarize inside this card; images embedded as data: URIs in place. -->
+  <!-- REQUIRED: the item's description, AS-IS (sanitize.py output). Do not
+       rewrite, reorder, or summarize inside this card; images embedded as
+       data: URIs in place. -->
   <section id="desc">
     <h2>Description</h2>
     <p class="sectionsub">{{As written on the item · last edited {{date}}.}}</p>
@@ -218,7 +222,7 @@
   </section>
 
   <!-- REQUIRED when comments exist: chronological, oldest first, one card each.
-       Comment bodies render as-is (same .desc containment); images embedded. -->
+       Comment bodies render as-is after sanitize.py (same .desc containment); images embedded. -->
   <section id="comments">
     <h2>Comments</h2>
     <p class="sectionsub">{{N}} comments, oldest first.</p>
