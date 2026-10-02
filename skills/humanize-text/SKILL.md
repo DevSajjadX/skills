@@ -26,10 +26,11 @@ The engine is the same every way: know the voice, remove the tells, keep the fac
 
 ## Voice profiles
 
-A voice profile is a project-owned file the humanizer reads: who the writer is, core traits, hard bans, tone dials, and calibration pairs (bad version vs. voice version of the same content). Calibration pairs do more work than any rule list.
+A voice profile is a file the humanizer reads, either the project's or the user's personal one: who the writer is, core traits, hard bans, tone dials, and calibration pairs (bad version vs. voice version of the same content). Calibration pairs do more work than any rule list.
 
-- Project has one → read it and defer to it. To find it, use the path the calling skill or the project's CLAUDE.md gives. If neither gives one, use the first `voice-profile.md` in the repo, skipping this skill's own folder. If you find none, the project has no profile. Project bans override the generic checklist; the project can be stricter, never looser.
-- Project has none → fall back as in step 1 (personal profile, samples, one question, then the `references/voice-profile.md` defaults), and offer once to write a profile if the user expects to do this repeatedly.
+- Project has one → read it and defer to it. To find it, use the path the calling skill or the project's CLAUDE.md gives. If neither gives one, use the first `voice-profile.md` in the repo, skipping this skill's own folder. If you find none, the project has no profile.
+- Project has none → continue down the step 1 chain, and offer once to write a profile if the user expects to do this repeatedly.
+- Any voice profile, project or personal, outranks `ai-tells.md` in steps 2 and 4: where it gives an explicit rule for something the checklist also covers (a ban, emoji, emoticons, em dashes), that rule replaces the matching checklist item. The checklist fills every gap.
 
 ## Hard rules
 
