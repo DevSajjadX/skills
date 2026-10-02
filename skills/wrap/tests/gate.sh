@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Self-test of hooks/wrap-gate.sh: feeds synthetic hook JSON on stdin and asserts the decision.
-# Covers the `git commit` match (global opts, quotes, sh -c, near-misses, non-Bash tools),
-# deny-once arming, UserPromptSubmit arm/disarm, and PostToolUse Skill(wrap) arming.
+# Covers the `git commit` match (global opts, quotes, sh -c, prefixes and assignments, paths,
+# near-misses, non-Bash tools), deny-once arming, UserPromptSubmit arm/disarm, PostToolUse
+# Skill(wrap) arming, and the error when jq is missing.
 # Prints PASS/FAIL per assertion; exit 1 on any FAIL.
 set -u
 
@@ -51,8 +52,11 @@ rm -f "$MARK"; expect "heredoc then git commit on its own line -> deny" deny "$(
 rm -f "$MARK"; expect "cd x && git commit -> deny"        deny "$(bash_cmd 'cd x && git commit -m y')"
 rm -f "$MARK"; expect "printf > f newline git commit -> deny" deny "$(bash_cmd $'printf "a" > f\ngit commit -m y')"
 rm -f "$MARK"; expect "echo \"git commit is great\" -> pass" pass "$(bash_cmd 'echo "git commit is great"')"
+rm -f "$MARK"; expect "echo \"run HUSKY=0 git commit later\" -> pass" pass "$(bash_cmd 'echo "run HUSKY=0 git commit later"')"
+rm -f "$MARK"; expect "echo \"Great! git commit next\" -> pass" pass "$(bash_cmd 'echo "Great! git commit next"')"
+rm -f "$MARK"; expect "echo \"see bin/git commit docs\" -> pass" pass "$(bash_cmd 'echo "see bin/git commit docs"')"
 
-# --- a real invocation never escapes the gate, whatever runs it
+# --- the invocation forms the matcher covers, whatever runs them
 rm -f "$MARK"; expect "\$(git commit) substitution -> deny"  deny "$(bash_cmd 'x=$(git commit -m y)')"
 rm -f "$MARK"; expect "backtick git commit -> deny"          deny "$(bash_cmd 'x=`git commit -m y`')"
 rm -f "$MARK"; expect "if ...; then git commit -> deny"      deny "$(bash_cmd 'if true; then git commit -m y; fi')"
@@ -60,6 +64,15 @@ rm -f "$MARK"; expect "for ...; do git commit -> deny"       deny "$(bash_cmd 'f
 rm -f "$MARK"; expect "xargs git commit -> deny"             deny "$(bash_cmd 'xargs git commit -m y')"
 rm -f "$MARK"; expect "sudo git commit -> deny"              deny "$(bash_cmd 'sudo git commit -m y')"
 rm -f "$MARK"; expect "{ git commit; } group -> deny"        deny "$(bash_cmd '{ git commit -m y; }')"
+rm -f "$MARK"; expect "HUSKY=0 git commit -> deny"           deny "$(bash_cmd 'HUSKY=0 git commit -m y')"
+rm -f "$MARK"; expect "cd x && A=1 B=2 git commit -> deny"   deny "$(bash_cmd 'cd x && A=1 B=2 git commit -m y')"
+rm -f "$MARK"; expect "env FOO=1 git commit -> deny"         deny "$(bash_cmd 'env FOO=1 git commit -m y')"
+rm -f "$MARK"; expect "nice git commit -> deny"              deny "$(bash_cmd 'nice git commit -m y')"
+rm -f "$MARK"; expect "timeout 60 git commit -> deny"        deny "$(bash_cmd 'timeout 60 git commit -m y')"
+rm -f "$MARK"; expect "! git commit -> deny"                 deny "$(bash_cmd '! git commit -m y')"
+rm -f "$MARK"; expect "/usr/bin/git commit -> deny"          deny "$(bash_cmd '/usr/bin/git commit -m y')"
+rm -f "$MARK"; expect "git -C \"/a b\" commit -> deny"        deny "$(bash_cmd 'git -C "/a b" commit -m y')"
+rm -f "$MARK"; expect "git -C '/a b' commit -> deny"         deny "$(bash_cmd "git -C '/a b' commit -m y")"
 
 # --- UserPromptSubmit: /wrap arms, anything else disarms
 rm -f "$MARK"
@@ -77,6 +90,10 @@ check  "Skill(wrap) arms"                          '[ -e "$MARK" ]'
 rm -f "$MARK"
 run PostToolUse Skill skill other >/dev/null
 check  "Skill(other) does not arm"                 '[ ! -e "$MARK" ]'
+
+# --- jq missing: the gate cannot read its input, so it says so (non-blocking error) instead of passing in silence
+err=$(PATH=/nonexistent /bin/bash "$HOOK" </dev/null 2>&1 >/dev/null); rc=$?
+check  "jq missing -> exit 1 with a message on stderr" '[ $rc = 1 ] && [[ "$err" == *jq* ]]'
 
 printf '\n%s\n' "$([ $FAILS = 0 ] && echo 'ALL PASS' || echo "$FAILS FAILED")"
 [ $FAILS = 0 ]

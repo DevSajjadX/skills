@@ -7,10 +7,13 @@
 #   PostToolUse  (Skill)      — Skill(wrap) arms
 #   PreToolUse   (Bash)       — `git commit` unarmed: deny once and arm
 # The match is textual and positional: `git commit` must sit where a command starts, meaning line
-# start, after `;` `&` `|` `(` a backtick or `{`, after a `then`/`do`/`xargs`/`sudo` style prefix, or
-# inside a `-c '…'` shell string. Prose that merely mentions it passes, a real invocation never does.
-# Self-test: tests/gate.sh.
+# start, after `;` `&` `|` `(` a backtick or `{`, or inside a `-c '…'` shell string, optionally behind
+# prefix words (`then`/`do`/`xargs`/`sudo`/`env`/`nice`/`timeout N`/`!`) and `VAR=value` assignments,
+# with `git` path-qualified or carrying global options (`-C "/a b"`). Prose that merely mentions it
+# passes. A textual matcher cannot cover every shell form: `eval`, aliases and `VAR="a b" git commit`
+# pass, the accepted ceiling of a soft gate. Self-test: tests/gate.sh.
 set -u
+command -v jq >/dev/null || { echo 'wrap-gate: jq not found, commit gate disabled' >&2; exit 1; }
 INPUT=$(cat)
 EVENT=$(jq -r '.hook_event_name // ""' <<<"$INPUT")
 SESSION=$(jq -r '.session_id // "nosession"' <<<"$INPUT")
@@ -28,8 +31,8 @@ case "$EVENT" in
   PreToolUse)
     [[ "$(jq -r '.tool_name // ""' <<<"$INPUT")" == Bash ]] || exit 0
     CMD=$(jq -r '.tool_input.command // ""' <<<"$INPUT")
-    # `git [global opts] commit`; global opts may carry one non-dash argument (-C dir, -c k=v)
-    RE='(^|[;&|(`{]|-c[[:space:]]+['"'"'"])[[:space:]]*([[:space:]]*(then|else|do|xargs|time|sudo|nohup|command|env)[[:space:]]+)*git([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+commit([[:space:]]|$)'
+    # `[prefixes] [path/]git [global opts] commit`; a global opt may carry one argument, quoted or not (-C dir, -c k=v)
+    RE='(^|[;&|(`{]|-c[[:space:]]+['"'"'"])[[:space:]]*([[:space:]]*(then|else|do|xargs|time|sudo|nohup|command|env|nice|!|timeout[[:space:]]+[^[:space:]]+|[A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*)[[:space:]]+)*([^[:space:]]*/)?git([[:space:]]+-[^[:space:]]+([[:space:]]+("[^"]*"|'"'"'[^'"'"']*'"'"'|[^-[:space:]][^[:space:]]*))?)*[[:space:]]+commit([[:space:]]|$)'
     grep -Eq "$RE" <<<"$CMD" || exit 0
     [[ -e "$MARK" ]] && exit 0
     touch "$MARK"
