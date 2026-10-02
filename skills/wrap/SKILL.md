@@ -1,6 +1,6 @@
 ---
 name: wrap
-description: "Session wrap-up: sweep leftovers, review the diff and apply the findings, retire debt, sync docs, verify green, regroup commits, draft a short commit message, report what needs you. Arguments: commit (c) / squash (s) / merge (m [branch]); --p pushes after any; s --f regroups the whole branch; m --f does that, then merges."
+description: "Use when the user asks to wrap up, finish or close out the session, or to commit, push, squash/regroup commits, or merge the branch — and before any git commit, which goes through wrap."
 argument-hint: "[c|commit [--p]] [s|squash [--p|--f]] [m|merge [branch] [--p|--f]]"
 ---
 
@@ -14,7 +14,7 @@ Close out the session so the repo is clean, verified, and ready to commit. Work 
 
 **A primary that cannot run revokes its modifiers.** `--p` and `--f` are sub-orders of `c`, `s` or `m`. When the primary stops for any reason (a guard, a failed pre-check, an AskUserQuestion answered or defaulted to stop), wrap stops and reports: no modifier, and no later one-way step, a push above all. Pushing after a refused squash spends the locality the squash needed and turns a free local `reset --soft` into a force push.
 
-The model picks the arguments from what the user asked — "commit" → `c`, "push" → `--p`, "squash"/"regroup" → `s`, "merge" → `m` — and runs the skill itself. Never tell the user to type `/wrap …`, and never ask permission for a plain commit or fast-forward push; the one confirmation in this skill is the `--f` force push.
+The model picks the arguments from what the user asked — "commit" → `c`, "push" → `--p`, "squash"/"regroup" → `s`, "merge" → `m` — and runs the skill itself. Never tell the user to type `/wrap …`, and never ask permission for a plain commit or fast-forward push. Wrap asks only where it cannot choose for you: which default branch (step 2, when nothing names it), which remote (several, no upstream), how to group files that need hunk splits (step 7), and the `--f` force push.
 
 - `commit` / `c` — step 8 commits (explicit paths). Unpushed commits are reported under Needs you, not asked about.
 - `--p` — after step 8's commit(s), push: `git push <remote> <branch>`, fast-forward only, never bare `--force`. With `s`, the regrouped commits are what gets pushed (local scope, so always a fast-forward). Remote = the upstream's (`git rev-parse --abbrev-ref @{u}` → `<remote>/<branch>`); no upstream → `-u` to the sole remote, ask if several. Remote rejects → stop and report; never force. With `m`, the branch pushed is the *target*, after step 7b's merge. Primary stopped → no push (rule above).
@@ -41,14 +41,14 @@ Refs (step 7 reuses them):
 - `SCOPE`: `--f` → `$BASE` (off `$DEF` only; step 7 refuses it there). Otherwise the parent of the oldest commit no remote has: `U=$(git rev-list HEAD --not --remotes $DEF | tail -1)` (`$DEF` only off it and when it exists locally), `SCOPE=$U^` — a plain run never reaches a pushed commit, upstream or not, nor, off `$DEF`, a local default-branch commit. `U` empty, or a root commit (no remote has any of it) → HEAD's sha; in the root case step 7 skips, as nothing marks where the unpushed work begins.
 - `TREE=$(GIT_INDEX_FILE=$(mktemp -u) sh -c 'git read-tree HEAD && git add -A && git write-tree; rm -f "$GIT_INDEX_FILE"')` — a tree object of the working tree, untracked included, ignored excluded; the real index and tree stay untouched. It is exactly what wrap will commit, so it is what gets reviewed.
 
-`git diff --quiet $SCOPE $TREE` → nothing to review, skip. Otherwise run the `reviewing-changes` skill (Skill tool) with base `$SCOPE` and head `$TREE`. `$TREE` is not a commit, so two-argument forms only: `git diff $SCOPE $TREE`, `git grep … $TREE --`, `python3 <skill dir>/sweep.py $SCOPE $TREE`; the commit list is `git log --oneline $SCOPE..HEAD`. Claims = what the session set out to do plus every commit message in that range. Skill not installed → say so under Needs you and continue.
+`git diff --quiet $SCOPE $TREE` → nothing to review, skip. Otherwise run the `reviewing-changes` skill (Skill tool) with base `$SCOPE` and head `$TREE`. `$TREE` is not a commit, so two-argument forms only: `git diff $SCOPE $TREE`, `git grep … $TREE --`, and the skill's own sweep with `$SCOPE $TREE` as base and head; the commit list is `git log --oneline $SCOPE..HEAD`. Claims = what the session set out to do plus every commit message in that range. Skill not installed → say so under Needs you and continue.
 
 The review names, wrap fixes — apply the findings instead of reporting them:
 - BLOCK / HIGH: fix now; nothing commits while one stands.
 - MED / LOW and every sweep row with an `existing:` hit: fix (reference the existing constant, helper, bulk call, doc) unless the fix outgrows the session's change → carry it into step 3 as declared debt.
 - Re-run the review after fixing (fresh `$TREE`); after two passes, report what remains instead of a third.
 
-Done when the verdict is MERGE, or MERGE WITH DECLARED DEBT with every item carried into step 3.
+Done when the verdict is MERGE, or MERGE WITH DECLARED DEBT with every item carried into step 3; or the review was skipped (empty diff, or the skill is missing and noted under Needs you); or two passes ran and what remains is reported. Then continue through step 9 — a standing BLOCK/HIGH still blocks every commit (above).
 
 ## 3. Retire debt
 
@@ -76,7 +76,7 @@ Done when the gates pass and the report quotes the commands run.
 
 ## 7. Squash (careful)
 
-Trigger: bare wrap with local per-task commits that don't match the default branch's pattern (read its `git log` for the last comparable body of work), or `s`. The guard is pushed commits, not the branch's name: plain `s` stops at `$SCOPE`, touching only commits no remote has seen, so it runs on the default branch too. `--f` reaches through pushed commits, so it is for side branches only (pre-checks).
+Trigger: local per-task commits that don't match the default branch's pattern (read its `git log` for the last comparable body of work), on any run; `s` runs it regardless. The guard is pushed commits, not the branch's name: plain `s` stops at `$SCOPE`, touching only commits no remote has seen, so it runs on the default branch too. `--f` reaches through pushed commits, so it is for side branches only (pre-checks).
 
 Pre-checks (refs from step 2):
 - Detached HEAD (`git symbolic-ref -q HEAD` fails) → stop.
@@ -133,7 +133,7 @@ End with two sections:
 End every wrap with this help block:
 
 ```
-/wrap            sweep · review · docs · gates · draft only
+/wrap            sweep · review · docs · gates · regroup unpushed if messy · draft only
 /wrap c|commit   + commit
 /wrap c --p      + commit and fast-forward push
 /wrap s|squash   regroup local commits by concern
