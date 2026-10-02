@@ -12,7 +12,9 @@ filters → check reachable channels → compute landed USD → recommend.
 
 - Reachable channels and standing dealbreakers come from the user's
   standing instructions (a "Buying" section in their global CLAUDE.md,
-  or memory). Read them before researching.
+  or memory), plus, where recorded there, the delivery destination,
+  each channel's forwarder fee basis and the storefronts used per
+  channel. Read them before researching.
 - If none are recorded, ask once for both, and offer to save the answer
   there.
 
@@ -52,12 +54,13 @@ filters → check reachable channels → compute landed USD → recommend.
   and state the rate, its source and its fetch time next to each
   converted price. A rate-source rule in the user's standing
   instructions (e.g. for one currency) wins.
-- Report the real landed cost delivered to the user: item price +
+- Report the real landed cost delivered to the user's destination
+  (section 0): item price +
   shipping/forwarder fee + any import duty or tax not already in the
   forwarder's door-to-door rate — never the list price.
-- If a channel's forwarder rate or duty isn't known, ask the user; if
-  they can't say, show a clearly labelled estimate with its basis
-  (e.g. $/kg × weight).
+- If a channel's forwarder rate or duty isn't known, ask the user and
+  offer to save the answer in the section 0 record; if they can't say,
+  show a clearly labelled estimate with its basis (e.g. $/kg × weight).
 - If shipping through a reachable channel is infeasible or unclear,
   flag it instead of presenting the option as buyable.
 
