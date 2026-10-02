@@ -1,0 +1,13 @@
+name: tests
+on: [push, pull_request]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: bash tests/template-parity.sh
+      - run: bash skills/wrap/tests/dry-run.sh
+      - run: bash skills/wrap/tests/gate.sh
+      - run: uv run skills/pr-summary/abridge.py selftest
+      - run: uv run skills/task-summary/sanitize.py selftest
