@@ -39,17 +39,34 @@ commit api/band.ts   "export const band = 2;"    "wip: api band v2"
 commit ui/chip.ts    "import {band} from '../api/band'; useBand(band); // v2" "wip: chip v2"
 
 # =============================== pre-checks (skill text) ===============================
-UP=$(git rev-parse --abbrev-ref @{u} 2>/dev/null); R=${UP%%/*}
-DEF=$(git symbolic-ref --short "refs/remotes/$R/HEAD" 2>/dev/null); DEF=${DEF#"$R/"}; DEF=${DEF:-main}
-REMOTE=$(git rev-parse @{u}); BASE=$(git merge-base HEAD "$DEF")
-scope_for() { # step 2's SCOPE, first match; --f on DEF prints nothing and fails (step 7 refuses it)
-  local on_def=0 up; [ "$(git rev-parse --abbrev-ref HEAD)" = "$DEF" ] && on_def=1
-  up=$(git rev-parse @{u} 2>/dev/null)
-  if [ "${1:-}" = --f ]; then [ $on_def = 0 ] && git merge-base HEAD "$DEF"
-  elif [ -n "$up" ] && git merge-base --is-ancestor "$up" HEAD; then echo "$up"
-  elif [ $on_def = 0 ]; then git merge-base HEAD "$DEF"
-  else git rev-parse HEAD; fi
+# step 2's refs; R and DEF are globals the helpers read
+remote_name() { # the upstream's remote, else the sole remote
+  local up; up=$(git rev-parse --abbrev-ref @{u} 2>/dev/null)
+  if [ -n "$up" ]; then echo "${up%%/*}"; elif [ "$(git remote | wc -l)" -eq 1 ]; then git remote; fi
 }
+def_for() { # remote HEAD ref, else the remote's own HEAD, else the one of main/master that exists; fails = stop and ask
+  local d b n=0
+  d=$(git symbolic-ref --short "refs/remotes/$R/HEAD" 2>/dev/null); d=${d#"$R/"}
+  [ -z "$d" ] && [ -n "$R" ] && d=$(git ls-remote --symref "$R" HEAD 2>/dev/null | awk '$1 == "ref:" && $3 == "HEAD" { sub("^refs/heads/", "", $2); print $2 }')
+  if [ -z "$d" ]; then
+    for b in main master; do git rev-parse -q --verify "refs/heads/$b" >/dev/null && { d=$b; n=$((n + 1)); }; done
+    [ $n = 1 ] || return 1
+  fi
+  echo "$d"
+}
+remote_for() { git rev-parse -q --verify @{u} || git rev-parse -q --verify "refs/remotes/$R/$(git branch --show-current)"; }
+base_for() { # merge-base with whichever of DEF and R/DEF exist
+  local r refs=(); for r in "refs/heads/$DEF" "refs/remotes/$R/$DEF"; do git rev-parse -q --verify "$r" >/dev/null && refs+=("$r"); done
+  git merge-base HEAD "${refs[@]}"
+}
+scope_for() { # --f: BASE, refused on DEF (prints nothing, fails); else the parent of the oldest commit no remote has
+  local on_def=0 u; [ "$(git branch --show-current)" = "$DEF" ] && on_def=1
+  if [ "${1:-}" = --f ]; then [ $on_def = 0 ] && base_for; return; fi
+  if [ $on_def = 0 ] && git rev-parse -q --verify "refs/heads/$DEF" >/dev/null; then u=$(git rev-list HEAD --not --remotes "$DEF" | tail -1)
+  else u=$(git rev-list HEAD --not --remotes | tail -1); fi
+  [ -n "$u" ] && git rev-parse -q --verify "$u^" || git rev-parse HEAD
+}
+R=$(remote_name); DEF=$(def_for); REMOTE=$(remote_for); BASE=$(base_for)
 check "remote derived from upstream (=fork, not origin)" '[ "$R" = fork ]'
 check "default branch detected from remote HEAD"          '[ "$DEF" = main ]'
 check "upstream is an ancestor of HEAD"                   'git merge-base --is-ancestor "$REMOTE" HEAD'
@@ -147,7 +164,7 @@ check "default branch, plain s: 3 wip -> 2 concern commits"       '[ "$(git rev-
 check "default branch, plain s: content identical to OLD"         'git diff --quiet "$OLD" HEAD'
 check "default branch, plain s: pushed commits keep their hashes" '[ "$(git rev-parse HEAD~2)" = "$PUSHED" ] && [ "$(git rev-parse "$R/$DEF")" = "$PUSHED" ]'
 git branch -q --unset-upstream
-check "default branch, no upstream: scope is HEAD, step 7 skips"  '[ "$(scope_for)" = "$(git rev-parse HEAD)" ]'
+check "default branch, no upstream: scope still stops at the pushed commit" '[ "$(scope_for)" = "$PUSHED" ]'
 git branch -q -u "$R/$DEF"; git reset -q --hard "$PUSHED"
 git checkout -q --detach
 check "guard: detached HEAD -> refuse" '[ "$(git rev-parse --abbrev-ref HEAD)" = HEAD ]'
@@ -207,6 +224,39 @@ git checkout -q main; git commit -q --allow-empty -m "chore: local-only on main"
 check "m guard: target ahead of upstream -> refuse"     '! merge_step feat/m3 "$DEF" ./check.sh && [ "$(git rev-parse --abbrev-ref HEAD)" = feat/m3 ]'
 git checkout -q main
 check "m guard: on the target branch -> refuse"         '! merge_step main "$DEF" ./check.sh'
+
+# =============================== scope: only commits no remote has ======================
+# a) local DEF ahead of its remote (main holds "chore: local-only on main"); a feature cut from it
+git checkout -q -b feat/ahead; commit docs/ahead.md "ahead" "wip: ahead"
+check "local DEF ahead: BASE is local DEF"                         '[ "$(base_for)" = "$(git rev-parse main)" ]'
+check "local DEF ahead: plain scope holds only the feature commit" '[ "$(git rev-list --count "$(scope_for)"..HEAD)" = 1 ]'
+check "local DEF ahead: --f scope holds only the feature commit"   '[ "$(git rev-list --count "$(scope_for --f)"..HEAD)" = 1 ]'
+
+# b) local DEF stale: another clone moved the remote's DEF on; a feature cut from the remote's DEF
+( cd "$OTHER" && git checkout -q main && git pull -q && commit docs/other.md "o" "chore: other's main commit" && git push -q origin main )
+git fetch -q "$R"; git checkout -q --no-track -b feat/stale "$R/$DEF"; commit docs/stale.md "s" "wip: stale"
+check "stale local DEF: BASE is the remote's DEF"                  '[ "$(base_for)" = "$(git rev-parse "$R/$DEF")" ]'
+check "stale local DEF: plain scope holds only the feature commit" '[ "$(git rev-list --count "$(scope_for)"..HEAD)" = 1 ]'
+check "stale local DEF: --f scope holds only the feature commit"   '[ "$(git rev-list --count "$(scope_for --f)"..HEAD)" = 1 ]'
+
+# c) pushed without -u: no upstream, yet the remote has the first commit
+git checkout -q --no-track -b feat/nou "$R/$DEF"; commit docs/nou.md "1" "wip: nou 1"; git push -q "$R" feat/nou; commit docs/nou.md "2" "wip: nou 2"
+check "pushed without -u: REMOTE is the same-name remote branch"   '[ "$(remote_for)" = "$(git rev-parse "$R/feat/nou")" ]'
+check "pushed without -u: plain scope stops at the pushed commit"  '[ "$(scope_for)" = "$(git rev-parse "$R/feat/nou")" ]'
+
+# d) a master repo: no remote, then a remote without refs/remotes/<r>/HEAD
+LOCAL="$ROOT/local"; git init -q -b master "$LOCAL"; cd "$LOCAL"; git config user.email t@t; git config user.name t
+commit a.md "a" "chore: a"; commit a.md "b" "chore: b"
+R=$(remote_name); DEF=$(def_for)
+check "no remote: DEF is the one of main/master that exists"       '[ "$DEF" = master ]'
+check "no remote, on DEF: scope is HEAD, step 7 skips"             '[ "$(scope_for)" = "$(git rev-parse HEAD)" ]'
+git branch main
+check "no remote, both main and master: DEF unresolved -> stop"    '! def_for >/dev/null'
+git init -q --bare -b master "$ROOT/local.git"; git remote add up "$ROOT/local.git"; git push -q up master
+R=$(remote_name)
+check "no upstream: R is the sole remote"                          '[ "$R" = up ]'
+check "no remote HEAD ref: DEF is the remote's own HEAD, not a guess" '[ "$(def_for)" = master ] && ! git rev-parse -q --verify refs/remotes/up/HEAD >/dev/null'
+cd "$WORK"
 
 printf '\n%s\n' "$([ $FAILS = 0 ] && echo 'ALL PASS' || echo "$FAILS FAILED")"
 [ $FAILS = 0 ]

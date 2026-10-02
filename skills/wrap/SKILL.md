@@ -35,8 +35,10 @@ Done when every modified and untracked file is accounted for (kept on purpose or
 
 Refs (step 7 reuses them):
 - `UP=$(git rev-parse --abbrev-ref @{u} 2>/dev/null)` (`<remote>/<branch>`); `R=${UP%%/*}`, or the sole remote when no upstream — never assume `origin`.
-- `DEF=$(git symbolic-ref --short refs/remotes/$R/HEAD 2>/dev/null)`, strip `$R/`, fall back to `main` — never hardcode.
-- `REMOTE=$(git rev-parse @{u} 2>/dev/null)`; `BASE=$(git merge-base HEAD $DEF)`, which on `$DEF` itself is HEAD. `SCOPE`, first match: `--f` → `$BASE` (off `$DEF` only; step 7 refuses it there); `$REMOTE` an ancestor of HEAD → `$REMOTE`, so a plain run never reaches a pushed commit; off `$DEF` → `$BASE`; on `$DEF` → HEAD, and with no upstream step 7 skips saying nothing marks where the unpushed work begins.
+- `DEF=$(git symbolic-ref --short refs/remotes/$R/HEAD 2>/dev/null)`, strip `$R/`; empty → the remote's own answer, `git ls-remote --symref $R HEAD` (`ref: refs/heads/<b>`); still empty → the one of `main`/`master` that exists locally; neither or both → stop and ask. Never go on with an empty `DEF`: the empty `$SCOPE` it leads to makes `git diff --quiet $SCOPE $TREE` pass and skips the review in silence.
+- `REMOTE=$(git rev-parse @{u} 2>/dev/null)`, else the same-name `refs/remotes/$R/<branch>` when it exists — a push without `-u` is still a push.
+- `BASE=$(git merge-base HEAD $DEF $R/$DEF)`, naming only those of the two that exist: the newest commit HEAD shares with either copy of the default branch, so a local `$DEF` behind or ahead of its remote never brings default-branch commits into range. On `$DEF` itself it is HEAD.
+- `SCOPE`: `--f` → `$BASE` (off `$DEF` only; step 7 refuses it there). Otherwise the parent of the oldest commit no remote has: `U=$(git rev-list HEAD --not --remotes $DEF | tail -1)` (`$DEF` only off it and when it exists locally), `SCOPE=$U^` — a plain run never reaches a pushed commit, upstream or not, nor, off `$DEF`, a local default-branch commit. `U` empty, or a root commit (no remote has any of it) → HEAD's sha; in the root case step 7 skips, as nothing marks where the unpushed work begins.
 - `TREE=$(GIT_INDEX_FILE=$(mktemp -u) sh -c 'git read-tree HEAD && git add -A && git write-tree; rm -f "$GIT_INDEX_FILE"')` — a tree object of the working tree, untracked included, ignored excluded; the real index and tree stay untouched. It is exactly what wrap will commit, so it is what gets reviewed.
 
 `git diff --quiet $SCOPE $TREE` → nothing to review, skip. Otherwise run the `reviewing-changes` skill (Skill tool) with base `$SCOPE` and head `$TREE`. `$TREE` is not a commit, so two-argument forms only: `git diff $SCOPE $TREE`, `git grep … $TREE --`, `python3 <skill dir>/sweep.py $SCOPE $TREE`; the commit list is `git log --oneline $SCOPE..HEAD`. Claims = what the session set out to do plus every commit message in that range. Skill not installed → say so under Needs you and continue.
@@ -74,7 +76,7 @@ Done when the gates pass and the report quotes the commands run.
 
 ## 7. Squash (careful)
 
-Trigger: bare wrap with local per-task commits that don't match the default branch's pattern (read its `git log` for the last comparable body of work), or `s`. Never a detached HEAD. The guard is pushed commits, not the branch's name: plain `s` stops at `$REMOTE`, touching only commits no remote has seen, so it runs on the default branch too. `--f` reaches through pushed commits, so it is for side branches only (pre-checks).
+Trigger: bare wrap with local per-task commits that don't match the default branch's pattern (read its `git log` for the last comparable body of work), or `s`. Never a detached HEAD. The guard is pushed commits, not the branch's name: plain `s` stops at `$SCOPE`, touching only commits no remote has seen, so it runs on the default branch too. `--f` reaches through pushed commits, so it is for side branches only (pre-checks).
 
 Pre-checks (refs from step 2):
 - `$REMOTE` set but not an ancestor of HEAD → stop; sync first.
@@ -91,7 +93,7 @@ Method (no interactive rebase):
 3. One `git add <explicit paths>` + commit per concern, mirroring the default branch's grouping and order, dependencies first (schema → api → ui → e2e/docs) so the branch bisects. Each commit is one united change that stands alone and typechecks — merge a group that can't into the one it needs; never squash merely for fewer commits. Files that don't partition without hunk splits → ask: merge groups / keep separate / stop. Each `git commit` is its own Bash call, never the tail of a chain, so the commit gate's "rerun the exact command" replays only the commit.
 4. Messages per step 8.
 5. `git diff --quiet $OLD HEAD` must pass, else `git reset --hard $OLD`, report, stop.
-6. `--f` only: verify each intermediate commit — `git checkout <sha> && <typecheck command>` per commit, then `git checkout <branch>`; a failure → merge that group into the one it needs and redo from 2, or `git reset --hard $OLD` and stop. Then, with upstream: `git push --force-with-lease=<branch>:$REMOTE $R <branch>`. Rejected → stop; never `--force`.
+6. `--f` only: verify each intermediate commit — `git checkout <sha> && <typecheck command>` per commit, then `git checkout <branch>`; a failure → merge that group into the one it needs and redo from 2, or `git reset --hard $OLD` and stop. Then, with `$REMOTE` set: `git push --force-with-lease=<branch>:$REMOTE $R <branch>`. Rejected → stop; never `--force`.
 
 Mechanics of this step and the step 2 refs/`$TREE` snapshot are exercised by `tests/dry-run.sh` (throwaway repo, bare remote, both scopes, every guard); run it after editing this step. `tests/gate.sh` exercises the commit-gate hook; run it after editing the hook.
 
