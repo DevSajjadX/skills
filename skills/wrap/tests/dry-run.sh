@@ -85,10 +85,16 @@ check "snapshot: local commits above SCOPE included"       'git diff "$SCOPE" "$
 check "snapshot: real index and working tree untouched"    'git diff --cached --quiet && [ "$(git status --porcelain | wc -l | tr -d " ")" = 3 ]'
 git checkout -q docs/notes.md; rm -f untracked.tmp ignored.log .gitignore
 
-# =============================== local scope (bare /wrap or `s`) =======================
+# =============================== local scope (no --f) ===================================
+park() { # Method 1 without `c`: tracked only; PARKED only when the stash ref moved
+  local s0; s0=$(git rev-parse -q --verify refs/stash); git stash push -q
+  PARKED=; [ "$(git rev-parse -q --verify refs/stash)" != "$s0" ] && PARKED=1
+}
+unpark() { if [ -n "$PARKED" ]; then git stash pop -q; fi; PARKED=; }
+printf 'users-old-wip\n' >>README.md; git stash push -q -m user-wip   # the user's own stash, not wrap's
 printf 'x\n' >>docs/notes.md                       # an uncommitted wrap edit, tracked file
 echo junk >untracked.tmp                           # untracked: must survive, never stashed
-git stash push -q                                   # tracked only
+park
 OLD=$(git rev-parse HEAD)
 git reset -q --soft "$REMOTE" && git reset -q
 git add api/band.ts;  git commit -q -m "feat(api): band v2"
@@ -96,12 +102,21 @@ git add ui/chip.ts;   git commit -q -m "feat(ui): chip follows band v2"
 check "local regroup: 2 wip commits -> 2 concern commits" '[ "$(git rev-list --count "$REMOTE"..HEAD)" = 2 ]'
 check "local regroup: content identical to OLD"           'git diff --quiet "$OLD" HEAD'
 check "local regroup: pushed commits untouched"           '[ "$(git rev-parse "$REMOTE")" = "$(git rev-parse fork/feat/x)" ]'
-git stash pop -q
+unpark
 check "wrap edit restored from stash"                     'grep -q x docs/notes.md'
 check "untracked file untouched by tracked-only stash"    '[ -f untracked.tmp ]'
 git checkout -q docs/notes.md; rm untracked.tmp
+# a clean tree parks nothing, so nothing may be popped: a blind pop applies the user's own stash
+park; OLD=$(git rev-parse HEAD)
+git reset -q --soft "$REMOTE" && git reset -q; git add api/band.ts ui/chip.ts; git commit -q -m "feat: band v2"
+unpark
+check "clean tree: the user's stash is not applied"       'git diff --quiet && ! grep -q users-old-wip README.md'
+check "clean tree: the user's stash is still listed"      'git stash list | grep -q user-wip'
+git reset -q --hard "$OLD"
 
 # =============================== --f scope (whole branch + lease) ======================
+printf 'x\n' >>docs/notes.md                       # a wrap edit on a file the regroup reshapes
+park
 check "--f scope on a side branch = BASE"           '[ "$(scope_for --f)" = "$BASE" ]'
 OLD=$(git rev-parse HEAD)
 git reset -q --soft "$BASE" && git reset -q
@@ -110,20 +125,26 @@ git add ui/chip.ts;    git commit -q -m "feat(ui): chip uses band"
 git add docs/notes.md; git commit -q -m "docs: band"
 check "--f regroup: 5 wip -> 3 concern commits"      '[ "$(git rev-list --count "$BASE"..HEAD)" = 3 ]'
 check "--f regroup: content identical to OLD"        'git diff --quiet "$OLD" HEAD'
-ok=1; for sha in $(git rev-list --reverse "$BASE"..HEAD); do git checkout -q "$sha"; ./check.sh >/dev/null || ok=0; done; git checkout -q feat/x
+ok=1; for sha in $(git rev-list --reverse "$BASE"..HEAD); do git checkout -q "$sha" && ./check.sh >/dev/null || ok=0; done; git checkout -q feat/x
 check "--f: every intermediate commit passes typecheck (api before ui)" '[ $ok = 1 ]'
 git push -q --force-with-lease=feat/x:"$REMOTE" "$R" feat/x
 check "--f: force-with-lease accepted, remote now at HEAD" '[ "$(git rev-parse fork/feat/x)" = "$(git rev-parse HEAD)" ]'
+unpark                                              # after step 6
+check "--f: wrap edit back after step 6"             'grep -q x docs/notes.md'
+git checkout -q docs/notes.md
 
 # =============================== guards ==================================================
-# 1) wrong order breaks bisectability: ui before api must fail the per-commit check
+# 1) wrong order breaks bisectability: ui before api must fail the per-commit check -> reset --hard OLD
+printf 'x\n' >>docs/notes.md; park; OLD=$(git rev-parse HEAD)
 git reset -q --soft "$BASE" && git reset -q
 git add ui/chip.ts;    git commit -q -m "feat(ui): chip uses band"
 git add api/band.ts;   git commit -q -m "feat(api): band"
 git add docs/notes.md; git commit -q -m "docs: band"
-ok=1; for sha in $(git rev-list --reverse "$BASE"..HEAD); do git checkout -q "$sha"; ./check.sh >/dev/null || ok=0; done; git checkout -q feat/x
+ok=1; for sha in $(git rev-list --reverse "$BASE"..HEAD); do git checkout -q "$sha" && ./check.sh >/dev/null || ok=0; done; git checkout -q feat/x
 check "guard: ui-before-api ordering is caught by the per-commit typecheck" '[ $ok = 0 ]'
-git reset -q --hard fork/feat/x
+git reset -q --hard "$OLD"; unpark                # abort: pop
+check "guard: the parked wrap edit survives the reset --hard OLD" 'grep -q x docs/notes.md'
+git checkout -q docs/notes.md
 
 # 2) parity failure -> reset --hard OLD
 OLD=$(git rev-parse HEAD)
