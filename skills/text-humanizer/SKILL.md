@@ -1,9 +1,9 @@
 ---
-name: humanize-text
+name: text-humanizer
 description: Use when the user asks to humanize or de-AI a text, to "make it sound like me", or to check a text for AI tells; when they paste a draft with just "fix this" or "this sounds like ChatGPT"; or to draft a reply or post in their voice — blog posts, tweets/X and LinkedIn posts, social or marketing copy, comment replies, emails, docs, release notes, bios. Also use as the last gate before any text this session wrote goes public.
 ---
 
-# Humanize text
+# Text humanizer
 
 Turns a draft into something a specific person plausibly wrote. Three jobs:
 
