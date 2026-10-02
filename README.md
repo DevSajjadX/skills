@@ -1,6 +1,6 @@
 # skills
 
-Agent skills that turn PRs and work items into readable, ADHD-friendly pages — installable with the [skills CLI](https://github.com/vercel-labs/skills) into Claude Code, Cursor, Codex, OpenCode, and 70+ other agents.
+Agent skills for readable, ADHD-friendly PR and work-item pages, session wrap-up, brand identity, text humanizing and purchase research — installable with the [skills CLI](https://github.com/vercel-labs/skills) into Claude Code, Cursor, Codex, OpenCode, and 70+ other agents.
 
 ## Install
 
@@ -20,6 +20,8 @@ npx skills add Esi-Abolfazl/skills --skill pr-summary -g -a claude-code -y
 | [pr-summary](skills/pr-summary/SKILL.md) | Turns a PR — or a work item's PR bundle — from Azure DevOps or GitHub into one HTML page: why the change exists, how it works, what changed. Whole picture on the first screen, never a wall of diff rows. |
 | [wrap](skills/wrap/SKILL.md) | Closes a session: sweeps leftovers, reviews the diff with the `reviewing-changes` skill and applies its findings, retires debt, syncs docs, runs the repo's gates, regroups work-branch commits by concern, drafts the commit message. Bare `/wrap` is draft-only; `c` commits, `s` squashes, `--p` pushes after either. Ships a commit gate hook (see below); expects `reviewing-changes` installed as a skill (not bundled here). |
 | [task-summary](skills/task-summary/SKILL.md) | Pulls a work item or issue into a readable page: description as written, comments in order, screenshots embedded. Also creates and edits items from session findings; descriptions can be bilingual (full text + short summary). |
+| [humanize-text](skills/humanize-text/SKILL.md) | Rewrites a draft (or drafts a reply from scratch) so it reads as a specific person wrote it: scans against an AI-tells checklist, rewrites in a project voice profile or sane defaults, re-scans its own output. Never fakes humanity with typos or invents specifics. |
+| [product-purchase-research](skills/product-purchase-research/SKILL.md) | Shopping research tuned to one buyer: fit to stated use over top specs, dealbreakers as hard filters, only reachable markets, every option priced as landed USD. Edit the market list in section 3 for your own channels. |
 
 ## Connecting
 
