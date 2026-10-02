@@ -4,6 +4,8 @@ Distilled from Wikipedia's "Signs of AI writing" (WikiProject AI Cleanup) plus c
 
 One match is coincidence. Several in one text is the tell.
 
+Non-English draft: sections 2-5 apply by pattern, not by literal wording, and English-only items such as Title Case drop out. Section 1 is English, so look for that language's own stock AI phrases instead of translating the list.
+
 ## 1. Vocabulary (highest signal)
 
 Replace on sight: delve, leverage/leveraging (verb), robust, seamless/seamlessly, landscape (abstract), tapestry, testament, pivotal, crucial, vital, foster/fostering, underscore, highlight (verb, in analysis), showcase, elevate, empower, harness, boast(s), garner, meticulous(ly), intricate/intricacies, interplay, vibrant, enduring, bolster, navigate (abstract), unlock, streamline, "align with", "valuable insights", "key takeaways", game-changer, cutting-edge, "in today's fast-paced world", "evolving landscape", "at the end of the day" (as filler), Additionally/Moreover/Furthermore as sentence openers.
@@ -57,11 +59,3 @@ Domain puffery follows the same rule. Whatever the subject is, the words state f
 - Placeholders left in: [Your Name], [link], YYYY-MM-DD.
 - Broken citation tokens and tracking junk: utm_source=chatgpt.com, oaicite, turn0search.
 - Restating the user's request back at them before answering.
-
-## 6. What NOT to do while humanizing
-
-- No injected typos, lowercase "i", or broken grammar to fake humanity. Published output is proofread.
-- No thesaurus swaps inside the same register.
-- No keeping the draft's structure and only changing words.
-- No invented specifics: numbers, dates, anecdotes, or quotes. Ask the user or keep the claim modest.
-- No stripping caveats, licenses, safety notes, or disclosures that the text needs to be honest.

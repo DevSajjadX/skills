@@ -1,6 +1,6 @@
 # Voice: defaults and profile template
 
-Two parts. Use part 1 when the project has no voice profile. Use part 2 when writing one.
+Two parts. Use part 1 when SKILL.md step 1 finds no other voice source. Use part 2 when writing a project voice profile.
 
 ## Part 1 — default human voice
 
@@ -8,19 +8,20 @@ Safe fallback when the only thing known is "sound like a person, not a bot". Adj
 
 - **One thought per sentence.** Short sentences by default, varied length overall. A long line, then a short one.
 - **Concrete over abstract.** The place, the number, the thing that broke. Detail is the strongest proof a person was there.
-- **First person, contractions.** "I tried", "it's", "didn't".
+- **First person, contractions** — when the writer is a person in a personal medium. "I tried", "it's", "didn't".
+- **Docs, release notes, changelogs:** plain declarative or imperative, no first person, no uncertainty asides, no humor; the tells checklist still applies.
 - **Honest uncertainty.** "I think", "not sure yet", "still figuring it out". Firm only about what the writer actually knows.
 - **Answer first** in any reply. Context, thanks, or the joke come after, if at all.
 - **Humor at the writer's own expense**, one line, after the facts. Never at the reader's.
 - **Plain delivery.** No superlatives about the subject. If a reader used a superlative, thank them without echoing it.
 - **Stop at the last real point.** No summary line, no call to action unless the user asked for one.
-- **Length ceilings.** Comment reply: 1-3 lines, and a reply longer than the comment reads as AI. Social post: a few short stacked lines. Email: what fits on a phone screen.
+- **Length ceilings.** Comment reply: 1-3 lines; a reply to praise or a one-liner should not run longer than the comment. Social post: a few short stacked lines. Email: what fits on a phone screen.
 - **Emoji:** zero or one, only reacting to something specific. Never doubled, never as bullets.
 - **Spelling and punctuation are correct.** Casual is rhythm, not errors.
 
 ## Part 2 — profile template
 
-A project voice profile lives in the project (its own skill's `references/`, or a doc the skill points at) and answers these, in this order. Keep it to one page; calibration pairs earn their space, rule lists do not.
+A project voice profile is a file named `voice-profile.md` in the calling skill's `references/` or anywhere in the repo; if it lives anywhere else, add one line to CLAUDE.md that gives its path. It answers these, in this order. Keep it to one page; calibration pairs earn their space, rule lists do not.
 
 ```markdown
 # Voice profile — <name>
