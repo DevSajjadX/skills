@@ -6,7 +6,7 @@
 set -u
 SKILL="$(cd "$(dirname "$0")/.." && pwd)/SKILL.md"
 
-ROOT=$(mktemp -d -t wrap-dry-run)
+ROOT=$(mktemp -d "${TMPDIR:-/tmp}/wrap-dry-run.XXXXXX") && [ -d "$ROOT" ] || exit 1
 trap 'rm -rf "$ROOT"' EXIT
 REMOTE_DIR="$ROOT/remote.git"
 WORK="$ROOT/work"
@@ -23,7 +23,7 @@ commit() { # commit <file> <content> <message>
 
 # --- fixture: remote named "fork" (not origin), default branch main, one base commit
 git init -q --bare -b main "$REMOTE_DIR"
-git init -q -b main "$WORK"; cd "$WORK"
+git init -q -b main "$WORK"; cd "$WORK" || exit 1
 git config user.email t@t; git config user.name t
 commit README.md "base" "chore: base"
 printf '#!/bin/sh\n# fake typecheck: ui must not reference an api symbol the api layer lacks\nif grep -q useBand ui/*.ts 2>/dev/null && ! grep -q "export const band" api/*.ts 2>/dev/null; then echo "typecheck failed"; exit 1; fi\nexit 0\n' >check.sh
@@ -166,7 +166,7 @@ git checkout -q -- .
 
 # 3) stale lease: another clone pushes first -> our lease must be rejected
 git clone -q "$REMOTE_DIR" "$OTHER"; ( cd "$OTHER" && git config user.email o@o && git config user.name o && git checkout -q feat/x && echo other >other.md && git add other.md && git commit -q -m "wip: someone else" && git push -q origin feat/x )
-cd "$WORK"; LEASE=$(git rev-parse fork/feat/x)   # what we last saw
+cd "$WORK" || exit 1; LEASE=$(git rev-parse fork/feat/x)   # what we last saw
 git commit -q --allow-empty -m "chore: local only"
 git push -q --force-with-lease=feat/x:"$LEASE" "$R" feat/x 2>/dev/null && pushed=1 || pushed=0
 check "guard: lease rejected when remote moved underneath us" '[ $pushed = 0 ]'
@@ -295,7 +295,7 @@ check "pushed without -u: REMOTE is the same-name remote branch"   '[ "$(remote_
 check "pushed without -u: plain scope stops at the pushed commit"  '[ "$(scope_for)" = "$(git rev-parse "$R/feat/nou")" ]'
 
 # d) a master repo: no remote, then a remote without refs/remotes/<r>/HEAD
-LOCAL="$ROOT/local"; git init -q -b master "$LOCAL"; cd "$LOCAL"; git config user.email t@t; git config user.name t
+LOCAL="$ROOT/local"; git init -q -b master "$LOCAL"; cd "$LOCAL" || exit 1; git config user.email t@t; git config user.name t
 commit a.md "a" "chore: a"; commit a.md "b" "chore: b"
 R=$(remote_name); DEF=$(def_for)
 check "no remote: DEF is the one of main/master that exists"       '[ "$DEF" = master ]'
@@ -306,7 +306,7 @@ git init -q --bare -b master "$ROOT/local.git"; git remote add up "$ROOT/local.g
 R=$(remote_name)
 check "no upstream: R is the sole remote"                          '[ "$R" = up ]'
 check "no remote HEAD ref: DEF is the remote's own HEAD, not a guess" '[ "$(def_for)" = master ] && ! git rev-parse -q --verify refs/remotes/up/HEAD >/dev/null'
-cd "$WORK"
+cd "$WORK" || exit 1
 
 # =============================== parity: each replayed command, as SKILL.md words it ======
 # A FAIL here means SKILL.md changed a command: update the helper above that replays it, then this line.
