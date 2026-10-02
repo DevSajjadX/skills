@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.9"
+# dependencies = []
+# ///
 """Number a unified diff, then apply a coordinate-based edit plan to it.
 
 The model picks coordinates; this script is the only thing that writes output.
@@ -16,13 +20,20 @@ Plan JSON:
    "remove":  [[start, end], ...],           inclusive 1-based line ranges
    "replace": [[line, "old", "new"], ...],   local elision inside one line
    "fold":    [[start, end], ...]}           collapse >=2 rows to one `...`
+
+Copied from the abridge-diff skill in vanenshi/skills (MIT, (c) 2026 Amir
+Shekari; see LICENSE-abridge next to this file), itself a port of
+boldsoftware/meat.
 """
 
 from __future__ import annotations
 
+import io
 import json
+import os
 import re
 import sys
+import tempfile
 
 FILE_META = re.compile(
     r"^(index |--- |\+\+\+ |old mode |new mode |new file mode |deleted file mode "
@@ -38,21 +49,23 @@ RE_IMPORT_LINE = re.compile(
     r"import\b"
     r"|from\s+\S+\s+import\b"
     r"|#\s*include\b"
-    r"|use\s+[^;{]*;"
+    r"|use\s+[^;]*;"
     r"|(?:global\s+)?using\s+(?:static\s+)?[A-Za-z_][\w.]*\s*(?:=\s*[\w.]+\s*)?;"
     r"|(?:const|let|var)\s+[^=]+=\s*require\s*\("
     r"|require\s*\("
     r"|export\s+[^;]*\bfrom\s+['\"]"
     r")"
 )
+# Prose rows like "import the dump first." read as imports; leave prose files alone.
+PROSE_EXT = (".md", ".markdown", ".rst", ".txt", ".adoc")
 
 
 def marker_of(line: str) -> str:
-    return line[:1] if line[:1] in "+- " else " "
+    return line[:1] if line[:1] in ("+", "-", " ") else " "
 
 
 def content_of(line: str) -> str:
-    return line[1:] if line[:1] in "+- " else line
+    return line[1:] if line[:1] in ("+", "-", " ") else line
 
 
 def classify(lines: list[str]) -> list[str]:
@@ -102,8 +115,12 @@ def import_rows(lines: list[str], kinds: list[str]) -> set[int]:
     """Body rows that are import/include/require declarations, block forms included."""
     rows: set[int] = set()
     open_at: int | None = None
+    prose = False
     for i, kind in enumerate(kinds):
-        if kind != "body":
+        ln = lines[i]
+        if ln.startswith("diff --git ") or (ln.startswith("+++ ") and ln != "+++ /dev/null"):
+            prose = ln.split("\t")[0].lower().endswith(PROSE_EXT)
+        if kind != "body" or prose:
             open_at = None
             continue
         text = content_of(lines[i]).strip()
@@ -124,8 +141,11 @@ def elision_ok(old: str, new: str) -> bool:
     """`new` must be `old` with omitted spans replaced by ... or …, nothing else."""
     if new == old or not re.search(r"\.\.\.|…", new):
         return False
+    parts = re.split(r"\.\.\.|…", new)
+    if not (old.startswith(parts[0]) and old.endswith(parts[-1])):
+        return False
     pos = 0
-    for part in re.split(r"\.\.\.|…", new):
+    for part in parts:
         if not part:
             continue
         found = old.find(part, pos)
@@ -147,6 +167,8 @@ def common_indent(texts: list[str]) -> str:
 
 
 def abridge(raw: str, plan: dict) -> tuple[str, dict]:
+    if not isinstance(plan, dict):
+        raise ValueError("plan must be a JSON object")  # noqa: TRY004 -- ValueError is the "plan rejected" contract
     lines = raw.split("\n")
     if lines and lines[-1] == "":
         lines.pop()
@@ -161,6 +183,16 @@ def abridge(raw: str, plan: dict) -> tuple[str, dict]:
             return None
         return n - 1
 
+    def entries(key: str, *types: type) -> list[list]:
+        raw_entries = plan.get(key, [])
+        good = []
+        for e in raw_entries if isinstance(raw_entries, list) else [raw_entries]:
+            if isinstance(e, list) and len(e) == len(types) and all(isinstance(v, t) for v, t in zip(e, types)):
+                good.append(e)
+            else:
+                errors.append(f"{key}: entry {e!r} must be [{', '.join(t.__name__ for t in types)}]")
+        return good
+
     imports = import_rows(lines, kinds)
     for i in imports:
         keep[i] = False
@@ -172,7 +204,7 @@ def abridge(raw: str, plan: dict) -> tuple[str, dict]:
             keep[i] = False
 
     removed_by_plan: set[int] = set()
-    for entry in plan.get("remove", []):
+    for entry in entries("remove", int, int):
         start, end = entry
         a, b = idx(start, "remove"), idx(end, "remove")
         if a is None or b is None:
@@ -184,7 +216,7 @@ def abridge(raw: str, plan: dict) -> tuple[str, dict]:
             keep[i] = False
             removed_by_plan.add(i)
 
-    for entry in plan.get("replace", []):
+    for entry in entries("replace", int, str, str):
         line, old, new = entry
         i = idx(line, "replace")
         if i is None:
@@ -205,7 +237,7 @@ def abridge(raw: str, plan: dict) -> tuple[str, dict]:
             continue
         text[i] = marker_of(lines[i]) + body.replace(old, new)
 
-    for entry in plan.get("fold", []):
+    for entry in entries("fold", int, int):
         start, end = entry
         a, b = idx(start, "fold"), idx(end, "fold")
         if a is None or b is None:
@@ -233,10 +265,19 @@ def abridge(raw: str, plan: dict) -> tuple[str, dict]:
         for i in span[1:]:
             keep[i] = False
 
+    # A header removed while rows under it survive glues those rows onto the
+    # previous hunk or file, so they read as changes somewhere else.
+    pre, secs = sections_of(lines, kinds)
+    for sec in secs:
+        live = [h for h in sec["hunks"] if any(keep[j] for j in h["body"])]
+        locators = [i for i in sec["meta"] if re.match(r"diff --git |--- |\+\+\+ ", lines[i])]
+        for i in [h["hdr"] for h in live] + (locators if live else []):
+            if i in removed_by_plan:
+                errors.append(f"remove: line {i + 1} is a header of a hunk or file whose rows survive")
+
     if errors:
         raise ValueError("\n".join(errors))
 
-    pre, secs = sections_of(lines, kinds)
     out: list[str] = [text[i] for i in pre if keep[i]]
     for sec in secs:
         live = [h for h in sec["hunks"] if any(keep[j] for j in h["body"])]
@@ -248,20 +289,26 @@ def abridge(raw: str, plan: dict) -> tuple[str, dict]:
                 out.append(text[hunk["hdr"]])
             out += [text[j] for j in hunk["body"] if keep[j]]
 
-    changed = sum(1 for i, ln in enumerate(lines) if kinds[i] == "body" and ln[:1] in "+-")
+    changed = sum(1 for i, ln in enumerate(lines) if kinds[i] == "body" and ln[:1] in ("+", "-"))
     survived = sum(
-        1 for i, ln in enumerate(lines) if kinds[i] == "body" and ln[:1] in "+-" and keep[i]
+        1 for i, ln in enumerate(lines) if kinds[i] == "body" and ln[:1] in ("+", "-") and keep[i]
     )
     stats = {"changed_rows": changed, "kept_rows": survived, "imports_dropped": len(imports)}
     return "\n".join(out) + ("\n" if out else ""), stats
 
 
+def read_diff(path: str) -> str:
+    # surrogateescape round-trips non-UTF-8 bytes (legacy-encoded files) unchanged.
+    with open(path, encoding="utf-8", errors="surrogateescape") as fh:
+        return fh.read()
+
+
 def main(argv: list[str]) -> int:
+    sys.stdout.reconfigure(errors="surrogateescape")
     if len(argv) == 2 and argv[1] == "selftest":
         return selftest()
     if len(argv) == 3 and argv[1] == "number":
-        with open(argv[2], encoding="utf-8") as fh:
-            body = fh.read()
+        body = read_diff(argv[2])
         rows = body.split("\n")
         if rows and rows[-1] == "":
             rows.pop()
@@ -269,8 +316,7 @@ def main(argv: list[str]) -> int:
             print(f"{n}|{row}")
         return 0
     if len(argv) == 4 and argv[1] == "apply":
-        with open(argv[2], encoding="utf-8") as fh:
-            body = fh.read()
+        body = read_diff(argv[2])
         with open(argv[3], encoding="utf-8") as fh:
             plan = json.load(fh)
         try:
@@ -325,7 +371,7 @@ def selftest() -> int:
     assert "math/rand" not in out, "import rows must vanish without plan coordinates"
 
     for row in (
-        "using Match.Core.Repository.Context;",
+        "using Acme.Core.Data;",
         "using static System.Math;",
         "global using Xunit;",
         "using Alias = System.Text.StringBuilder;",
@@ -351,6 +397,45 @@ def selftest() -> int:
     assert "+    ..." in out, out
     assert "panic(" not in out, out
 
+    out, _ = abridge(diff, {"replace": [[14, "rand.Read(b)", "rand.Read..."]]})
+    assert "rand.Read...;" in out, "a trailing elision is legitimate"
+
+    mixed = "\n".join(
+        [
+            "diff --git a/README.md b/README.md",
+            "--- a/README.md",
+            "+++ b/README.md",
+            "@@ -1,1 +1,2 @@",
+            " intro",
+            "+import the dump before running migrations.",
+            "diff --git a/src/main.rs b/src/main.rs",
+            "--- a/src/main.rs",
+            "+++ b/src/main.rs",
+            "@@ -1,2 +1,4 @@",
+            " fn main() {}",
+            "",
+            "+use std::{io, fs};",
+            "+let x = 1;",
+            "",
+        ]
+    )
+    out, stats = abridge(mixed, {})
+    assert "import the dump" in out, "prose rows are never treated as imports"
+    assert "use std::{io" not in out, "a braced single-line Rust use is an import"
+    assert stats["changed_rows"] == 3, "a blank body row is context, not a change"
+
+    with tempfile.NamedTemporaryFile("wb", suffix=".diff", delete=False) as fh:
+        fh.write(b"@@ -1 +1 @@\n+caf\xe9\n")
+    real_stdout, sys.stdout = sys.stdout, io.TextIOWrapper(io.BytesIO(), encoding="utf-8")
+    try:
+        main(["abridge.py", "number", fh.name])
+        sys.stdout.flush()
+        raw_out = sys.stdout.buffer.getvalue()
+    finally:
+        sys.stdout = real_stdout
+        os.unlink(fh.name)
+    assert raw_out == b"1|@@ -1 +1 @@\n2|+caf\xe9\n", "non-UTF-8 bytes must pass through unchanged"
+
     for bad, why in [
         ({"fold": [[6, 7]]}, "fold over import rows"),
         ({"fold": [[4, 5]]}, "fold across metadata"),
@@ -359,6 +444,13 @@ def selftest() -> int:
         ({"replace": [[14, "rand.Read", "rand.Reed"]]}, "elision that rewrites characters"),
         ({"replace": [[14, "nosuchtext", "..."]]}, "elision whose old text is absent"),
         ({"remove": [[999, 999]]}, "out-of-range coordinate"),
+        ({"replace": [[14, "rand.Read(b)", "Read..."]]}, "elision dropping a leading span"),
+        ({"replace": [[14, "rand.Read(b)", "...Read"]]}, "elision dropping a trailing span"),
+        ({"remove": [[12, 12]]}, "hunk header removed while its body survives"),
+        ({"remove": [[1, 1]]}, "file row removed while its body survives"),
+        ({"remove": [5]}, "flat remove entry"),
+        ({"replace": [[14, "rand", 5]]}, "non-string replace text"),
+        ([], "plan that is not an object"),
     ]:
         try:
             abridge(diff, bad)

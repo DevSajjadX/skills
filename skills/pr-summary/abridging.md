@@ -3,7 +3,9 @@
 Internal procedure of `pr-summary` — used in the Gather step when the PR's diff
 is too long to read row by row (~50+ changed rows). It turns a long unified
 diff into a short one that still *is* a diff: same rows, same markers, same
-file and hunk structure, with the mechanical bulk removed. A local port of
+file and hunk structure, with the mechanical bulk removed. Bundled from the
+`abridge-diff` skill in [vanenshi/skills](https://github.com/vanenshi/skills)
+(MIT, © 2026 Amir Shekari — see `LICENSE-abridge`), a local port of
 [boldsoftware/meat](https://github.com/boldsoftware/meat) that runs on this
 session's model instead of a paid API key.
 
@@ -29,13 +31,15 @@ SKILL=<the pr-summary skill's base directory>
 ```
 
 1. **Capture the diff to a file.** The Gather step usually produced it already
-   (`git diff origin/<target>...origin/<source>` or `gh pr diff <url>`); write
-   it to the session scratchpad, e.g. `pr.diff`.
+   (`gh pr diff <url>`; on Azure `git diff origin/<target>...origin/<source>`
+   for an active PR, `git diff <lastMergeTargetCommit> <lastMergeCommit>` for a
+   completed one — see SKILL.md's Gather table); write it to the session
+   scratchpad, e.g. `pr.diff`.
 
 2. **Number it.**
 
    ```bash
-   python3 "$SKILL"/abridge.py number pr.diff
+   uv run "$SKILL"/abridge.py number pr.diff
    ```
 
    The gutter is `N|source`. `N` is a 1-based physical line in the original and
@@ -49,7 +53,7 @@ SKILL=<the pr-summary skill's base directory>
 4. **Write the plan JSON**, then apply it:
 
    ```bash
-   python3 "$SKILL"/abridge.py apply pr.diff plan.json
+   uv run "$SKILL"/abridge.py apply pr.diff plan.json
    ```
 
    The abridged diff goes to stdout; retention stats and the summary go to
@@ -90,8 +94,10 @@ Rules the applier enforces, so plan around them:
   the applier derives the indent and emits the `...`.
 - Imports and `index <blob>..<blob>` rows are stripped automatically. Spending
   coordinates on imports is rejected.
-- Metadata and `@@` headers can only be removed, never folded or replaced. When
-  every body row of a hunk or file goes, its headers are pruned for you.
+- Metadata and `@@` headers can only be removed, never folded or replaced — and
+  a hunk's `@@` or a file's `diff`/`---`/`+++` row only together with every body
+  row under it. When every body row of a hunk or file goes, its headers are
+  pruned for you.
 - Emit `[]` for any op you do not need.
 
 ## Common mistakes
@@ -110,14 +116,16 @@ Rules the applier enforces, so plan around them:
 This file, `rubric.md`, and `abridge.py` in this directory are the single
 source of truth for the abridging workflow inside `pr-summary`. When something
 here is wrong, fix the source file before finishing the turn — do not work
-around it silently for one run.
+around it silently for one run. These files are a fork of `abridge-diff`
+(vanenshi/skills): when a fix lands here, offer it upstream too, so the copies
+don't drift.
 
 Fix here when:
 
 - **`abridge.py` rejects a plan that the rubric endorses**, or accepts one that
   produces a broken diff (orphan delimiter, mismatched triple quote, a fold that
   swallowed an anchor). Fix the validation or the applier, add the case to
-  `selftest()`, and re-run `python3 abridge.py selftest`.
+  `selftest()`, and re-run `uv run abridge.py selftest`.
 - **The import pass drops a behavioral row, or misses an import form** in a
   language the diff actually used. Adjust `RE_IMPORT_LINE` / `RE_IMPORT_OPEN`,
   add the case to `selftest()`, re-run it.
@@ -128,7 +136,7 @@ Fix here when:
 `selftest()` must pass before the turn ends:
 
 ```bash
-python3 "$SKILL"/abridge.py selftest
+uv run "$SKILL"/abridge.py selftest
 ```
 
 Say what was changed and why in the final response. A fix that is not written

@@ -58,8 +58,9 @@ Do not over-investigate; most rows can be judged from the diff alone.
    source change that drove the generation.
 
 6. **Imports are removed automatically, without exception.** `abridge.py` strips
-   imports, includes, requires, and use declarations from every result: package
-   swaps, aliases, multiline blocks, unchanged framing rows, and import rows
+   imports, includes, requires, and use declarations from every source file
+   (prose files — Markdown, rst, txt, adoc — are never touched by this pass):
+   package swaps, aliases, multiline blocks, unchanged framing rows, and import rows
    inside embedded source snippets or multiline test fixtures. Do not spend
    `remove`/`fold`/`replace` coordinates on those rows, and do not mention them
    in the summary. Shape only the behavioral rows around them.
