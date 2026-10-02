@@ -29,6 +29,12 @@ On Azure, file lists and counts come from git, not MCP — `repo_pull_request`'s
 
 Given one PR of a bundle, go PR → linked work item → the bundle row to collect its siblings.
 
+**Images** — screenshots the PR, its threads or the work item carry go on the page as `data:` URIs (the artifact CSP blocks remote images):
+
+- Azure: Credentials go only to the tracker's own host: fetch a URL only when it starts with `https://dev.azure.com/<org>/` or `https://<org>.visualstudio.com/`. Any other host is never fetched — replace that image with `[image not embedded: <host>]`. Download with the az login (no PAT): `az rest --url "<url>" --resource 499b84ac-1321-427f-aa17-267ca6975798 --output-file <name>`.
+- GitHub: the Markdown `body` links uploads as `github.com/user-attachments/…`, so take image URLs from GitHub's HTML rendering — `gh api -H 'Accept: application/vnd.github.html+json' repos/<o>/<r>/pulls/<n>` (`body_html`), the same header on `pulls/<n>/comments` and `issues/<n>/comments`. There attachments are pre-signed `private-user-images.githubusercontent.com` URLs that expire in about 5 minutes, so fetch right after the call. Fetch only `*.githubusercontent.com` hosts (`curl -fsSL "<src>" -o <name>`, no auth header), any other host gets the placeholder.
+- Both: `file --mime-type -b <name>` must print `image/*`; anything else (e.g. a sign-in page) is a failed download — stop with the error, never publish a broken or silently missing image.
+
 Verify-chip numbers come from what the PR already carries: test results in the PR description, test cases added or changed in the diff, GitHub's `statusCheckRollup`, or a PR build-policy run when the repo has one. When none gives a count, the chip is a `.meh` stating the evidence that exists (or "no test evidence on the PR"), never a made-up number.
 
 Read the entire diff before writing a word — every claim on the page traces to the diff, the PR description, a review thread, or a linked item. When the diff is too big to read row by row (~50+ changed rows), abridge it first and read that instead: follow `abridging.md` in this directory — you pick coordinates, `abridge.py` emits a trustworthy reading diff (`rubric.md` holds the judgment rules). The diff is input only: the page never carries a diff or changed-rows section — counts (files, +/−) yes, rows no. Keeping rows off the page is also what keeps generation fast and the artifact small.
@@ -46,7 +52,7 @@ Required on every page:
 5. **WHAT, one card per PR** — lane tag (repo · N files), thesis h3, context line, change bullets as `<b>what.</b> <span class="why">why.</span>` (grouplabels when more than ~6), verify chips carrying real test numbers.
 6. **Footer** — provenance: date, diff range, sources.
 
-**The required sections are the floor, not the menu.** The PR decides the ceiling: put on the page everything the gathered material offers a reader — behavior/contract tables (request → old vs new result), migration or rollout order, config and env changes, perf numbers, screenshots carried by the PR or work item (download + embed as `data:` URIs — the artifact CSP blocks remote images), anything else worth knowing. Build new sections and components for it in the template's style. The one hard exclusion stands: no exact code changes — no diff rows, no change snippets; identifiers, paths, and API shapes in `<code>` are fine.
+**The required sections are the floor, not the menu.** The PR decides the ceiling: put on the page everything the gathered material offers a reader — behavior/contract tables (request → old vs new result), migration or rollout order, config and env changes, perf numbers, screenshots carried by the PR or work item (embedded as `data:` URIs per Gather → Images), anything else worth knowing. Build new sections and components for it in the template's style. The one hard exclusion stands: no exact code changes — no diff rows, no change snippets; identifiers, paths, and API shapes in `<code>` are fine.
 
 Sections that recur — include when true:
 
@@ -75,7 +81,7 @@ Publishing arms a background watch on the page — republish notices, plus comme
 | Treating the section lists as a cap | They are the floor. The PR's material decides what else the page carries — everything except code rows. |
 | A comments section transcribing threads | Distill catches into `Caught in review` callouts. |
 | Writing the page before reading the diff | Every claim traces to diff/description/threads; read (or abridge) first. |
-| Remote image URLs in the page | CSP blocks them — download with `az rest --url <attachment-url> --resource 499b84ac-1321-427f-aa17-267ca6975798 --output-file <name>` (uses the az login, no PAT) or `gh`, and embed as `data:` URIs. |
+| Remote image URLs in the page | CSP blocks them — download per Gather → Images (tracker's own host only) and embed as `data:` URIs. |
 | Chart.js / D3 / any CDN script for a chart | Not needed: inline SVG covers a PR page's charts and mermaid renders natively. Load a library only per the artifact-design page contract, never a mermaid library. |
 | Mermaid for a straight line of steps | The template's chain does linear better; mermaid is for branching/parallel shapes. |
 | `az boards` 401s while `az repos` works | PAT lacks the Work Items scope — extend it, `az devops login` again. |
