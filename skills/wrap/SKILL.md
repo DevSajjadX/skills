@@ -83,12 +83,12 @@ Pre-checks (refs from step 2):
 - `git rev-list --merges $BASE..HEAD` non-empty → stop; a soft reset flattens merges silently.
 - `--f` on `$DEF` → stop; `$BASE` is HEAD there, and the default branch's published history is not `--f`'s to rewrite. Report that plain `s` regroups its unpushed commits.
 
-Scope: `$SCOPE` from step 2. `--f` = `$BASE`, after ONE AskUserQuestion — proceed with force push / local-only instead / stop; auto-continues with no answer → stop, never force push without an explicit choice. Nothing committed above scope → skip.
+Scope: `$SCOPE` from step 2. `--f` = `$BASE`, after ONE AskUserQuestion — proceed with force push / local-only instead / stop; auto-continues with no answer → stop, never force push without an explicit choice. With `c` (so also `m`), step 8's commit runs now, its push not yet: those commits join the regroup, and 7b finds a clean tree. Then nothing committed above scope → skip.
 
 A soft reset regroups at file granularity — true per-concern commits come from committing per concern during the session; wrap only tidies.
 
 Method (no interactive rebase):
-1. Park uncommitted wrap edits: with `c` run step 8 now (they join the regroup); else `git stash push` (tracked only — untracked files don't affect a soft reset and may be large tool output), pop after 5, also on abort.
+1. Without `c`, park uncommitted wrap edits: `git stash push` (tracked only — untracked files don't affect a soft reset and may be large tool output), pop after 5, also on abort.
 2. `OLD=$(git rev-parse HEAD)`; `git reset --soft <scope> && git reset`.
 3. One `git add <explicit paths>` + commit per concern, mirroring the default branch's grouping and order, dependencies first (schema → api → ui → e2e/docs) so the branch bisects. Each commit is one united change that stands alone and typechecks — merge a group that can't into the one it needs; never squash merely for fewer commits. Files that don't partition without hunk splits → ask: merge groups / keep separate / stop. Each `git commit` is its own Bash call, never the tail of a chain, so the commit gate's "rerun the exact command" replays only the commit.
 4. Messages per step 8.
@@ -114,13 +114,13 @@ Method:
 3. Step 6's gate commands on the merged result. Failure → `git reset --hard $TARGET_OLD && git checkout $FEATURE`, report, stop. Nothing is deleted or pushed.
 4. `FEATURE_SHA=$(git rev-parse $FEATURE)`; `git branch -d $FEATURE` (`-d` never force-deletes an unmerged branch). Stay on `target`. `--p` → push `target` per the `--p` rules (fast-forward only).
 
-`tests/dry-run.sh` exercises this step too (ff merge, merge commit, gate-failure rollback).
+`tests/dry-run.sh` exercises this step too (ff merge, merge commit, gate-failure rollback, `m` with only uncommitted work).
 
 Report: target and merge kind (fast-forward or merge commit); `git reset --hard <TARGET_OLD>` (print the hash) undoes the merge; `git branch <FEATURE> <FEATURE_SHA>` restores the deleted branch until garbage collection; whether `target` was pushed. After `--f`, the remote feature branch still exists — deleting it is the user's call (Needs you).
 
 ## 8. Commit message
 
-For changes still uncommitted after step 7 (with `c` after a squash, step 8 already ran inside it). Readable by humans and LLMs: `type(scope): subject` ≤ 72 chars; body a few lines — what changed and why, pointing to the docs from step 5; one united change per commit, split when changes span concerns; match recent `git log` style. Draft only; with `c`, commit with explicit paths, then push if `--p` and the primary did not stop (Arguments). The commit runs as its own Bash call for the same reason.
+For changes still uncommitted after step 7 (with `c`, the commit already ran at step 7's scope check whenever step 7 ran; the push is still this step's). Readable by humans and LLMs: `type(scope): subject` ≤ 72 chars; body a few lines — what changed and why, pointing to the docs from step 5; one united change per commit, split when changes span concerns; match recent `git log` style. Draft only; with `c`, commit with explicit paths, then push if `--p` and the primary did not stop (Arguments). The commit runs as its own Bash call for the same reason.
 
 ## 9. Report
 

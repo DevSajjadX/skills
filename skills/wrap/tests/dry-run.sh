@@ -172,7 +172,7 @@ check "guard: detached HEAD -> refuse" '[ "$(git rev-parse --abbrev-ref HEAD)" =
 # =============================== step 7b: merge (`m`) ====================================
 # Replays the skill's merge method: pre-checks, sync target, ff-or-merge-commit, gate, delete branch.
 merge_step() { # merge_step <feature> <target> <gate cmd> -> sets MERGED (1/0), TARGET_OLD, FEATURE_SHA
-  local target=$2 tu
+  local target=$2 tu; MERGED=0
   git rev-parse --verify -q "refs/heads/$target" >/dev/null || return 1
   [ "$(git rev-parse --abbrev-ref HEAD)" != "$target" ] || return 1
   tu=$(git rev-parse --abbrev-ref "$target@{u}" 2>/dev/null)
@@ -188,7 +188,7 @@ merge_step() { # merge_step <feature> <target> <gate cmd> -> sets MERGED (1/0), 
 # 1) happy path: regroup, then fast-forward into the default branch
 git checkout -q main; git checkout -q -b feat/m1
 commit docs/m1.md "m1" "wip: m1"; commit docs/m1.md "m1 v2" "wip: m1 v2"
-OLD=$(git rev-parse HEAD); git reset -q --soft "$(git merge-base HEAD "$DEF")" && git reset -q
+OLD=$(git rev-parse HEAD); git reset -q --soft "$(scope_for)" && git reset -q
 git add docs/m1.md; git commit -q -m "docs: m1"
 check "m: regroup parity before merge" 'git diff --quiet "$OLD" HEAD'
 merge_step feat/m1 "$DEF" ./check.sh
@@ -219,7 +219,17 @@ check "m guard: target reset to TARGET_OLD"             '[ "$(git rev-parse "$DE
 check "m guard: feature branch still present"           'git rev-parse --verify -q refs/heads/feat/m3 >/dev/null'
 check "m guard: back on the feature branch"             '[ "$(git rev-parse --abbrev-ref HEAD)" = feat/m3 ]'
 
-# 4) pre-checks: target ahead of its upstream, or current branch is the target -> refuse
+# 4) `m` with only uncommitted work (a tracked edit and a new file), nothing committed above scope
+git checkout -q main; git checkout -q -b feat/m4
+printf 'm4\n' >>README.md; echo m4 >docs/m4.md
+git add README.md docs/m4.md; git commit -q -m "feat: m4"   # step 7 with `c`: step 8's commit first, explicit paths
+check "m, uncommitted only: the early commit sits above scope" '[ "$(git rev-list --count "$(scope_for)"..HEAD)" = 1 ]'
+merge_step feat/m4 "$DEF" ./check.sh
+check "m, uncommitted only: merged"                     '[ "$MERGED" = 1 ]'
+check "m, uncommitted only: target has the edit and the new file" '[ "$(git branch --show-current)" = "$DEF" ] && grep -q m4 README.md && [ -f docs/m4.md ]'
+git push -q "$R" main
+
+# 5) pre-checks: target ahead of its upstream, or current branch is the target -> refuse
 git checkout -q main; git commit -q --allow-empty -m "chore: local-only on main"; git checkout -q feat/m3
 check "m guard: target ahead of upstream -> refuse"     '! merge_step feat/m3 "$DEF" ./check.sh && [ "$(git rev-parse --abbrev-ref HEAD)" = feat/m3 ]'
 git checkout -q main
