@@ -49,3 +49,7 @@ A logo delivery is a strategic recommendation, not a drawing. The three failures
 - **Differentiation by accident.** "The swash ampersand is the distinctive element" — if the claim fits any competitor, it isn't differentiation.
 - **Legibility asserted, never rendered.**
 - **Building every concept fully.** Sketches for the board; full variants only for the recommendation.
+
+## Pending decisions
+
+- Scope (logo-only v1 vs full identity v2) is undecided; don't change it without the user's call. Any next version needs the research-first opening and the brand-name gate (never invent a brand name; present researched candidates and wait for the pick).
