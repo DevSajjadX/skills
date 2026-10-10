@@ -52,13 +52,13 @@ Done when the verdict is MERGE, or MERGE WITH DECLARED DEBT with every item carr
 
 ## 3. Retire debt
 
-Ship correct-by-design code. The review's Declared-debt rows and undeclared-debt findings are the input. A shortcut that must stay is declared: name it, its ceiling, and the follow-up that retires it, both in the final report and wherever the project tracks work.
+Ship correct-by-design code. The review's Declared-debt rows and undeclared-debt findings are the input. A shortcut that must stay is declared: name it, its ceiling, and the follow-up that retires it, in the final report, in a code comment at the shortcut (unless the repo bans comments by a gate, e.g. a comments test; then the task item, or the final report when the project tracks no work, carries the file:line), and wherever the project tracks work.
 
-Done when the diff holds no shortcut the report leaves unnamed.
+Done when the diff holds no shortcut the report leaves unnamed, and each declared shortcut carries its comment (or, where a gate bans comments, its file:line in the task item or the final report).
 
 ## 4. Let the code speak
 
-The code is the source of truth. A comment survives only when it states what code cannot: an external-system fact or a cross-module invariant. Prefer a rename, a named constant, or an assertion; delete narration of what the next line does or why the change is right.
+The code is the source of truth. A comment survives only when it carries what code cannot: an external-system fact, a cross-module invariant, a non-obvious why, or a declared shortcut's ceiling (a `shortcut:` comment, the marker the Ponytail plugin writes, counts). Prefer a rename, a named constant, or an assertion; delete narration of what the next line does or why the change is right. A repo whose own gate bans comments wins over this step.
 
 Done when every comment in the diff passes that test.
 
