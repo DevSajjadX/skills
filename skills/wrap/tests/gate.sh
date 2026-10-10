@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Self-test of hooks/wrap-gate.sh: feeds synthetic hook JSON on stdin and asserts the decision.
-# Covers the `git commit` match (global opts, quotes, sh -c, prefixes and assignments, paths,
+# Covers the `git commit` and `git push` match (global opts, quotes, sh -c, prefixes and assignments, paths,
 # near-misses, non-Bash tools), deny-once arming, UserPromptSubmit arm/disarm, PostToolUse
 # Skill(wrap) arming, and the error when jq is missing.
 # Prints PASS/FAIL per assertion; exit 1 on any FAIL.
@@ -76,6 +76,11 @@ rm -f "$MARK"; expect "! git commit -> deny"                 deny "$(bash_cmd '!
 rm -f "$MARK"; expect "/usr/bin/git commit -> deny"          deny "$(bash_cmd '/usr/bin/git commit -m y')"
 rm -f "$MARK"; expect "git -C \"/a b\" commit -> deny"        deny "$(bash_cmd 'git -C "/a b" commit -m y')"
 rm -f "$MARK"; expect "git -C '/a b' commit -> deny"         deny "$(bash_cmd "git -C '/a b' commit -m y")"
+rm -f "$MARK"; expect "git push origin main -> deny"         deny "$(bash_cmd 'git push origin main')"
+rm -f "$MARK"; expect "cd x && git push -> deny"             deny "$(bash_cmd 'cd x && git push')"
+rm -f "$MARK"; expect "git -C dir push -u origin b -> deny"  deny "$(bash_cmd 'git -C dir push -u origin b')"
+rm -f "$MARK"; expect "git stash push -q -> pass"            pass "$(bash_cmd 'git stash push -q')"
+rm -f "$MARK"; expect "git pushy -> pass"                    pass "$(bash_cmd 'git pushy')"
 
 # --- UserPromptSubmit: /wrap arms, anything else disarms
 rm -f "$MARK"
@@ -85,6 +90,8 @@ expect "commit after /wrap prompt -> pass"         pass "$(bash_cmd 'git commit 
 run UserPromptSubmit "" prompt 'hello' >/dev/null
 check  "prompt 'hello' disarms"                    '[ ! -e "$MARK" ]'
 expect "commit after plain prompt -> deny"         deny "$(bash_cmd 'git commit -m x')"
+touch "$MARK"; run UserPromptSubmit "" prompt 'PreToolUse' >/dev/null
+check  "prompt 'PreToolUse' still disarms"         '[ ! -e "$MARK" ]'
 
 # --- PostToolUse: only Skill(wrap) arms
 rm -f "$MARK"

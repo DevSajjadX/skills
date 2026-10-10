@@ -35,7 +35,7 @@ Nothing to set up front. Paste a link — the skill resolves its own access, in 
 
 ## Commit gate (wrap)
 
-`skills/wrap/hooks/wrap-gate.sh` swaps the model's plain `git commit` for `/wrap c`. Soft gate: the first direct commit in a turn is denied once with an instruction to invoke `Skill(wrap, c)` itself (never to ask the user); that deny arms the gate, so a retry — or wrap's own commit — passes. A user-typed `/wrap …` or the model's `Skill(wrap)` also arms it; every new prompt disarms it. Nothing ever blocks; any question comes from wrap itself (its Arguments section lists every ask). Needs `jq` on PATH; without it the hook prints an error and the gate is off. Wire it in `~/.claude/settings.json`:
+`skills/wrap/hooks/wrap-gate.sh` swaps the model's plain `git commit` or `git push` for `/wrap c` (`/wrap c --p` for a push). Soft gate: the first direct commit or push in a turn is denied once with an instruction to invoke `Skill(wrap, c)` itself (never to ask the user); that deny arms the gate, so a retry (or wrap's own commit) passes. A user-typed `/wrap …` or the model's `Skill(wrap)` also arms it; every new prompt disarms it. Nothing ever blocks; any question comes from wrap itself (its Arguments section lists every ask). Needs `jq` on PATH; without it the hook prints an error and the gate is off. Wire it in `~/.claude/settings.json`:
 
 ```json
 "PreToolUse":       [{ "matcher": "Bash",  "hooks": [{ "type": "command", "command": "~/.claude/skills/wrap/hooks/wrap-gate.sh", "timeout": 5 }] }],
