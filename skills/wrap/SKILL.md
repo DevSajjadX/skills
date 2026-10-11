@@ -121,7 +121,7 @@ Report: target and merge kind (fast-forward or merge commit); `git reset --hard 
 
 ## 8. Commit message
 
-For changes still uncommitted after step 7 (with `c`, the commit already ran at step 7's scope check whenever step 7 ran; the push is still this step's). Readable by humans and LLMs: `type(scope): subject` ≤ 72 chars; body a few lines — what changed and why, pointing to the docs from step 5; one united change per commit, split when changes span concerns; match recent `git log` style. Draft only; with `c`, commit with explicit paths, then push if `--p` and the primary did not stop (Arguments). The commit runs as its own Bash call for the same reason.
+For changes still uncommitted after step 7 (with `c`, the commit already ran at step 7's scope check whenever step 7 ran; the push is still this step's). Readable by humans and LLMs: `type(scope): subject` ≤ 72 chars; body a few lines — what changed and why, pointing to the docs from step 5; one united change per commit, split when changes span concerns; match recent `git log` style. Draft only; with `c`, commit with explicit paths: `git add <paths>`, then `git commit -m` (index only). Never pass paths to `git commit` (`git commit [--] <paths>`): it commits those files' working-tree state, so a hunk held out of the index ships anyway; then push if `--p` and the primary did not stop (Arguments). The commit runs as its own Bash call for the same reason.
 
 ## 9. Report
 
