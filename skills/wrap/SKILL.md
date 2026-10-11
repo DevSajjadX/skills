@@ -64,7 +64,7 @@ Done when every comment in the diff passes that test.
 
 ## 5. Sync the docs
 
-Update the docs the change made stale (README, ADRs, project guides), starting from the review's doc hits. Details of the change belong here, not in the commit message.
+Update the docs the change made stale (README, ADRs, project guides), starting from the review's doc hits. Doc hits catch only docs that mention a changed name, never an omission: also walk each README covering the change as its reader would (setup, new-machine steps, file or doc index) and add the file, step, dependency or secret it now lacks. Details of the change belong here, not in the commit message.
 
 Done when every behavior change is reflected in docs, or the report says why none apply.
 
