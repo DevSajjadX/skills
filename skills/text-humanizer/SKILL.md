@@ -1,6 +1,6 @@
 ---
 name: text-humanizer
-description: Use when the user asks to humanize or de-AI a text, to "make it sound like me", or to check a text for AI tells; when they paste a draft with just "fix this" or "this sounds like ChatGPT"; or to draft a reply or post in their voice — blog posts, tweets/X and LinkedIn posts, social or marketing copy, comment replies, emails, docs, release notes, bios. Also use as the last gate before any text this session wrote goes public.
+description: Use when the user asks to humanize or de-AI a text, to "make it sound like me", or to check a text for AI tells; when they paste a draft with just "fix this" or "this sounds like ChatGPT"; to draft a reply or post in their voice: blog posts, tweets/X and LinkedIn posts, social or marketing copy, comment replies, emails, docs, release notes, bios; or to write questions with proposed defaults for someone who decides. Also use as the last gate before any text this session wrote goes public.
 ---
 
 # Text humanizer
@@ -31,6 +31,21 @@ A voice profile is a file the humanizer reads, either the project's or the user'
 - Project has one → read it and defer to it. To find it, use the path the calling skill or the project's CLAUDE.md gives. If neither gives one, use the first `voice-profile.md` in the repo, skipping this skill's own folder. If you find none, the project has no profile.
 - Project has none → continue down the step 1 chain, and offer once to write a profile if the user expects to do this repeatedly.
 - Any voice profile, project or personal, outranks `ai-tells.md` in steps 2 and 4: where it gives an explicit rule for something the checklist also covers (a ban, emoji, emoticons, em dashes), that rule replaces the matching checklist item. The checklist fills every gap.
+
+## Decision questions
+
+When the text asks someone to decide (open product questions, choices with a default, approvals), it has this shape:
+
+1. An opening of three lines at most: what the questions are for, that our proposal sits under each one, and that the reader replies only with the numbers they disagree with. Anything the reader must send either way comes next, in up to four short lines: what it is, where it was asked for, what it is used for, and what stands in until it arrives.
+2. Each decision is exactly two lines, then a blank line:
+   - the numbered question, ending in a question mark;
+   - the proposal label (`Our proposal:`, or the voice profile's label for the language), then the answer first (yes, no, or the choice), then at most one sentence: the reason for it or its main cost.
+3. One decision per number, and only decisions the reader has to make.
+
+```
+1. Can a patient cancel an appointment online?
+Our proposal: Yes, up to 2 hours before. A later cancellation leaves a slot the clinic can't refill.
+```
 
 ## Hard rules
 
