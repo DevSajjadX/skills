@@ -18,8 +18,10 @@ export type Stats = {
   costBase?: number
   // The last test run's outcome, 'stale' once code changed after it; absent before any run.
   tests?: Tests
-  // The pane section a clicked card asked for; drawn first.
+  // The pane section a clicked card asked for; it opens when clicked.
   focus?: string
+  // The pane's sections drawn open; the rest show their header and summary only.
+  open?: string[]
 }
 
 declare module 'claude-code' {

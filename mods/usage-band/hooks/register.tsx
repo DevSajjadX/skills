@@ -5,8 +5,11 @@ import type { Stats } from '../types'
 import { bandSvg, bandText, bandWidth, fmtSpan, fmtTokens } from './pills'
 import { NO_SCAN, SCAN_AWK, parseScan } from './scan'
 import { isCode, isTestCommand, testOutcome } from './testrun'
+import { ACCENT, ALERT } from './cells'
 import { buildView, layouts } from './view'
 
+type ClientEl = (p: { key: string; module: string; props: unknown; width: string; height?: string }) => never
+type SvgEl = (p: { source: string; width: number; height: number; alt: string }) => never
 const PANE = 'usage-band'
 const EMPTY: Stats = { transcript: '', scan: NO_SCAN, turnCosts: [] }
 const stats = atom({ plugin: 'usage-band', key: 'stats' } as const, EMPTY)
@@ -49,6 +52,13 @@ async function rescan($: EngineInterface) {
 const refresh = ($: EngineInterface) => rescan($).catch(err => fail($, String(err).slice(0, 160)))
 
 const openDetails = ($: EngineInterface) => $.ui.open({ id: PANE, title: 'Usage details' })
+// Nothing chosen yet: Context, the section most read, is the one drawn open.
+const toggleSection = ($: EngineInterface, id: string) =>
+  update($, stats, x => {
+    const was = new Set(x.open ?? ['context'])
+    if (!was.delete(id)) was.add(id)
+    return { ...EMPTY, ...x, open: [...was] }
+  })
 
 const clock = (ms: number) => {
   const d = new Date(ms)
@@ -126,9 +136,14 @@ export const register: Register = on => {
 
   // A click on a card: open the details pane with that card's section first.
   on('ui.message', async ($, e, next) => {
+    const toggle = (e.data as { toggle?: unknown } | null)?.toggle
+    if (typeof toggle === 'string') {
+      await toggleSection($, toggle)
+      return {}
+    }
     const open = (e.data as { open?: unknown } | null)?.open
     if (typeof open !== 'string') return next(e)
-    await update($, stats, s => ({ ...EMPTY, ...s, focus: open }))
+    await update($, stats, s => ({ ...EMPTY, ...s, focus: open, open: [...new Set([...(s.open ?? []), open])] }))
     await openDetails($)
     return {}
   }).catch(($, e, next) => next(e))
@@ -142,8 +157,6 @@ export const register: Register = on => {
     const table = $.ui.resolve(e)
     const { Box, Text } = table
 
-    type ClientEl = (p: { key: string; module: string; props: unknown; width: string; height?: string }) => never
-    type SvgEl = (p: { source: string; width: number; height: number; alt: string }) => never
 
     // The terminal: chips in its monospace cells, laid out to the region's real width; they take clicks.
     if (e.surface === 'terminal' && 'Client' in table) {
@@ -201,100 +214,172 @@ export const register: Register = on => {
     const s = await load($)
     const usage = await $.session.usage({ breakdown: 'summary' }).catch(() => $.session.usage())
     const v = buildView(s, usage, await $.clock.now())
-    const { Box, Text } = $.ui.resolve(e)
+    const table = $.ui.resolve(e)
+    const { Box, Text, Button } = table
+    const Svg = 'Svg' in table ? (table as unknown as { Svg: SvgEl }).Svg : undefined
     const c = v.context
+    const open = new Set(s.open ?? ['context'])
+    const Client = 'Client' in table ? (table as unknown as { Client: ClientEl }).Client : undefined
+    const join = (...xs: (string | false | undefined)[]) => xs.filter(Boolean).join(' · ')
+    const pct = (n: number) => `${n.toFixed(1).replace(/\.0$/, '')}%`
+    // shortcut: the same cell-to-pixel factor as the band; measure again if the desktop changes its font.
+    const barPx = Math.max(120, Math.floor((e.props.bodyColumns - 6) * 8.6))
 
-    const row = (label: string, value: string, sub = '') => (
-      <Box key={`${label} ${value} ${sub}`} flexDirection="row" gap={1}>
-        <Box width={16}>
-          <Text dimColor>{label}</Text>
+    // A meter: coloured parts along one track, an optional amber line (auto-compact) and tick (the clock).
+    const bar = (key: string, parts: { n: number; color: string }[], total: number, marks: { at?: number; line?: number } = {}) => {
+      if (total <= 0) return null
+      if (Svg) {
+        let x = 0
+        const segs = parts
+          .filter(p => p.n > 0)
+          .map(p => {
+            const w = (p.n / total) * barPx
+            const r = `<rect x="${x.toFixed(1)}" y="2" width="${Math.max(1, w - 1.5).toFixed(1)}" height="6" fill="${p.color}"/>`
+            x += w
+            return r
+          })
+          .join('')
+        const at = (v?: number) => (v === undefined ? '' : `<rect x="${((v / 100) * barPx - 1).toFixed(1)}" y="0" width="2" height="10" rx="1" fill="${marks.line === v ? '#eaa75c' : '#ecebe6'}"/>`)
+        const source = `<svg xmlns="http://www.w3.org/2000/svg" width="${barPx}" height="10" viewBox="0 0 ${barPx} 10"><defs><clipPath id="r"><rect y="2" width="${barPx}" height="6" rx="3"/></clipPath></defs><rect y="2" width="${barPx}" height="6" rx="3" fill="#8a8983" fill-opacity=".25"/><g clip-path="url(#r)">${segs}</g>${at(marks.line)}${at(marks.at)}</svg>`
+        return <Svg key={key} source={source} width={barPx} height={10} alt="" />
+      }
+      const cells = Math.max(10, e.props.bodyColumns - 6)
+      return (
+        <Text key={key}>
+          {parts.map((p, i) => <Text key={`${i}`} color={p.color}>{'━'.repeat(Math.round((p.n / total) * cells))}</Text>)}
+          <Text dimColor>{'━'.repeat(Math.max(0, cells - parts.reduce((w, p) => w + Math.round((p.n / total) * cells), 0)))}</Text>
+        </Text>
+      )
+    }
+    // A row: a colour dot and the name on the left, the figure and its share right-aligned.
+    const item = (label: string, value: string, share = '', o: { dot?: string; dim?: boolean } = {}) => (
+      <Box key={`${label}|${value}`} flexDirection="row" justifyContent="space-between">
+        <Box flexDirection="row" gap={1} flexShrink={1}>
+          {o.dot !== undefined && <Text color={o.dot}>■</Text>}
+          <Text dimColor={o.dim} wrap="truncate-end">{label}</Text>
         </Box>
-        <Text bold>{value}</Text>
-        {sub !== '' && <Text dimColor>{sub}</Text>}
+        <Box flexDirection="row" gap={2}>
+          <Text dimColor>{value}</Text>
+          {share !== '' && (
+            <Box width={6} justifyContent="flex-end">
+              <Text dimColor={o.dim}>{share}</Text>
+            </Box>
+          )}
+        </Box>
       </Box>
     )
-    const head = (title: string) => (
-      <Box key={`h-${title}`} marginTop={1}>
-        <Text bold>{title}</Text>
+    const headline = (key: string, big: string, right = '') => (
+      <Box key={key} flexDirection="row" justifyContent="space-between" marginTop={1}>
+        <Text bold>{big}</Text>
+        <Text dimColor>{right}</Text>
+      </Box>
+    )
+    // Phrases that wrap whole: a narrow pane moves the next phrase to its own line, never splits one.
+    const note = (key: string, text: string | string[], warn = false) => (
+      <Box key={key} marginTop={1} flexDirection="row" flexWrap="wrap" columnGap={2}>
+        {(Array.isArray(text) ? text : [text]).map(t => (
+          <Text key={t} dimColor={!warn} color={warn ? 'warning' : undefined}>
+            {t}
+          </Text>
+        ))}
+      </Box>
+    )
+    // A card: its title opens and closes it; closed, the summary on the right says the gist.
+    const card = (id: string, title: string, summary: string, body: RenderChildren[]) => (
+      <Box key={id} flexDirection="column" borderStyle="round" borderDimColor paddingX={1} marginBottom={1}>
+        {Client ? (
+          <Client key={`open-${id}`} module="./header.client.tsx" props={{ id, title, summary, open: open.has(id) }} width="100%" />
+        ) : (
+          <Box flexDirection="row" justifyContent="space-between">
+            <Button key={`open-${id}`} plain onPress={() => toggleSection($, id)}>
+              <Text dimColor>{open.has(id) ? '▾  ' : '▸  '}</Text>
+              <Text bold>{title}</Text>
+            </Button>
+            {!open.has(id) && <Text dimColor>{summary}</Text>}
+          </Box>
+        )}
+        {open.has(id) && body}
       </Box>
     )
 
-    const limitRows = v.limits.flatMap(l =>
-      l === undefined
-        ? []
-        : [
-            row(
-              l.kind === 'five_hour' ? '5-hour limit' : '7-day limit',
-              `${Math.round(l.pct)}% used`,
-              [l.left !== undefined ? `resets in ${fmtSpan(l.left)}` : '', l.fullIn !== undefined ? `full in ~${fmtSpan(l.fullIn)} at this pace` : ''].filter(Boolean).join(' · '),
-            ),
-          ],
-    )
-    const categories = (usage.context.breakdown?.categories ?? []).filter(k => k.tokens > 0 && k.kind !== 'free')
+    const PALETTE = ['#4a8df0', '#e0643a', '#1f9e6e', '#d39a1a', '#9c9b95']
+    const parts = (usage.context.breakdown?.categories ?? []).filter(k => k.tokens > 0 && k.kind !== 'free')
+    const live = parts.filter(k => !/deferred/i.test(k.name)).sort((x, y) => y.tokens - x.tokens)
+    const deferred = parts.filter(k => /deferred/i.test(k.name))
+    const color = (i: number) => PALETTE[Math.min(i, PALETTE.length - 1)]!
     const t = s.scan.tokens
     const log = s.scan.log.slice(-10)
     // turnCosts covers only turns since the band loaded: they line up with the newest turns.
     const costOf = (i: number) => s.turnCosts[s.turnCosts.length - (log.length - i)]
-
-    const sections: [string, RenderChildren[]][] = [
-      ['limits', [head('Limits'), limitRows.length > 0 ? limitRows : <Text dimColor>No reading yet.</Text>]],
-      [
-        'context',
-        [
-          head('Context'),
-          row('in use', `${fmtTokens(c.used)} / ${fmtTokens(c.max)}`, `${Math.round(c.pct)}%`),
-          row('auto-compact', c.compactAt !== undefined ? `at ${fmtTokens(c.compactAt)}` : 'off', c.turnsLeft !== undefined ? `~${c.turnsLeft} turns away at ${fmtTokens(c.growth ?? 0)} a turn` : ''),
-          row('compactions', String(s.scan.compactions)),
-          ...categories.map(k => row(k.name, fmtTokens(k.tokens), c.max > 0 ? `${((k.tokens / c.max) * 100).toFixed(1)}%` : '')),
-        ],
-      ],
-      [
-        'tokens',
-        [
-          head('Tokens'),
-          row('input', fmtTokens(t.input + t.cacheWrite), 'uncached + cache writes'),
-          row('cache reads', fmtTokens(t.cacheRead), v.cache !== undefined ? `${Math.round(v.cache)}% of input` : ''),
-          row('output', fmtTokens(t.output)),
-        ],
-      ],
-      [
-        'cost',
-        [
-          head('Cost'),
-          row('session', usage.cost ? `$${usage.cost.usd.toFixed(2)}` : 'n/a', v.avg !== undefined ? `⌀ $${v.avg.toFixed(2)} a turn` : ''),
-          v.last !== undefined && row('last turn', `$${v.last.toFixed(2)}`),
-        ],
-      ],
-      [
-        'turns',
-        [
-          head(`Turns (${s.scan.turns}, agent ${fmtSpan(s.scan.agentMs)})`),
-          log.length === 0 && <Text dimColor>No turns yet.</Text>,
-          ...log
-            .map((turn, i) => {
-              const cost = costOf(i)
-              return row(clock(turn.startAt), fmtSpan(turn.ms), [`ctx ${fmtTokens(turn.ctx)}`, cost !== undefined ? `$${cost.toFixed(2)}` : ''].filter(Boolean).join(' · '))
-            })
-            .reverse(),
-        ],
-      ],
-      [
-        'tests',
-        [
-          head('Tests'),
-          s.tests === undefined
-            ? <Text dimColor>No test run seen yet.</Text>
-            : row('last run', s.tests.state, [s.tests.passed !== undefined ? `${s.tests.passed} passed` : '', s.tests.failed !== undefined ? `${s.tests.failed} failed` : ''].filter(Boolean).join(' · ')),
-        ],
-      ],
-    ]
-    // The section a clicked card asked for comes first; the rest keep their order.
-    const ordered = [...sections.filter(([k]) => k === s.focus), ...sections.filter(([k]) => k !== s.focus)]
+    const limits = v.limits.filter((l): l is NonNullable<typeof l> => l !== undefined)
+    const verdict = s.tests && (s.tests.state === 'pass' ? 'Passed' : s.tests.state === 'fail' ? 'Failed' : 'Stale')
+    const counts = s.tests && join(s.tests.passed !== undefined && `${s.tests.passed} passed`, s.tests.failed !== undefined && `${s.tests.failed} failed`)
 
     return (
       <Box flexDirection="column">
         {s.scanError && <Text color="warning">Could not read the transcript: {s.scanError}</Text>}
-        {ordered.flatMap(([, parts]) => parts)}
+        {card('context', 'Context', `${Math.round(c.pct)}% · ${fmtTokens(c.used)} / ${fmtTokens(c.max)}`, [
+          headline('h', `${Math.round(c.pct)}% used`, `${fmtTokens(c.used)} / ${fmtTokens(c.max)}`),
+          bar('bar', live.length > 0 ? live.map((k, i) => ({ n: k.tokens, color: color(i) })) : [{ n: c.used, color: PALETTE[0]! }], c.max, { line: c.compactPct }),
+          ...live.map((k, i) => item(k.name, fmtTokens(k.tokens), pct((k.tokens / c.max) * 100), { dot: color(i) })),
+          ...(c.max > c.used ? [item('Free space', fmtTokens(c.max - c.used), pct(((c.max - c.used) / c.max) * 100), { dot: '#3a3a38' })] : []),
+          ...deferred.map(k => item(k.name, fmtTokens(k.tokens), '—', { dot: '#5a5a57', dim: true })),
+          note(
+            'n',
+            [
+              c.compactAt !== undefined ? `${fmtTokens(Math.max(0, c.compactAt - c.used))} until auto-compact` : 'auto-compact off',
+              join(c.turnsLeft !== undefined && `~${c.turnsLeft} turns`, `compacted ×${s.scan.compactions}`),
+            ],
+            c.alert !== undefined,
+          ),
+        ])}
+        {card(
+          'limits',
+          'Limits',
+          join(...limits.map(l => `${l.kind === 'five_hour' ? '5h' : '7d'} ${Math.round(l.pct)}%`)),
+          limits.length === 0
+            ? [note('none', 'No reading yet.')]
+            : limits.flatMap(l => [
+                headline(`h-${l.kind}`, `${l.kind === 'five_hour' ? '5-hour' : '7-day'} · ${Math.round(l.pct)}% used`, l.left !== undefined ? `resets in ${fmtSpan(l.left)}` : ''),
+                bar(`b-${l.kind}`, [{ n: l.pct, color: l.alert ? ALERT[l.alert] : '#8db27a' }], 100, { at: l.mark }),
+                ...(l.fullIn !== undefined ? [note(`f-${l.kind}`, `At this pace it is full in ~${fmtSpan(l.fullIn)}, before the reset.`, true)] : []),
+              ]),
+        )}
+        {card('tokens', 'Tokens', join(`in ${fmtTokens(t.input + t.cacheWrite)}`, `out ${fmtTokens(t.output)}`), [
+          headline('h', `${fmtTokens(t.input + t.cacheWrite + t.output)} sent and received`, v.cache !== undefined ? `${Math.round(v.cache)}% cached` : ''),
+          item('Input', fmtTokens(t.input + t.cacheWrite), '', { dot: ACCENT.in }),
+          item('Output', fmtTokens(t.output), '', { dot: ACCENT.out }),
+          item('Cache reads', fmtTokens(t.cacheRead), '', { dot: '#9c9b95', dim: true }),
+        ])}
+        {card('cost', 'Cost', usage.cost ? `$${usage.cost.usd.toFixed(2)}` : 'n/a', [
+          headline('h', usage.cost ? `$${usage.cost.usd.toFixed(2)}` : 'n/a', `${s.scan.turns} turns`),
+          ...(v.avg !== undefined ? [item('Average a turn', `$${v.avg.toFixed(2)}`)] : []),
+          ...(v.last !== undefined ? [item('Last turn', `$${v.last.toFixed(2)}`)] : []),
+        ])}
+        {card(
+          'turns',
+          'Turns',
+          join(`${s.scan.turns}`, `agent ${fmtSpan(s.scan.agentMs)}`),
+          [
+            headline('h', `${s.scan.turns} turns`, `agent ${fmtSpan(s.scan.agentMs)}`),
+            ...(log.length === 0
+              ? [note('none', 'No turns yet.')]
+              : log
+                  .map((turn, i) => {
+                    const cost = costOf(i)
+                    return item(`${clock(turn.startAt)}  ${fmtSpan(turn.ms)}`, `ctx ${fmtTokens(turn.ctx)}`, cost !== undefined ? `$${cost.toFixed(2)}` : '')
+                  })
+                  .reverse()),
+          ],
+        )}
+        {card(
+          'tests',
+          'Tests',
+          s.tests === undefined ? 'none yet' : (verdict ?? '').toLowerCase(),
+          s.tests === undefined
+            ? [note('none', 'No test run seen yet.')]
+            : [headline('h', verdict!, counts ?? ''), ...(s.tests.state === 'stale' ? [note('n', 'Code changed since the last run.')] : [])],
+        )}
       </Box>
     )
   }).catch(($, e, next) => next(e))

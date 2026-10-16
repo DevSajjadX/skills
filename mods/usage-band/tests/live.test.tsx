@@ -73,10 +73,10 @@ describe('click', () => {
     expect(opened).toEqual(['usage-band', 'usage-band'])
     await term.unmount()
 
+    // The clicked card's section is drawn open; the others show their header only.
     const pane = await $.ui.mount({ plugin: 'usage-band', surface: 'desktop', ...PANE } as never)
-    const heads = (await pane.findAll({ type: 'Text' } as never)).map(t => String((t as { text?: string }).text))
-    const first = heads.find(h => /^(Limits|Context|Tokens|Cost|Turns|Tests)/.test(h))
-    expect(first).toBe('Context')
+    expect(await pane.find({ type: 'Text', text: /% used$/ } as never)).toBeDefined()
+    expect(await pane.find({ type: 'Text', text: /^Cache reads/ } as never)).toBeUndefined()
     await pane.unmount()
   })
 })
@@ -86,8 +86,34 @@ describe('details', () => {
     engine(on as never)
     for (const surface of ['terminal', 'desktop'] as const) {
       const pane = await $.ui.mount({ plugin: 'usage-band', surface, ...PANE } as never)
-      for (const h of ['Limits', 'Context', 'Tokens', 'Cost', 'Tests']) expect(await pane.find({ type: 'Text', text: new RegExp(`^${h}`) } as never)).toBeDefined()
+      const titles = ((await pane.findAll({ type: 'Client' } as never)) as unknown as { props: { props: { title: string } } }[]).map(c => c.props.props.title)
+      expect(titles).toEqual(['Context', 'Limits', 'Tokens', 'Cost', 'Turns', 'Tests'])
       await pane.unmount()
     }
+  })
+  test('a header opens and closes its section', async ($, on) => {
+    engine(on as never)
+    // Anywhere on the header row, not only its title: the row is a Client that posts the toggle.
+    type Pane = { resize: (a: never) => Promise<void>; pointer: (a: never) => Promise<void> }
+    const click = async (pane: Pane) => {
+      await pane.resize({ columns: 60, rows: 1, in: 'open-tokens' } as never)
+      await pane.pointer({ type: 'up', x: 55, y: 0, button: 'left', in: 'open-tokens' } as never)
+    }
+    const lines = async () => {
+      const pane = await $.ui.mount({ plugin: 'usage-band', surface: 'desktop', ...PANE } as never)
+      const found = (await pane.find({ type: 'Text', text: /^Cache reads/ } as never)) !== undefined
+      return { pane, found }
+    }
+    let { pane, found } = await lines()
+    expect(found).toBe(false)
+    await click(pane)
+    await pane.unmount()
+    ;({ pane, found } = await lines())
+    expect(found).toBe(true)
+    await click(pane)
+    await pane.unmount()
+    ;({ pane, found } = await lines())
+    expect(found).toBe(false)
+    await pane.unmount()
   })
 })
