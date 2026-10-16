@@ -1,0 +1,14 @@
+{
+  "name": "esi-abolfazl",
+  "owner": {
+    "name": "Esi-Abolfazl"
+  },
+  "description": "Claude Code mods (plugins) from Esi-Abolfazl/skills",
+  "plugins": [
+    {
+      "name": "usage-band",
+      "source": "./mods/usage-band",
+      "description": "Pill band above the prompt: 5h/7d limits, tokens, context, compactions, agent time, cost, tests"
+    }
+  ]
+}

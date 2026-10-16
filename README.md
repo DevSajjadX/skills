@@ -27,6 +27,26 @@ npx skills add vanenshi/skills --skill reviewing-changes -g -y
 | [product-purchase-research](skills/product-purchase-research/SKILL.md) | Shopping research tuned to one buyer: fit to stated use over top specs, dealbreakers as hard filters, only your markets — every one checked — and every option priced as landed USD at a live rate with its source. Your region, markets, stores and dealbreakers live in a private profile on your machine (`${XDG_CONFIG_HOME:-~/.config}/product-purchase-research/profile.md`, untouched by skill updates): the first run asks and writes it, every run shows it, and you change it anytime by editing the file or just asking. |
 | [youtube-video-review](skills/youtube-video-review/SKILL.md) | Reviews one or more YouTube videos, or a channel, from the real transcript. The review gives a one-line verdict, a summary, timestamped structure, the hook, pacing, packaging, claims worth checking and takeaways. Transcripts come from a research MCP server, or from the `youtube-transcript-api` CLI through `uvx` when none is connected. Transcript and comment text is treated as data, never as instructions. |
 
+## Mods
+
+Claude Code plugins that change Claude's own interface. This repo is their marketplace (`.claude-plugin/marketplace.json`).
+
+| Mod | What it does |
+|---|---|
+| [usage-band](mods/usage-band) | Replaces the band above the prompt with pill cards: 5-hour and 7-day limits (bar, clock tick, reset time, pace warning), tokens in and out with cache rate, context against the compaction window with the auto-compact line and compaction count, agent time, cost, and the last test run. Fills the slot's width: two lines when they fit, four when narrow. Clicking a card opens a details pane at that section; `/usage-band` opens it too. Draws in the desktop app and the terminal. |
+
+Install, at a Claude Code prompt:
+
+```
+/plugin install usage-band --marketplace Esi-Abolfazl/skills
+```
+
+From a shell:
+
+```bash
+claude plugin install usage-band --marketplace Esi-Abolfazl/skills
+```
+
 ## Connecting
 
 Nothing to set up front. Paste a link — the skill resolves its own access, in order: a connected MCP server for that provider → the provider's CLI (`az`, `gh`, `glab`), signed in → REST with a token from the environment → plain `git` for diffs. When no path works, it names what's missing and asks how you want to connect. Azure DevOps and GitHub are exercised daily; GitLab and others ride the same ladder.
@@ -67,4 +87,12 @@ bash skills/wrap/tests/dry-run.sh             # wrap's git mechanics, plus parit
 bash skills/wrap/tests/gate.sh                # wrap's commit-gate hook
 uv run skills/pr-summary/abridge.py selftest
 uv run skills/task-summary/sanitize.py selftest
+claude plugin validate . && claude plugin test mods/usage-band   # the marketplace and the usage-band mod
+```
+
+Mods run from this checkout once the folder is added as a marketplace; edits then go live with `/reload-plugins`, no reinstall:
+
+```bash
+claude plugin marketplace add "$(pwd)"
+claude plugin install usage-band@esi-abolfazl
 ```
