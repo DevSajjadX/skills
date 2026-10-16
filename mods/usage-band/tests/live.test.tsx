@@ -49,6 +49,13 @@ describe('click', () => {
     const opened: string[] = []
     on('ui.open', (_$, e) => (opened.push((e as { id: string }).id), { value: { isPlaced: true } }) as never)
 
+    // A section opened earlier closes: the clicked card's is the only one open.
+    await $.ui.mount({ plugin: 'usage-band', surface: 'desktop', ...PANE } as never).then(async p => {
+      await p.resize({ columns: 60, rows: 1, in: 'open-tokens' } as never)
+      await p.pointer({ type: 'up', x: 5, y: 0, button: 'left', in: 'open-tokens' } as never)
+      await p.unmount()
+    })
+
     // Desktop: one strip per card row; the strip that gets the click is the row, the column is x.
     const band = await $.ui.mount({ plugin: 'usage-band', surface: 'desktop', ...BAND } as never)
     const strips = (await band.findAll({ type: 'Client' } as never)) as unknown as { key: string; props: { props: { boxes: { x: number; w: number; tone: string }[]; width: number } } }[]

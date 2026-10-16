@@ -143,8 +143,10 @@ export const register: Register = on => {
     }
     const open = (e.data as { open?: unknown } | null)?.open
     if (typeof open !== 'string') return next(e)
-    await update($, stats, s => ({ ...EMPTY, ...s, focus: open, open: [...new Set([...(s.open ?? []), open])] }))
+    // The clicked card's section alone is open, scrolled to the top of the pane.
+    await update($, stats, s => ({ ...EMPTY, ...s, focus: open, open: [open] }))
     await openDetails($)
+    await $.ui.scroll({ to: { key: open }, in: PANE, block: 'start' }).catch(() => undefined)
     return {}
   }).catch(($, e, next) => next(e))
 
