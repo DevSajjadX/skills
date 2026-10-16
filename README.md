@@ -35,22 +35,14 @@ Claude Code plugins that change Claude's own interface. This repo is their marke
 |---|---|
 | [usage-band](mods/usage-band) | Replaces the band above the prompt with pill cards: 5-hour and 7-day limits (bar, clock tick, reset time, pace warning), tokens in and out with cache rate, context against the compaction window with the auto-compact line and compaction count, agent time, cost, and the last test run. Fills the slot's width: two lines when they fit, four when narrow. Clicking a card opens a details pane at that section; `/usage-band` opens it too. Draws in the desktop app and the terminal. |
 
-Install from a shell. Built and tested on Claude Code 2.1.299.
-
-Claude Code 2.1.299 or newer, one step:
+Install from a shell. Mods need a current Claude Code (built and tested on 2.1.299), so update first:
 
 ```bash
+claude update
 claude plugin install usage-band --marketplace Esi-Abolfazl/skills
 ```
 
-Older builds have no `--marketplace` flag: add this repo as a marketplace once, then install from it:
-
-```bash
-claude plugin marketplace add Esi-Abolfazl/skills
-claude plugin install usage-band@esi-abolfazl
-```
-
-At a Claude Code prompt, the same commands start with `/plugin` (`/plugin install usage-band --marketplace Esi-Abolfazl/skills`, or `/plugin marketplace add Esi-Abolfazl/skills` then `/plugin install usage-band@esi-abolfazl`).
+At a Claude Code prompt the install is `/plugin install usage-band --marketplace Esi-Abolfazl/skills`.
 
 ## Connecting
 
