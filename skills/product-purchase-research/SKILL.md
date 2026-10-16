@@ -105,6 +105,11 @@ A field reading `(not set)` is asked on the next run.
 - Report the real landed cost delivered to the profile's destination:
   item price + shipping/forwarder fee + any import duty or tax not already in the
   forwarder's door-to-door rate — never the list price.
+- Per-unit across variants: open every pack size and variant on the
+  product page (1-pack, 2-pack, bundles) and price the quantity the
+  user needs from each (unit price × count). Recommend the cheapest
+  combination and show the arithmetic; a multi-pack is not assumed
+  cheaper.
 - A market whose shipping fee is `unknown`, or a duty nobody knows:
   show a clearly labelled estimate with its basis (e.g. $/kg × weight),
   never a bare number. A rate you look up is proposed for the profile
