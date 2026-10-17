@@ -4,6 +4,8 @@ Agent skills for readable, ADHD-friendly PR and work-item pages, session wrap-up
 
 ## Install
 
+### Skills, with the skills CLI (any agent)
+
 ```bash
 # all skills, interactive
 npx skills add Esi-Abolfazl/skills
@@ -14,6 +16,23 @@ npx skills add Esi-Abolfazl/skills --skill pr-summary -g -a claude-code -y
 # needed by wrap's review step
 npx skills add vanenshi/skills --skill reviewing-changes -g -y
 ```
+
+### Skills, in Claude Code (all of them, as one plugin)
+
+In the Claude desktop app, no terminal needed:
+
+1. Click **+** next to the prompt box, then **Plugins**.
+2. **Add marketplace**: `Esi-Abolfazl/skills`.
+3. **Add plugin**: `skills`.
+
+In a terminal, update first, since plugin installs need a current Claude Code:
+
+```bash
+claude update
+claude plugin install skills --marketplace Esi-Abolfazl/skills
+```
+
+At a Claude Code prompt in a terminal: `/plugin install skills --marketplace Esi-Abolfazl/skills`.
 
 ## Skills
 
@@ -35,14 +54,20 @@ Claude Code plugins that change Claude's own interface. This repo is their marke
 |---|---|
 | [usage-band](mods/usage-band) | Replaces the band above the prompt with pill cards: 5-hour and 7-day limits (bar, clock tick, reset time, pace warning), tokens in and out with cache rate, context against the compaction window with the auto-compact line and compaction count, agent time, cost, and the last test run. Fills the slot's width: two lines when they fit, four when narrow. Clicking a card opens a details pane of collapsible cards (context breakdown with its bar, limits, tokens, cost, turns, tests) with that card's section open; `/usage-band` opens it too. Draws in the desktop app and the terminal. |
 
-Install from a shell. Mods need a current Claude Code (built and tested on 2.1.299), so update first:
+Install in the Claude desktop app, no terminal needed (the app keeps itself up to date):
+
+1. Click **+** next to the prompt box, then **Plugins**.
+2. **Add marketplace**: `Esi-Abolfazl/skills` (skip if you added it for the skills).
+3. **Add plugin**: `usage-band`.
+
+In a terminal, mods need a current Claude Code (built and tested on 2.1.299), so update first:
 
 ```bash
 claude update
 claude plugin install usage-band --marketplace Esi-Abolfazl/skills
 ```
 
-At a Claude Code prompt the install is `/plugin install usage-band --marketplace Esi-Abolfazl/skills`.
+At a Claude Code prompt in a terminal: `/plugin install usage-band --marketplace Esi-Abolfazl/skills`.
 
 ## Connecting
 
@@ -52,7 +77,7 @@ Nothing to set up front. Paste a link — the skill resolves its own access, in 
 
 ## Commit gate (wrap)
 
-`skills/wrap/hooks/wrap-gate.sh` swaps the model's plain `git commit` or `git push` for `/wrap c` (`/wrap c --p` for a push). Soft gate: the first direct commit or push in a turn is denied once with an instruction to invoke `Skill(wrap, c)` itself (never to ask the user); that deny arms the gate, so a retry (or wrap's own commit) passes. A user-typed `/wrap …` or the model's `Skill(wrap)` also arms it; every new prompt disarms it. Nothing ever blocks; any question comes from wrap itself (its Arguments section lists every ask). Needs `jq` on PATH; without it the hook prints an error and the gate is off. Wire it in `~/.claude/settings.json`:
+`skills/wrap/hooks/wrap-gate.sh` swaps the model's plain `git commit` or `git push` for `/wrap c` (`/wrap c --p` for a push). Soft gate: the first direct commit or push in a turn is denied once with an instruction to invoke `Skill(wrap, c)` itself (never to ask the user); that deny arms the gate, so a retry (or wrap's own commit) passes. A user-typed `/wrap …` or the model's `Skill(wrap)` also arms it; every new prompt disarms it. Nothing ever blocks; any question comes from wrap itself (its Arguments section lists every ask). Needs `jq` on PATH; without it the hook prints an error and the gate is off. Installed as the `skills` plugin, the script sits under the plugin's `installPath` (`claude plugin list --json`) instead of `~/.claude/skills`; use that path below. Wire it in `~/.claude/settings.json`:
 
 ```json
 "PreToolUse":       [{ "matcher": "Bash",  "hooks": [{ "type": "command", "command": "~/.claude/skills/wrap/hooks/wrap-gate.sh", "timeout": 5 }] }],

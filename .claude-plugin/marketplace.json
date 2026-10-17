@@ -3,8 +3,13 @@
   "owner": {
     "name": "Esi-Abolfazl"
   },
-  "description": "Claude Code mods (plugins) from Esi-Abolfazl/skills",
+  "description": "Agent skills and Claude Code mods from Esi-Abolfazl/skills",
   "plugins": [
+    {
+      "name": "skills",
+      "source": "./",
+      "description": "All the agent skills in this repo, for Claude Code"
+    },
     {
       "name": "usage-band",
       "source": "./mods/usage-band",
