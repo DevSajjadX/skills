@@ -25,7 +25,7 @@ It is the only record of these facts.
   asked or written unless the user names a place.
 - **Any field still `(not set)`** (all of them on the first run, when
   the file doesn't exist yet): ask for every one in a single message —
-  region and delivery destination, the markets they can buy from and
+  region and every delivery destination, the markets they can buy from and
   how goods reach them (direct, or a forwarder with its fee basis), the
   stores or kinds of stores to check. Write the answers in the format
   below, creating the folder if needed. A question the user skips or
@@ -36,8 +36,9 @@ It is the only record of these facts.
   answered.
 - **Research waits only for** a delivery destination and at least one
   market. Any other gap is worked around: `any` stores means the
-  market's main stores; an `unknown` shipping fee becomes a labelled
-  estimate (section 4).
+  market's main stores (its largest marketplaces and price aggregators,
+  the brand's official store, and the category's specialist shops); an
+  `unknown` shipping fee becomes a labelled estimate (section 4).
 - **Changes anytime:** the user may edit the file by hand, or ask
   ("add <store> to <market>", "drop <market>", "lift the <brand> ban");
   a request like that is the go-ahead — update the file and show the
@@ -47,7 +48,8 @@ It is the only record of these facts.
 - **`confirmed:`** is the month the user last said they can buy from
   that market. Older than six months → ask them to reconfirm when you
   show the block; on their answer, update the market and set it to the
-  current month.
+  current month. A market first written from the user's answer gets
+  the current month too.
 
 ```markdown
 # Buying profile
@@ -56,16 +58,16 @@ A field reading `(not set)` is asked on the next run.
 
 ## Region
 - Region: <country you live in>
-- Delivery destination: <city, country>
+- Delivery destination: <city, country; list each place you can receive goods>
 
 ## Markets
-- <market> — stores: <store names, or "any">; shipping: <direct | forwarder, fee basis | unknown>; confirmed: <YYYY-MM>
+- <market> · stores: <store names, or "any">; shipping: <direct | forwarder, fee basis | unknown; one per destination when they differ>; confirmed: <YYYY-MM>
 
 ## Store kinds
 - <e.g. official brand stores, large marketplaces, second-hand listings — or "any">
 
 ## Dealbreakers
-- <refused product or attribute — or "none">
+- <refused product or attribute; a store as "Store: <domain> · <its name in seller lists>"; or "none">
 ```
 
 ## 1. Fit to stated constraints, not top specs
@@ -77,12 +79,24 @@ A field reading `(not set)` is asked on the next run.
 - For mixed use, prefer the balanced option: good at both beats great
   at one use and cheap at the other (e.g. one grinder that handles
   both 16g V60 and 8g espresso well beats a V60-only star).
+- **For someone else** (a friend, family): their use, constraints and
+  dealbreakers come from the user; ask for the missing ones in one
+  message. The profile's markets, destinations and store bans count
+  only when the user buys and receives it for them; otherwise ask
+  where that person buys and receives. Nothing about them goes into
+  the profile.
 
 ## 2. Dealbreakers are filters, not preferences
 
 - Any attribute the user refuses (a material, a feature) eliminates the
   option entirely. Do not trade it off against other merits.
 - Check every candidate against the profile's dealbreakers (section 0).
+- **A store ban follows the seller, on any site:** an offer is out when
+  its seller is the banned store, by domain or by name in any script or
+  spelling. Seller lists often show a name and no domain. For a ban
+  written in one form, look up the other once (the store's own site
+  shows its name) and propose storing both, as
+  `Store: example.com · Example Shop`.
 - A newly refused attribute is a dealbreaker for the rest of the
   session. Propose adding it to the profile; write it only on the
   user's yes.
@@ -102,23 +116,26 @@ A field reading `(not set)` is asked on the next run.
 
 - Shortlist before sweeping markets: settle the candidates from the
   constraints, dealbreakers and reviews first, then check markets for
-  the shortlist only. A model the user names exactly is the shortlist.
+  the shortlist only. A model the user names exactly is the shortlist;
+  add at most two alternatives, labelled as such, only when it fails
+  the use or a dealbreaker, or no market sells it.
 - Subagents: at most one per market, plus one for reviews and specs.
   Each covers every shortlisted candidate, and none starts its own
   subagents. No subagent re-verifies facts another one already
   checked; the controller still opens the offer it recommends.
 - Each subagent, and the controller for its own searching, gets 15 web
-  searches (WebSearch calls; page reads don't count). A subagent never
-  searches past its budget. More searching waits for the user's
-  go-ahead for a stated number of searches, with the unchecked list in
-  hand.
+  searches per run (WebSearch calls; page reads don't count); a
+  subagent sent again for the same market spends what is left of its
+  15. A subagent never searches past its budget. More searching waits
+  for the user's yes to a number you propose, at most 15 more per ask,
+  with the unchecked list in hand.
 - A market subagent's brief carries the shortlist, its market with its
-  stores and shipping, the destination, the dealbreakers, the store
+  stores and shipping, the destinations, the dealbreakers, the store
   notes' path, all of section 3, and its budget. It returns, per offer:
   store, URL, seller, price with its currency unit and whether it was
   read raw or from a summary, condition (new, used, pre-order with ship
   date), warranty and where it is honored, regional version, stock,
-  price age, and shipping to the destination with its cost. Then the
+  price age, and shipping to each destination with its cost. Then the
   stores it left unchecked and why, the sites that blocked it, the
   sources with an unconfirmed unit, the searches it used, and any
   store-notes entries it would propose.
@@ -155,6 +172,16 @@ pages and specs.
 - **One browser driver.** Only the controller uses the browser. Market
   subagents use plain requests and list browser-only stores as
   unchecked; the controller opens those afterwards, one at a time.
+  Each page gets one load and 30 s of waiting (set the browser tool's
+  own timeout to 30 s where it has one). A load that errors, hangs
+  (one store page once took 513 s) or is still blank after that: the
+  store is unchecked apart from labelled search summaries (step 3),
+  the report says why, and the browser doesn't load that site again
+  this session.
+- **Classifieds** (second-hand listings): search by query alone, since
+  a guessed category id or slug fails and the query needs none. Prices
+  are asking prices; a token price or "negotiable" is not a price.
+  Compare used listings by condition and version.
 - **Units:** confirm each source's currency unit once, by one item
   checked two ways (the same product at two stores, or a page's shown
   price against its API value), both with tax included. APIs often use
@@ -207,9 +234,19 @@ pages and specs.
   and state the rate, its source and its fetch time next to each
   converted price. A rate-source rule in the user's standing
   instructions (e.g. for one currency) wins.
-- Report the real landed cost delivered to the profile's destination:
-  item price + shipping/forwarder fee + any import duty or tax not already in the
-  forwarder's door-to-door rate — never the list price.
+- Each rate is fetched once per session, by the controller, and reused
+  for every price. A rate page still blank 30 s after it loads: ask the
+  user for the rate it shows, labelled as read by the user.
+- Report the real landed cost delivered to each of the profile's
+  destinations: item price + shipping/forwarder fee + any import duty or
+  tax not already in the forwarder's door-to-door rate, never the list
+  price. A destination in the market's own country is domestic,
+  whatever the market's shipping field says: the store's delivery fee
+  only, no forwarder, no duty.
+- Origin tax: use the price the store charges for that destination
+  (many drop their own VAT on an order shipped abroad, as the cart
+  shows). A refund the buyer claims later, such as a tourist VAT
+  refund, is a note with its conditions, never subtracted.
 - Per-unit across variants: open every pack size and variant on the
   product page (1-pack, 2-pack, bundles) and price the quantity the
   user needs from each (unit price × count). Recommend the cheapest
@@ -219,8 +256,12 @@ pages and specs.
   show a clearly labelled estimate with its basis (e.g. $/kg × weight),
   never a bare number. A rate you look up is proposed for the profile
   (section 0).
-- If shipping from a market to the destination is infeasible or
-  unclear, flag it instead of presenting the option as buyable.
+- That estimate is for a route that exists: `unknown` in the profile
+  means the fee, not the route. A route not known to exist (the stores
+  don't ship there and the profile names no forwarder for that
+  destination) is flagged instead, and the option is not presented as
+  buyable there.
+- A budget the user states caps the landed price at each destination.
 
 ## Shape of every recommendation
 
@@ -230,5 +271,7 @@ pages and specs.
   available in, with shipping feasibility noted, and the stores checked
   per market so a missed market is easy to spot, plus the stores left
   unchecked and why.
+- Several destinations: one landed price per destination for each
+  option, and the cheapest buyable route named for each destination.
 - End with any store-notes entries proposed this run (section 3).
 - For mixed-use asks, lead with the balanced pick.
