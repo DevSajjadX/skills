@@ -11,6 +11,11 @@ import { buildView, layouts } from './view'
 type ClientEl = (p: { key: string; module: string; props: unknown; width: string; height?: string }) => never
 type SvgEl = (p: { source: string; width: number; height: number; alt: string }) => never
 const PANE = 'usage-band'
+// Surfaces that tore down one of this plugin's Clients: under load the desktop's module frame misses its
+// watchdogs (10s to load, 2s to draw) and takes every instance of the plugin with it. There the sites
+// draw without Clients until the next retry.
+const down = new Set<string>()
+const RETRY_MS = 30_000
 const EMPTY: Stats = { transcript: '', scan: NO_SCAN, turnCosts: [] }
 const stats = atom({ plugin: 'usage-band', key: 'stats' } as const, EMPTY)
 // A Stats kept by an older version lacks newer fields; the spread fills them in.
@@ -67,6 +72,12 @@ const clock = (ms: number) => {
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
+    // First, so a failure below never stops it. A Client that fails again is dropped again.
+    $.clock.every(RETRY_MS, () => {
+      if (down.size === 0) return
+      down.clear()
+      $.ui.invalidate('ui.render')
+    })
     await $.command.register({ name: 'usage-band', description: 'Open the usage details pane (limits, context, tokens, turns, tests)' })
     // The cost so far is the baseline the next turn's own cost is measured from.
     const usd = (await $.session.usage().catch(() => undefined))?.cost?.usd
@@ -150,6 +161,12 @@ export const register: Register = on => {
     return {}
   }).catch(($, e, next) => next(e))
 
+  // The engine draws the failed Client's site again once this answers; the render hooks leave it out.
+  on('ui.fault', ($, e, next) => {
+    down.add(e.surface)
+    return next(e)
+  })
+
   // Never calls next: this band replaces whatever plugins beneath would draw here.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey) return next(e)
@@ -161,7 +178,7 @@ export const register: Register = on => {
 
 
     // The terminal: chips in its monospace cells, laid out to the region's real width; they take clicks.
-    if (e.surface === 'terminal' && 'Client' in table) {
+    if (e.surface === 'terminal' && 'Client' in table && !down.has(e.surface)) {
       const { Client } = table as unknown as { Client: ClientEl }
       // Client props are plain JSON: the round trip drops unset fields and turns a missing cell into null.
       const props = JSON.parse(JSON.stringify({ layouts: layouts(v) }))
@@ -178,7 +195,7 @@ export const register: Register = on => {
       const grids = all.find(g => bandWidth(...g) <= slot) ?? all[all.length - 1]!
       const svg = bandSvg(grids, slot)
       const drawing = <Svg source={svg.source} width={svg.width} height={svg.height} alt={alt} />
-      if (!('Client' in table)) return drawing
+      if (!('Client' in table) || down.has(e.surface)) return drawing
       // An Svg takes no clicks, so invisible strips lie over it, one per row of cards, each as tall as
       // its share of the drawing (rows are evenly spaced, so the strip edges fall in the gaps).
       const { Client } = table as unknown as { Client: ClientEl }
@@ -221,7 +238,7 @@ export const register: Register = on => {
     const Svg = 'Svg' in table ? (table as unknown as { Svg: SvgEl }).Svg : undefined
     const c = v.context
     const open = new Set(s.open ?? ['context'])
-    const Client = 'Client' in table ? (table as unknown as { Client: ClientEl }).Client : undefined
+    const Client = 'Client' in table && !down.has(e.surface) ? (table as unknown as { Client: ClientEl }).Client : undefined
     const join = (...xs: (string | false | undefined)[]) => xs.filter(Boolean).join(' · ')
     const pct = (n: number) => `${n.toFixed(1).replace(/\.0$/, '')}%`
     // shortcut: the same cell-to-pixel factor as the band; measure again if the desktop changes its font.
