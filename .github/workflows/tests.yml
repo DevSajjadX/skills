@@ -13,3 +13,4 @@ jobs:
       - run: bash skills/wrap/tests/gate.sh
       - run: uv run skills/pr-summary/abridge.py selftest
       - run: uv run skills/task-summary/sanitize.py selftest
+      - run: uv run skills/iran-stores/iran_stores.py selftest
