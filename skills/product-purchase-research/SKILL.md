@@ -246,6 +246,10 @@ pages and specs.
   price. A destination in the market's own country is domestic,
   whatever the market's shipping field says: the store's delivery fee
   only, no forwarder, no duty.
+- An item that stays where it is used (furniture, large appliances,
+  fixtures) is priced for one destination: where it will be used. That
+  is the user's region, or the place the ask names. Name it, and why,
+  in the constraints line.
 - Origin tax: use the price the store charges for that destination
   (many drop their own VAT on an order shipped abroad, as the cart
   shows). A refund the buyer claims later, such as a tourist VAT
@@ -274,7 +278,8 @@ pages and specs.
   available in, with shipping feasibility noted, and the stores checked
   per market so a missed market is easy to spot, plus the stores left
   unchecked and why.
-- Several destinations: one landed price per destination for each
-  option, and the cheapest buyable route named for each destination.
+- Several destinations priced (section 4): one landed price per
+  destination for each option, and the cheapest buyable route named
+  for each destination.
 - End with any store-notes entries proposed this run (section 3).
 - For mixed-use asks, lead with the balanced pick.
