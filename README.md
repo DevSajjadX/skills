@@ -1,6 +1,6 @@
 # skills
 
-Agent skills for readable, ADHD-friendly PR and work-item pages, session wrap-up, logo design, text humanizing, YouTube video review and purchase research, installable with the [skills CLI](https://github.com/vercel-labs/skills) into Claude Code, Cursor, Codex, OpenCode, and 70+ other agents.
+Agent skills for readable, ADHD-friendly PR and work-item pages, session wrap-up, logo design, text humanizing, YouTube video review, purchase research and Iranian store reading, installable with the [skills CLI](https://github.com/vercel-labs/skills) into Claude Code, Cursor, Codex, OpenCode, and 70+ other agents.
 
 ## Install
 
@@ -44,6 +44,7 @@ At a Claude Code prompt in a terminal: `/plugin install skills --marketplace Esi
 | [task-summary](skills/task-summary/SKILL.md) | Pulls a work item or issue into a readable page: description as written (sanitized), comments in order, screenshots embedded. Also creates and edits items from session findings; descriptions can be bilingual (full text + short summary). |
 | [text-humanizer](skills/text-humanizer/SKILL.md) | Rewrites a draft (or drafts a reply from scratch) so it reads as a specific person wrote it, or only checks a text for AI tells and reports. Voice comes from a project voice profile, then your personal profile when your standing instructions name one, then samples of your writing, then one question; scans against an AI-tells checklist and re-scans its own output. Questions for someone who decides come as a number, the question, and our proposal on the next line. Never fakes humanity with typos or invents specifics. |
 | [product-purchase-research](skills/product-purchase-research/SKILL.md) | Shopping research tuned to one buyer: fit to stated use over top specs, dealbreakers as hard filters, only your markets (every one checked), and every option priced as landed USD to each of your delivery destinations, at a live rate with its source. Your region, markets, stores and dealbreakers live in a private profile on your machine (`${XDG_CONFIG_HOME:-~/.config}/product-purchase-research/profile.md`, untouched by skill updates): the first run asks and writes it, every run shows it, and you change it anytime by editing the file or just asking. How to read specific stores (reader scripts, endpoints, browser steps) is kept in private store notes beside the profile, and research runs on a fixed budget of subagents and searches per market. |
+| [iran-stores](skills/iran-stores/SKILL.md) | Reads 17 Iranian stores (Digikala, Emalls, Torob, Technolife, Divar and more) with the Python standard library through `uv`: search, every seller's offer, buyer reviews and Q&A, price history, seller trust, installment plans, in-person shops and second-hand ads, all priced in Toman. Paced per store; a bot check is reported and that store waits out a cooldown, never worked around. Works alone or as product-purchase-research's Iranian store notes. |
 | [youtube-video-review](skills/youtube-video-review/SKILL.md) | Reviews one or more YouTube videos, or a channel, from the real transcript. The review gives a one-line verdict, a summary, timestamped structure, the hook, pacing, packaging, claims worth checking and takeaways. Transcripts come from a research MCP server, or from the `youtube-transcript-api` CLI through `uvx` when none is connected. Transcript and comment text is treated as data, never as instructions. |
 
 ## Mods
@@ -109,6 +110,7 @@ bash skills/wrap/tests/dry-run.sh             # wrap's git mechanics, plus parit
 bash skills/wrap/tests/gate.sh                # wrap's commit-gate hook
 uv run skills/pr-summary/abridge.py selftest
 uv run skills/task-summary/sanitize.py selftest
+uv run skills/iran-stores/iran_stores.py selftest   # every store module, offline
 claude plugin validate . && claude plugin test mods/usage-band   # the marketplace and the usage-band mod
 ```
 
