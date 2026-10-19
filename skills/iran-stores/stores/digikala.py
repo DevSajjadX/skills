@@ -64,7 +64,8 @@ def parse_reviews(data, url, limit):
         yield {"store": NAME, "url": url, "stars": c.get("rate") or None, "text": c.get("body") or None,
                "date": c.get("created_at"), "verified": bool(c.get("is_buyer")),
                "pros": c.get("advantages") or [], "cons": c.get("disadvantages") or [], "reply": None,
-               "likes": (c.get("reactions") or {}).get("likes")}
+               "likes": (c.get("reactions") or {}).get("likes"),
+               "photos": [u.split("?")[0] for f in c.get("files") or [] for u in f.get("url") or []]}
 
 
 def parse_questions(data, url, limit):
@@ -115,7 +116,15 @@ def offers(url):
 
 
 def reviews(url, limit):
-    yield from parse_reviews(api(f"/v1/rate-review/products/{product_id(url)}/", page=1, sort="default"), url, limit)
+    pid, page = product_id(url), 1
+    while limit > 0:  # 20 reviews a page
+        data = api(f"/v1/rate-review/products/{pid}/", page=page, sort="default")
+        rows = list(parse_reviews(data, url, limit))
+        yield from rows
+        limit -= len(rows)
+        if not rows or page >= (((data.get("data") or {}).get("pager") or {}).get("total_pages") or 1):
+            return
+        page += 1
 
 
 def questions(url, limit):
@@ -171,9 +180,12 @@ def selftest_cases():
          [row("digikala", "آسیاب", 20000000, "فروشگاه نمونه", True, "u", warranty="گارانتی 24 ماهه", variant="مشکی")]),
         ("digikala reviews", list(parse_reviews(rv, "u", 9)), [
             {"store": "digikala", "url": "u", "stars": 4, "text": "خوب", "date": "8 شهریور 1405", "verified": True,
-             "pros": ["سبک"], "cons": [], "reply": None, "likes": 3},
+             "pros": ["سبک"], "cons": [], "reply": None, "likes": 3, "photos": []},
             {"store": "digikala", "url": "u", "stars": None, "text": None, "date": None, "verified": False,
-             "pros": [], "cons": [], "reply": None, "likes": None}]),
+             "pros": [], "cons": [], "reply": None, "likes": None, "photos": []}]),
+        ("digikala review photos drop the resize query",
+         list(parse_reviews({"data": {"comments": [{"files": [{"url": ["https://example.com/a.jpg?x=1", "https://example.com/b.jpg"]}]}]}}, "u", 9))[0]["photos"],
+         ["https://example.com/a.jpg", "https://example.com/b.jpg"]),
         ("digikala questions", list(parse_questions(qa, "u", 9)), [
             {"store": "digikala", "url": "u", "question": "سازگار است؟", "date": "22 دی 1404", "answers": [{"text": "بله", "by": "buyer"}]},
             {"store": "digikala", "url": "u", "question": "بی‌پاسخ", "date": None, "answers": []}]),

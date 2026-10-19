@@ -116,6 +116,7 @@ def core_cases():
             cases.append(("paced stores keep separate state", core.state_path("alpha") != core.state_path("beta"), True))
             cases.append(("paced defaults come from DEFAULT_PACE", core.paced.__wrapped__.__defaults__, core.DEFAULT_PACE))
             cases += mcp_cases()
+            cases += digikala_review_paging_cases()
 
     cases += [
         ("match_level all, case and digits", core.match_level("mx master ۳s", "Logitech MX Master 3S"), "all"),
@@ -220,6 +221,27 @@ def installment_cases():
         ("cli --installment with a flagged and an unflagged store: the unflagged is skipped, exit 0", results[3], (0, ["pay"], skip("plain"), [("pay", True)])),
         ("cli --installment with a kind of unflagged stores: exit 3", results[4], (3, [], skip("other"), [])),
         ("cli nearby applies --limit", run_nearby_limit(), 2),
+    ]
+
+
+def digikala_review_paging_cases():
+    """Two fake review pages on the `_fetch_raw` seam; the second carries a photo with a resize query."""
+    photo = "https://example.com/comment-files/a.jpg"
+    calls = []
+
+    def fetch(req, timeout=25):
+        page = int(req.full_url.split("page=")[1].split("&")[0])
+        calls.append(page)
+        files = [{"url": [photo + "?x-oss-process=image/resize"]}] if page == 2 else []
+        return 200, json.dumps({"data": {"pager": {"total_pages": 2}, "comments": [{"rate": 5, "body": f"p{page}", "files": files}]}}), {}
+    reviews = core.modules()["digikala"].reviews
+    with patch_fetch(fetch):
+        paged = [(r["text"], r["photos"]) for r in reviews("https://www.digikala.com/product/dkp-1/", 9)]
+        paged_calls, calls[:] = list(calls), []
+        capped = [r["text"] for r in reviews("https://www.digikala.com/product/dkp-1/", 1)]
+    return [
+        ("digikala reviews page on to the last page, photos as plain URLs", (paged, paged_calls), ([("p1", []), ("p2", [photo])], [1, 2])),
+        ("digikala reviews stop at the limit without fetching the next page", (capped, calls), (["p1"], [1])),
     ]
 
 
