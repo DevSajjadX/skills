@@ -158,6 +158,9 @@ pages and specs.
   and propose updating the note.
 - **A store without notes:** stop at the first step that returns
   prices.
+  0. The rows of [sources.md](sources.md) for the market: an official
+     API, a vetted MCP server, or a reader skill. Rows needing a key
+     the user hasn't set are skipped and named.
   1. A plain request to the store's search page.
   2. The browser, when that gets a 403, a bot check, or a page without
      prices (drawn by JavaScript). While there, look at the JSON
