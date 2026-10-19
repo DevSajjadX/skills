@@ -43,7 +43,8 @@ def parse_search(page, q, limit, search_url):
         # A single-shop listing has no Emalls page, only a click-tracker redirect: link the search page.
         url = "https://emalls.ir" + quote(html.unescape(href.group(1)), safe="/~") if href else search_url
         price = re.search(r'class="prd-price">\s*<span>(.*?)</span>', b, re.DOTALL)
-        if not price and "prd-price" in b:
+        # An out-of-stock listing keeps an empty prd-price box next to its ناموجود label.
+        if not price and "prd-price" in b and not re.search(r'class="prd-price">\s*</div>', b):
             raise LayoutChanged("prd-price markup changed")
         toman = listed_price(price.group(1)) if price else None
         buy = re.search(r"خرید‌?\s*از\s*([^<]+)<", html.unescape(b))
@@ -115,6 +116,10 @@ def selftest_cases():
         ("emalls used, out of stock", (emo[1]["used"], emo[1]["in_stock"], emo[1]["toman"]), (True, False, None)),
         ("emalls in-stock placeholder price is no price", emo[2]["toman"], None),
         ("emalls listing without a number has no price", listed_price("<b>ناموجود</b>"), None),
+        ("emalls out-of-stock listing with an empty price box",
+         list(parse_search(block + '<div class="price-box"><span class="item-price-discount-box not-exist">ناموجود</span>'
+                                   '<div class="prd-price"></div></div>', "x", 9, "s"))[0],
+         row("emalls", "x", None, None, False, "https://emalls.ir/x~id~1", match="all")),
         *[(f"emalls match rejects {u}", match(u), False) for u in (
             "https://evil.example/?emalls.ir~id~1", "file:///etc/hosts#emalls.ir~id~", "http://emalls.ir/x~id~1")],
         ("emalls match accepts the host and subdomains", (match("https://emalls.ir/صندلی~id~9"), match("https://www.emalls.ir/x")), (True, True)),
