@@ -14,3 +14,4 @@ jobs:
       - run: uv run skills/pr-summary/abridge.py selftest
       - run: uv run skills/task-summary/sanitize.py selftest
       - run: uv run skills/iran-stores/iran_stores.py selftest
+      - run: uv run skills/youtube-video-review/quotes.py selftest
