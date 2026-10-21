@@ -1,6 +1,6 @@
 ---
 name: product-purchase-research
-description: Use when the user wants a product recommendation, comparison, or shopping research for something physical to buy — coffee gear, hardware, electronics, cases — including "which should I get" questions, price checks, and availability checks. Not for supplements, vitamins, or other nutrition products (dosing and safety questions are out of scope).
+description: Use when the user wants a product recommendation, comparison, or shopping research for something physical to buy (coffee gear, hardware, electronics, cases), including "which should I get" questions, price checks, and availability checks, and for any price, stock, review, price-history, seller or installment check on an Iranian store (Digikala, Emalls, Torob, Technolife, Khanoumi, Divar, Sheypoor and others). Not for supplements, vitamins, or other nutrition products (dosing and safety questions are out of scope).
 ---
 
 # Product purchase research
@@ -217,6 +217,11 @@ pages and specs.
   price unit, known blocks); every other rule in this skill still
   applies. When a note's method fails, fall back to the steps below
   and propose updating the note.
+- **Iranian stores** (17, from Digikala to Divar): use the bundled
+  reader, before hand-built URLs or the browser. Its commands and how
+  to read its rows are in [iran-stores/README.md](iran-stores/README.md).
+  A quick Iranian price or stock check needs only that file, not the
+  full research flow.
 - **A store without notes:** stop at the first step that returns
   prices.
   0. The rows of [sources.md](sources.md) for the market: an official
