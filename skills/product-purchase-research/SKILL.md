@@ -6,8 +6,9 @@ description: Use when the user wants a product recommendation, comparison, or sh
 # Product purchase research
 
 Work in this order: show the profile and load the store notes → pin
-the constraints → apply dealbreakers as filters → shortlist → check
-every market → compute landed USD → recommend.
+the constraints → write the coverage checklist → apply dealbreakers as
+filters → shortlist until saturated → check every market → compute
+landed USD → recommend.
 
 ## 0. The user's buying profile
 
@@ -86,6 +87,27 @@ A field reading `(not set)` is asked on the next run.
   where that person buys and receives. Nothing about them goes into
   the profile.
 
+### Coverage checklist
+
+Before the first search, write the rows the research must close.
+Research stops when every row is closed or the budget (section 3) is
+spent; the report says which. The open rows are the unchecked list a
+request for more searches carries.
+
+- One row per hard constraint, in the user's own words, not
+  paraphrased: a paraphrase can drop the condition that matters.
+- One row per dealbreaker, closed when every shortlisted candidate
+  has been checked against it.
+- "Shortlist saturated", closed by the saturation check (section 3).
+- One row per shortlisted candidate × market, added once the
+  shortlist is settled.
+- Per destination: the cheapest offer opened, and its landed price.
+
+Each row ends as ✓ with its source (a URL, or the store and offer),
+partial with what is missing, or ✗ with why (not sold there, blocked,
+budget spent). A row backed only by search-result summaries is
+partial, never ✓.
+
 ## 2. Dealbreakers are filters, not preferences
 
 - Any attribute the user refuses (a material, a feature) eliminates the
@@ -119,10 +141,31 @@ A field reading `(not set)` is asked on the next run.
   the shortlist only. A model the user names exactly is the shortlist;
   add at most two alternatives, labelled as such, only when it fails
   the use or a dealbreaker, or no market sells it.
+- **Saturation check** (skipped when the user names a model exactly):
+  the reviews-and-specs subagent, or the controller when it searches
+  alone, looks for candidates in two framings that reach different
+  sources, such as review sites against community forums, or
+  use-led ("best <category> for <use>") against spec-led (the
+  constraints written as specs). It counts only candidates that pass
+  the constraints and dealbreakers. When 70% or more of the second
+  framing's candidates were already found by the first, or the second
+  finds none the first missed, the shortlist is saturated. Below that, run one chaining round from the leading
+  candidates ("alternatives to <model>", "<model> vs", the rivals
+  their reviews compare against) and count again against everything
+  found so far; still below, settle the shortlist anyway and mark the
+  row partial with the counts. Both framings and the chaining round
+  come out of the subagent's 15 searches. The 70% is a starting
+  default borrowed from literature search, not yet tuned for shopping.
 - Subagents: at most one per market, plus one for reviews and specs.
   Each covers every shortlisted candidate, and none starts its own
   subagents. No subagent re-verifies facts another one already
   checked; the controller still opens the offer it recommends.
+- **Every subagent reports in three groups:** found (each with its
+  source), searched but none (what was searched), and not searched
+  (and why: budget, blocked, browser-only). Not searched is never
+  folded into none: it is the next thing to check, not an absence.
+  The reviews subagent also returns its candidates per framing, the
+  overlap count ("9 of 11 already found") and the searches it used.
 - Each subagent, and the controller for its own searching, gets 15 web
   searches per run (WebSearch calls; page reads don't count); a
   subagent sent again for the same market spends what is left of its
@@ -135,8 +178,8 @@ A field reading `(not set)` is asked on the next run.
   store, URL, seller, price with its currency unit and whether it was
   read raw or from a summary, condition (new, used, pre-order with ship
   date), warranty and where it is honored, regional version, stock,
-  price age, and shipping to each destination with its cost. Then the
-  stores it left unchecked and why, the sites that blocked it, the
+  price age, and shipping to each destination with its cost, all in
+  the three groups above. Then the sites that blocked it, the
   sources with an unconfirmed unit, the searches it used, and any
   store-notes entries it would propose.
 
@@ -274,6 +317,9 @@ pages and specs.
 
 - Open with the profile block (section 0), then the constraints you
   optimized for, so a mismatch is visible immediately.
+- Then the coverage checklist (section 1) with each row's state, the
+  saturation count, and why research stopped (every row closed, or
+  budget spent with the open rows named).
 - For each option: landed USD price per market it is actually
   available in, with shipping feasibility noted, and the stores checked
   per market so a missed market is easy to spot, plus the stores left
