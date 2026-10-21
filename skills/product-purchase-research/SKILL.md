@@ -100,7 +100,8 @@ request for more searches carries.
   has been checked against it.
 - "Shortlist saturated", closed by the saturation check (section 3).
 - One row per shortlisted candidate × market, added once the
-  shortlist is settled.
+  shortlist is settled. A candidate sold in one country only (a local
+  brand) gets its market's row plus one ✗ row naming the other markets.
 - Per destination: the cheapest offer opened, and its landed price.
 
 Each row ends as ✓ with its source (a URL, or the store and offer),
@@ -129,7 +130,10 @@ partial, never ✓.
   (section 0).
 - Check every market — at its listed stores, or stores of its listed
   kinds — for every serious candidate; never stop at the first one
-  that has it.
+  that has it. A serious candidate is one on the shortlist: it passes
+  every hard constraint and dealbreaker. One that fails a constraint
+  leaves the shortlist and gets no more market checks; the report
+  names it with the constraint it failed.
 - If a market looks changed since its `confirmed:` month (a store
   gone, shipping halted), ask rather than assume, then update it as in
   section 0.
@@ -156,6 +160,10 @@ partial, never ✓.
   row partial with the counts. Both framings and the chaining round
   come out of the subagent's 15 searches. The 70% is a starting
   default borrowed from literature search, not yet tuned for shopping.
+  When review sites and forums cover none of the makers the market's
+  stores list (local or unbranded goods), both framings run inside the
+  market: one store's own search against a price aggregator, or the
+  spec-led query against the use-led one on the same stores.
 - Subagents: at most one per market, plus one for reviews and specs.
   Each covers every shortlisted candidate, and none starts its own
   subagents. No subagent re-verifies facts another one already
@@ -289,10 +297,15 @@ pages and specs.
   price. A destination in the market's own country is domestic,
   whatever the market's shipping field says: the store's delivery fee
   only, no forwarder, no duty.
+- A delivery fee the store shows only in a cart or at checkout: take
+  it from the store's published shipping table when one exists;
+  otherwise report the landed price as item price + "delivery fee
+  shown at checkout", never a guessed fee. Never add items to a cart.
 - An item that stays where it is used (furniture, large appliances,
   fixtures) is priced for one destination: where it will be used. That
-  is the user's region, or the place the ask names. Name it, and why,
-  in the constraints line.
+  is the profile destination inside the user's region, or the place the
+  ask names. Name it, and why, in the constraints line. This wins over
+  a profile note to compare every destination.
 - Origin tax: use the price the store charges for that destination
   (many drop their own VAT on an order shipped abroad, as the cart
   shows). A refund the buyer claims later, such as a tourist VAT
