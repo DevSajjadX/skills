@@ -354,6 +354,15 @@ pages and specs.
   available in, with shipping feasibility noted, and the stores checked
   per market so a missed market is easy to spot, plus the stores left
   unchecked and why.
+- Every offer is one click away: the store and seller, linked to the
+  page the price came from (the listing itself, never a search page or
+  a store front), then price → landed USD, then one note line
+  (warranty, stock, price age, what is unchecked). An offer with no
+  page URL says why.
+- One card per option: its name, role (pick, runner-up, budget) and
+  why it fits, then its offers, cheapest buyable first. When the host
+  can publish a page, put the cards there and link it; in chat, one
+  heading and list per option. Never a table of options.
 - Several destinations priced (section 4): one landed price per
   destination for each option, and the cheapest buyable route named
   for each destination.
