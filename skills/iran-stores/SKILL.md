@@ -17,7 +17,7 @@ names this skill in its `## Store notes` section.
 ```bash
 uv run "$SKILL"/iran_stores.py stores                                 # what each store supports
 uv run "$SKILL"/iran_stores.py search "<query>"                       # Digikala, Emalls, Torob
-uv run "$SKILL"/iran_stores.py search "<query>" --kind electronics    # or --store technolife ...
+uv run "$SKILL"/iran_stores.py search "<query>" --kind electronics    # only that kind; or --store technolife ...
 uv run "$SKILL"/iran_stores.py search "<query>" --installment         # Torob only today: sold in installments
 uv run "$SKILL"/iran_stores.py offers|reviews|questions|history|installments|nearby "<product url>"
 uv run "$SKILL"/iran_stores.py seller "<seller or shop url or id>" [--store NAME]   # a bare id needs --store
@@ -34,9 +34,12 @@ uv run "$SKILL"/iran_stores.py seller "<seller or shop url or id>" [--store NAME
 | books | taaghche, fidibo (ebooks, audiobooks; Taaghche adds a printed price when it has one); 30book (printed) |
 | classifieds | divar, sheypoor |
 
-Pick the stores by product: electronics and gear add `--kind
-electronics`, cosmetics `--kind beauty`, clothes `--store shopino`,
-used items `--kind classifieds`. `stores` lists which commands each
+Pick the stores by product. `--kind` and `--store` replace the
+default stores, so name the defaults too when a kind should add to
+them: electronics and gear `--store digikala --store emalls --store
+torob --kind electronics`, cosmetics the same with `--kind beauty`,
+clothes `--store shopino`, used items `--kind classifieds` alone.
+`stores` lists which commands each
 store has; a missing one prints `<store>: <command> not available`.
 `--installment` runs only stores with that filter (Torob); a store
 without it prints `<store>: --installment not available` and is skipped.
