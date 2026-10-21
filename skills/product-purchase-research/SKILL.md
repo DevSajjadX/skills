@@ -142,9 +142,12 @@ partial, never ✓.
 
 - Shortlist before sweeping markets: settle the candidates from the
   constraints, dealbreakers and reviews first, then check markets for
-  the shortlist only. A model the user names exactly is the shortlist;
-  add at most two alternatives, labelled as such, only when it fails
-  the use or a dealbreaker, or no market sells it.
+  the shortlist only. A candidate that another shortlisted one matches
+  or beats on every checklist row and on the use is dominated: it
+  leaves the shortlist before the sweep, and the report names it with
+  the candidate that dominates it. A model the user names exactly is
+  the shortlist; add at most two alternatives, labelled as such, only
+  when it fails the use or a dealbreaker, or no market sells it.
 - **Saturation check** (skipped when the user names a model exactly):
   the reviews-and-specs subagent, or the controller when it searches
   alone, looks for candidates in two framings that reach different
@@ -157,9 +160,12 @@ partial, never ✓.
   candidates ("alternatives to <model>", "<model> vs", the rivals
   their reviews compare against) and count again against everything
   found so far; still below, settle the shortlist anyway and mark the
-  row partial with the counts. Both framings and the chaining round
-  come out of the subagent's 15 searches. The 70% is a starting
-  default borrowed from literature search, not yet tuned for shopping.
+  row partial with the counts. When web search returns nothing usable
+  in the market's language, run the chaining round through the
+  market's own store search instead, and say so. Both framings and
+  the chaining round come out of the subagent's 15 searches. The 70%
+  is a starting default borrowed from literature search, not yet tuned
+  for shopping.
   When review sites and forums cover none of the makers the market's
   stores list (local or unbranded goods), both framings run inside the
   market: one store's own search against a price aggregator, or the
@@ -174,6 +180,10 @@ partial, never ✓.
   folded into none: it is the next thing to check, not an absence.
   The reviews subagent also returns its candidates per framing, the
   overlap count ("9 of 11 already found") and the searches it used.
+- Spec checks come out of the same budget: verify from the maker's
+  page or manual only the specs that decide a checklist row, and only
+  for shortlisted candidates. Once one maker's spec-page or manual URL
+  pattern is found, read the others by URL instead of searching.
 - Each subagent, and the controller for its own searching, gets 15 web
   searches per run (WebSearch calls; page reads don't count); a
   subagent sent again for the same market spends what is left of its
@@ -300,12 +310,16 @@ pages and specs.
 - A delivery fee the store shows only in a cart or at checkout: take
   it from the store's published shipping table when one exists;
   otherwise report the landed price as item price + "delivery fee
-  shown at checkout", never a guessed fee. Never add items to a cart.
+  shown at checkout", never a guessed fee. A fee shown only as a floor
+  ("from €7.99") is not a table: report it as "delivery from €7.99,
+  exact at checkout". Never add items to a cart.
 - An item that stays where it is used (furniture, large appliances,
   fixtures) is priced for one destination: where it will be used. That
   is the profile destination inside the user's region, or the place the
   ask names. Name it, and why, in the constraints line. This wins over
-  a profile note to compare every destination.
+  a profile note to compare every destination. The other destinations
+  get no price, so a market with no known route to the one destination
+  is not searched: its checklist row is ✗ "no route to <that place>".
 - Origin tax: use the price the store charges for that destination
   (many drop their own VAT on an order shipped abroad, as the cart
   shows). A refund the buyer claims later, such as a tourist VAT
@@ -315,6 +329,9 @@ pages and specs.
   user needs from each (unit price × count). Recommend the cheapest
   combination and show the arithmetic; a multi-pack is not assumed
   cheaper.
+- A calculator or formula input you had to estimate (a box size, a
+  weight): the result is an estimate. State the input and its basis,
+  and the result for a plausible larger input, so the spread shows.
 - A market whose shipping fee is `unknown`, or a duty nobody knows:
   show a clearly labelled estimate with its basis (e.g. $/kg × weight),
   never a bare number. A rate you look up is proposed for the profile
