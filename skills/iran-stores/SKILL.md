@@ -1,20 +1,26 @@
+---
+name: iran-stores
+description: Use for a price, stock, review, price-history, seller-trust or installment check on an Iranian store (Digikala, Emalls, Torob, Technolife, MasterKala, Khanoumi, Asal Banoo, Shopino, SnappMarket, Okala, Taaghche, Fidibo, 30book, Divar, Sheypoor, Pasavard), and as the Iranian store notes of product-purchase-research.
+---
+
 # Iranian store reader
 
-Part of product-purchase-research: read this for every Iranian market
-and for any price, stock or review check on an Iranian store. A
-standard-library Python reader for 17 Iranian stores: search, every
+A standard-library Python reader for 17 Iranian stores: search, every
 seller's offer, buyer reviews, Q&A, price history, seller trust,
 installment plans and in-person shops. Run it before hand-built URLs
-or the browser, one call at a time. Needs `uv`. `IRAN` is this folder,
-`<product-purchase-research base directory>/iran-stores`.
+or the browser, one call at a time. Needs `uv`. `SKILL` is this
+skill's base directory.
+
+With product-purchase-research: a profile whose markets include Iran
+names this skill in its `## Store notes` section.
 
 ```bash
-uv run "$IRAN"/iran_stores.py stores                                 # what each store supports
-uv run "$IRAN"/iran_stores.py search "<query>"                       # Digikala, Emalls, Torob
-uv run "$IRAN"/iran_stores.py search "<query>" --kind electronics    # only that kind; or --store technolife ...
-uv run "$IRAN"/iran_stores.py search "<query>" --installment         # Torob only today: sold in installments
-uv run "$IRAN"/iran_stores.py offers|reviews|questions|history|installments|nearby "<product url>"
-uv run "$IRAN"/iran_stores.py seller "<seller or shop url or id>" [--store NAME]   # a bare id needs --store
+uv run "$SKILL"/iran_stores.py stores                                 # what each store supports
+uv run "$SKILL"/iran_stores.py search "<query>"                       # Digikala, Emalls, Torob
+uv run "$SKILL"/iran_stores.py search "<query>" --kind electronics    # only that kind; or --store technolife ...
+uv run "$SKILL"/iran_stores.py search "<query>" --installment         # Torob only today: sold in installments
+uv run "$SKILL"/iran_stores.py offers|reviews|questions|history|installments|nearby "<product url>"
+uv run "$SKILL"/iran_stores.py seller "<seller or shop url or id>" [--store NAME]   # a bare id needs --store
 ```
 
 | Kind | Stores (`--store` name) |
@@ -147,4 +153,4 @@ notes, not measured here): run it once more, then use the browser.
   instead (credits in `THIRD_PARTY.md`).
 - One module per store in `stores/`, following the module contract in
   the core's docstring. Self-test after any edit:
-  `uv run "$IRAN"/iran_stores.py selftest`.
+  `uv run "$SKILL"/iran_stores.py selftest`.

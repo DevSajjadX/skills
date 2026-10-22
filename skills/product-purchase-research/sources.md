@@ -106,7 +106,7 @@ when it fails.
 
 | Market | Source | Access | Notes |
 |---|---|---|---|
-| Iran | the bundled reader, [iran-stores/README.md](iran-stores/README.md) | None | 17 stores: offers, reviews, price history, seller trust, installments |
+| Iran | the `iran-stores` skill | None | 17 stores: offers, reviews, price history, seller trust, installments |
 | UAE | YallaDeals (`https://yalladeals.io/mcp`) | Keyless | Amazon.ae and noon, 90-day history; affiliate; noon origin unverified |
 | UAE | Brainy UAE Prices (`https://prices.brainy.ae/mcp/v2`) | Keyless | Dubai groceries, dated values |
 | Israel | SuperMCP (`https://supermcp.co.il/mcp`) | Keyless | Legally mandated chain price feeds, 11 chains, daily |
