@@ -43,9 +43,11 @@ It is the only record of these facts.
 - **Changes anytime:** the user may edit the file by hand, or ask
   ("add <store> to <market>", "drop <market>", "lift the <brand> ban");
   a request like that is the go-ahead — update the file and show the
-  new block. Facts you only infer (a new refusal, a forwarder rate you
-  looked up) are proposed for the file and written only on the user's
-  yes.
+  new block. A market added here or on the first run whose reader
+  skill isn't installed gets the install question (section 3, Reader
+  skills first) right away, as that run's one ask. Facts you only
+  infer (a new refusal, a forwarder rate you looked up) are proposed
+  for the file and written only on the user's yes.
 - **`confirmed:`** is the month the user last said they can buy from
   that market. Older than six months → ask them to reconfirm when you
   show the block; on their answer, update the market and set it to the
@@ -209,6 +211,21 @@ page's own data), not from a fetch tool's summary of a page:
 summaries can drop or change digits. Summaries are fine for finding
 pages and specs.
 
+- **Reader skills first.** Before reading any store: for each profile
+  market whose [sources.md](sources.md) row is a reader skill missing
+  from your available skills (the `iran-stores` skill, for a profile
+  with Iran), ask the user once per run whether to install it,
+  showing `npx skills add Esi-Abolfazl/skills --skill <name> -g -y`.
+  The question says what a no costs: the row's Notes (for
+  `iran-stores`: every seller's offer, reviews, price history, seller
+  trust and installments across 17 stores) are lost, and that
+  market's research won't work properly, since plain requests and the
+  browser often hit bot checks and miss prices.
+  On yes, run it (`pnpm dlx skills add ...` where npx is unavailable
+  or blocked), then read its SKILL.md at the path the command prints
+  (usually `~/.agents/skills/<name>/SKILL.md`) and use it this run.
+  On no, read that market's stores without it and name the skill in
+  the report.
 - **Store notes first.** They live in `stores.md` beside the profile,
   unless the profile's `## Store notes` names another place (load that
   skill, or read that file). Load them before checking markets, and
@@ -221,7 +238,8 @@ pages and specs.
   prices.
   0. The rows of [sources.md](sources.md) for the market: an official
      API, a vetted MCP server, or a reader skill. Rows needing a key
-     the user hasn't set are skipped and named.
+     the user hasn't set are skipped and named. A reader skill counts
+     once installed (Reader skills first).
   1. A plain request to the store's search page.
   2. The browser, when that gets a 403, a bot check, or a page without
      prices (drawn by JavaScript). While there, look at the JSON
