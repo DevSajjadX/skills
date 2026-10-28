@@ -160,6 +160,7 @@ uv run skills/task-summary/sanitize.py selftest
 uv run skills/iran-stores/iran_stores.py selftest   # every store module, offline
 uv run skills/youtube-video-review/quotes.py selftest
 uv run skills/qa-engineer/scripts/qa_login.py selftest   # the sign-in helper against a fake origin and a fake agent-browser
+uv run tests/skill-lint.py                  # every SKILL.md: name equals its folder, a description, valid evals (fail); trigger and "not for" clause (warn)
 claude plugin validate . && claude plugin test mods/usage-band   # the marketplace and the usage-band mod
 node mods/usage-band/bench/parity.mjs         # usage-band's resumed scan equals a whole-file scan, on your largest transcripts
 ```

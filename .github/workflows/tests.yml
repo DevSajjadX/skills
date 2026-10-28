@@ -16,3 +16,5 @@ jobs:
       - run: uv run skills/iran-stores/iran_stores.py selftest
       - run: uv run skills/youtube-video-review/quotes.py selftest
       - run: uv run skills/qa-engineer/scripts/qa_login.py selftest
+      - run: uv run tests/skill-lint.py selftest
+      - run: uv run tests/skill-lint.py
