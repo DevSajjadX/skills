@@ -1,9 +1,9 @@
 ---
-name: product-judgment
+name: product-manager
 description: Use when a product or project question blocks the work and needs a PM's answer ("should we build X", "is this in scope", "what's the MVP cut", "which of these first", "a user asked for Y, do we add it", "how do we know it worked", "act as the PM", "judge this product"), or when an implementation choice would change what users can do, see or are told.
 ---
 
-# product-judgment
+# product-manager
 
 Answers a product question the way a PM on this project would: from the project's own decisions first, then from established product practice, with every claim labelled by where it came from. The project's documents outrank good ideas.
 
