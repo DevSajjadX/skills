@@ -5,8 +5,8 @@ export type Seg =
   // dim: drawn in the muted text colour, for an icon that labels a figure rather than the card.
   | { kind: 'icon'; name: keyof typeof ICONS; dim?: boolean }
   | { kind: 'text'; s: string; bold?: boolean; dim?: boolean; warn?: boolean }
-  // mark: the clock's tick; line: where auto-compact runs; both 0 to 100 along the bar.
-  | { kind: 'bar'; pct: number; mark?: number; line?: number; w?: number }
+  // mark: the clock's tick, 0 to 100 along the bar.
+  | { kind: 'bar'; pct: number; mark?: number; w?: number }
   | { kind: 'sep' }
   // spark: recent values as small bars, scaled to the largest.
   | { kind: 'spark'; values: number[] }
@@ -175,10 +175,6 @@ function drawLine(segs: Seg[], left: number, mid: number): string {
       const c = meterColor(s.pct)
       const id = `m${Math.round(cx)}-${Math.round(mid)}`
       out += drawFill(id, c, cx, mid, bw, fill)
-      if (s.line !== undefined) {
-        const lx = cx + (Math.min(100, Math.max(0, s.line)) / 100) * bw
-        out += `<rect class="cline" x="${lx - 1}" y="${mid - 8}" width="2" height="16" rx="1"/>`
-      }
       if (s.mark !== undefined) {
         const mx = cx + (s.mark / 100) * bw
         // A small dot above the bar in the bar's own colour, its neck flaring smoothly into the top edge.
@@ -219,8 +215,8 @@ function drawFill(id: string, c: string, x: number, mid: number, bw: number, fil
 
 function style(): string {
   const font = `ui-monospace,'SF Mono',Menlo,monospace`
-  let light = `.t,.b,.w{fill:#33322e;font:12px ${font}}.b,.w{font-weight:700}.d{fill:#8a8983;font:12px ${font}}.w{fill:#b97a12}.cline{fill:#c27a2c}.spark{fill:#a8831a;fill-opacity:.75}.sep{stroke:#1f1e1d;stroke-opacity:.2}.ic{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}`
-  let dark = `.t,.b{fill:#ecebe6}.d{fill:#9c9b95}.w{fill:#e9b44c}.cline{fill:#eaa75c}.spark{fill:#e0bb52;fill-opacity:.75}.sep{stroke:#fff;stroke-opacity:.2}`
+  let light = `.t,.b,.w{fill:#33322e;font:12px ${font}}.b,.w{font-weight:700}.d{fill:#8a8983;font:12px ${font}}.w{fill:#b97a12}.spark{fill:#a8831a;fill-opacity:.75}.sep{stroke:#1f1e1d;stroke-opacity:.2}.ic{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}`
+  let dark = `.t,.b{fill:#ecebe6}.d{fill:#9c9b95}.w{fill:#e9b44c}.spark{fill:#e0bb52;fill-opacity:.75}.sep{stroke:#fff;stroke-opacity:.2}`
   for (const [tone, [, ic, icDark]] of Object.entries(TONES)) {
     light += `.${tone} .acc{fill:${ic}}.${tone} .ic{stroke:${ic}}`
     dark += `.${tone} .acc{fill:${icDark}}.${tone} .ic{stroke:${icDark}}`

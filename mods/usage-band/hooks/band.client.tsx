@@ -44,12 +44,11 @@ export default function Band(props: Props, surface: ClientSurface<State>) {
     const fill = Math.round((Math.min(100, Math.max(0, s.pct)) / 100) * w)
     const at = (pct?: number) => (pct === undefined ? -1 : Math.min(w - 1, Math.round((pct / 100) * (w - 1))))
     const mark = at(s.mark)
-    const line = at(s.line)
     const color = meter(s.pct) ?? accent
     return (
       <Text key={`${k}`}>
         {Array.from({ length: w }, (_, i) =>
-          i === mark ? <Text key={`${i}`} bold>┃</Text> : i === line ? <Text key={`${i}`} color={ALERT.warn}>┃</Text> : <Text key={`${i}`} color={i < fill ? color : undefined} dimColor={i >= fill}>━</Text>,
+          i === mark ? <Text key={`${i}`} bold>┃</Text> : <Text key={`${i}`} color={i < fill ? color : undefined} dimColor={i >= fill}>━</Text>,
         )}
       </Text>
     )

@@ -82,13 +82,13 @@ function contextPill(c: Context, compactions: number, detail: Detail): Pill {
     alert: c.alert,
     title:
       `Context: ${c.used.toLocaleString()} of ${c.max.toLocaleString()} tokens. ` +
-      (c.compactAt !== undefined ? `Auto-compact at ${c.compactAt.toLocaleString()} (the amber line). ` : 'Auto-compact is off. ') +
+      (c.compactAt !== undefined ? `Auto-compact at ${c.compactAt.toLocaleString()}. ` : 'Auto-compact is off. ') +
       (c.turnsLeft !== undefined ? `About ${c.turnsLeft} turns to it, at ${fmtTokens(c.growth ?? 0)} a turn. ` : '') +
       `Compacted ${compactions} ${compactions === 1 ? 'time' : 'times'} this session.`,
     segs: [
       { kind: 'icon', name: 'layers' },
       { kind: 'text', s: 'ctx', dim: true },
-      { kind: 'bar', pct: c.pct, line: c.compactPct },
+      { kind: 'bar', pct: c.pct },
       { kind: 'text', s: `${Math.round(c.pct)}%`, bold: true },
       ...(detail >= 1 && c.turnsLeft !== undefined ? ([{ kind: 'text', s: `~${c.turnsLeft}t`, warn: c.turnsLeft <= 3 }] as const) : []),
       { kind: 'sep' },
