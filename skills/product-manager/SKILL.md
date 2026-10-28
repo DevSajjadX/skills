@@ -15,7 +15,7 @@ Answers a product question the way a PM on this project would: from the project'
 
 ## Steps
 
-1. **State the question as a decision.** Who is affected, what problem, which options. If the request names only a solution, write the problem it is meant to solve.
+1. **State the question as a decision.** Who is affected (an end user, staff, an admin, or the next agent or developer when the ask is about tooling), what problem, which options. If the request names only a solution, write the problem it is meant to solve.
 
 2. **Read the project's product truth before judging.** Follow the project's instruction file (`AGENTS.md`, `CLAUDE.md`) to its product sources, else search for them: product spec (`PRODUCT.md`, `docs/product/`), owner decisions, roadmap and release or acceptance criteria, anti-goals (`DO_NOT_DO`, non-goals, out of scope), open questions, ADRs, the issue or board item, done and queued work. Grep them for the question's nouns. Where the project says which source wins, follow it; without a stated order, a later dated owner decision beats an earlier one (cite both). An ask that duplicates done or queued work is answered by pointing at it.
 
@@ -23,7 +23,7 @@ Answers a product question the way a PM on this project would: from the project'
 
    | Found | Answer |
    |---|---|
-   | A decided rule covers it | Apply it, cite `file:line`. Not reopened unless the user asks; then name who decides. An ask the rule or an ADR makes impossible is a change to that decision, not a feature: say so and name who approves it; never design around it. |
+   | A decided rule covers it | Apply it, cite `file:line`. Not reopened unless the user asks; then name who decides. An ask the rule or an ADR makes impossible is a change to that decision, not a feature: say so in Basis, naming who could change it; never design around it. |
    | An anti-goal or out-of-scope line covers it | Quote the line, say why it applies, stop. Never reshape the ask into a variant that slips past the line; if the user still wants it, overturning the line is theirs to state. |
    | An open question with a stated default | Use the default, labelled "default, open with <owner>". Never settle it yourself. |
    | An open question with no default, or a problem too vague to name a "Done when" | Don't pick an answer. Name the owner and what it blocks, build only what doesn't depend on it, and propose parking it where the project keeps undecided problems. |
@@ -35,9 +35,10 @@ Answers a product question the way a PM on this project would: from the project'
    - **Verdict:** one line.
    - **Basis:** decided / anti-goal / default open with <owner> / judgment, each with its citation or lens.
    - **Why:** at most three bullets.
-   - **Build / don't build:** what changes and what explicitly stays out.
+   - **Build / don't build:** what changes and what explicitly stays out. A user-facing change names what the user sees and what the system enforces together, never a backend half and a frontend half. Each excluded piece says where it lives instead (another item, a waiting decision).
    - **Done when:** the project's own acceptance check or demo step if one applies; else one outcome measure (`lenses.md` § How will we know). Each line names something a user, staff member or failing check can see; never "works correctly", "is improved" or "more robust".
-   - **For the owner:** the one question only they can answer, with your proposed default; "none" when the basis is decided or an anti-goal.
+   - **For the owner:** the one question only they can answer, with your proposed default; exactly "none" when the basis is decided or an anti-goal, since who could change that rule is already in Basis.
+   - **Record it:** only when the basis is judgment and the verdict is a "no" for a general reason: the anti-goal line to add so the ask isn't judged again. Name the project's board or decision-log command if its instruction file gives one, else the file and section. Propose it; never write it.
 
 ## Common mistakes
 

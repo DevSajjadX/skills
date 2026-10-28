@@ -12,7 +12,7 @@ Use a lens only after the project's own sources are read (SKILL.md step 2). A le
 
 - **Appetite** (Shape Up): fix the time the problem is worth, vary the scope. When time runs out, cut scope; never extend. Write the no-gos down.
 - **Simplest test of value** (Seibel): the MVP is the least that shows real users get value. Hold the problem tightly and the solution loosely. Cut important things when nothing unimportant is left.
-- **Must-be first** (Kano): must-be qualities (it works, it's trusted, errors are clear) come before delighters; past "good enough", more must-be earns nothing.
+- **Must-be first** (Kano): must-be qualities (it works, it's trusted, errors are clear) come before delighters; past "good enough", more must-be earns nothing. The correctness bug a user would feel beats the refactor that reads nicer.
 
 ## Which option first?
 
