@@ -62,4 +62,30 @@ describe('rescan', () => {
     expect(text).toContain('$ $3.00 ⌀ $3.00')
     await ui.unmount()
   })
+
+  test('a new session with no transcript yet shows no warning; a later turn without one does', async ($, on) => {
+    let turns = 0
+    on('env.get', (_$, e) => ({ value: e.name === 'HOME' ? '/home/me' : undefined }))
+    on('session.id', () => ({ value: 'new' }))
+    on('session.turns', () => ({ value: turns }))
+    on('process.run', () => ({ value: { exitCode: 0, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+    on('session.usage', () => ({ value: { startedAt: NOW, context: { tokens: 0, window: 1_000_000, percent: 0 }, rateLimits: [], cost: { usd: 0 } } }))
+    on('clock.now', () => ({ value: NOW }))
+    on('turn.complete', () => ({ text: '' }))
+    const turn = { answer: '', durationMs: 0, isAborted: false, turnId: 't', reason: 'answer' } as const
+    const band = async () => {
+      const ui = await $.ui.mount({ plugin: 'usage-band', surface: 'terminal', ...BAND } as never)
+      await ui.resize({ columns: 200, rows: 4, in: 'band' } as never)
+      const text = bandRows(await ui.drawn({ in: 'band' } as never)).join('\n')
+      await ui.unmount()
+      return text
+    }
+
+    await $.turn.complete(turn)
+    expect(await band()).not.toContain('⚠')
+
+    turns = 1
+    await $.turn.complete(turn)
+    expect(await band()).toContain('⚠')
+  })
 })

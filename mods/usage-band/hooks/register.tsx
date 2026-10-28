@@ -48,9 +48,10 @@ const fail = ($: EngineInterface, scanError: string) => update($, stats, s => ({
 
 async function rescan($: EngineInterface) {
   const transcript = await findTranscript($)
-  if (transcript === '') return fail($, 'transcript not found')
+  // A new session has no transcript until its first prompt lands: nothing to scan yet, not an error.
+  if (transcript === '') return (await $.session.turns().catch(() => 1)) === 0 ? undefined : fail($, 'transcript not found')
   const stateFile = `${await configDir($)}/usage-band/${await $.session.id()}.state`
-  // A session's first scan reads the whole transcript (~2.5 s at 96 MB); the limit leaves room for far larger ones.
+  // A session's first scan reads the whole transcript (~8.5 s at 156 MB with macOS awk); the limit leaves room for far larger ones.
   const r = await $.process.run(['/bin/sh', '-c', SCAN_SH, 'sh', transcript, stateFile, SCAN_AWK], { timeoutMs: 120_000 })
   if (r.exitCode !== 0) return fail($, `scan exited ${r.exitCode}: ${r.stderr.slice(0, 120)}`)
   const scan = parseScan(r.stdout)
