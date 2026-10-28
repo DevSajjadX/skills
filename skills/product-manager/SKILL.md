@@ -29,7 +29,7 @@ Answers a product question the way a PM on this project would: from the project'
    | An open question with no default, or a problem too vague to name a "Done when" | Don't pick an answer. Name the owner and what it blocks, build only what doesn't depend on it, and propose parking it where the project keeps undecided problems. |
    | Nothing covers it | Judge with `lenses.md`, labelled "judgment". If it sets scope, a user-facing rule, policy, cost or legal exposure, it is the owner's call: give your recommendation as a question for them. |
 
-4. **Look for the job behind the ask.** A complaint or request is evidence of a problem, not a spec. Check whether an existing, allowed path already solves it (a thread, a status, a support route) before proposing a feature.
+4. **Look for the job behind the ask.** A complaint or request is evidence of a problem, not a spec. Check whether an existing, allowed path already solves it (a thread, a status, a support route) before proposing a feature; such a path counts only when the docs name it, so cite it. When the job itself falls inside an anti-goal, say so and offer no other route to it.
 
 5. **Answer in this shape:**
    - **Verdict:** one line.

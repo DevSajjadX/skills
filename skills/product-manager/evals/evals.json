@@ -1,0 +1,115 @@
+{
+  "skill_name": "product-manager",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We can't do delivery, I know. So instead add a 'Send my courier' option at checkout: the customer types their own courier's name and phone, and we hand the bread to that courier. That's not us delivering, so it's fine. Build it?",
+      "expected_output": "Rejects it as delivery under another name by quoting the out-of-scope line, offers no workaround variant, and leaves no owner question.",
+      "files": [
+        "evals/fixtures/bakery"
+      ],
+      "expectations": [
+        "Quotes or cites PRODUCT.md's 'Delivery of any kind' out-of-scope line",
+        "Says the courier option is delivery (or a variant of it) rather than treating it as a new feature",
+        "Proposes no near-variant of courier or third-party handover to build instead, and no workaround route the docs don't name",
+        "The 'For the owner' line is 'none' or absent"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Some customers want to order bread for three days ahead. I saw an old note that Dana allowed that. Can I widen the date picker to three days?",
+      "expected_output": "Finds both decisions, applies the later one (tomorrow or the day after), and says widening it is a change to Dana's decision, not a feature.",
+      "files": [
+        "evals/fixtures/bakery"
+      ],
+      "expectations": [
+        "Cites both the 2026-09-02 and the 2026-09-20 decisions in docs/decisions.md",
+        "Applies the later decision: the picker stays at tomorrow or the day after",
+        "Calls widening it a change to the decision (Dana's to make), not a feature to build",
+        "Does not build or propose a three-day option behind a flag or for some customers"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I'm building the pickup time slot picker. What hours should it offer?",
+      "expected_output": "Uses the stated default 8:00 to 18:00, labelled as a default still open with Dana, without settling it.",
+      "files": [
+        "evals/fixtures/bakery"
+      ],
+      "expectations": [
+        "Offers 8:00 to 18:00",
+        "Labels it as a default that is still open with Dana (not as decided)",
+        "Does not invent different hours or settle the question itself",
+        "Does not pick slot length, closing time or other rules the docs don't state; leaves them to Dana or configurable"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Should the order confirmation page have a 'Change order' button? I'd let them edit until 6pm the day before. Decide so I can build the page.",
+      "expected_output": "Does not pick an answer: names Dana and what the open question blocks, builds the page without the control, and proposes parking it.",
+      "files": [
+        "evals/fixtures/bakery"
+      ],
+      "expectations": [
+        "Cites open question 1 and says it has no default",
+        "Does not adopt the 6pm cutoff or any other cutoff as the answer",
+        "Names Dana as the owner of the question",
+        "Says what can be built now without the answer (the page without a change control)"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Customers keep asking for a loyalty points program (a free loaf after ten orders). Should we build it for v1? I can start on the backend tables tonight and do the UI next week.",
+      "expected_output": "Judgment no for v1, weighs evidence (requests are opinions), and proposes the out-of-scope line to add without writing it.",
+      "files": [
+        "evals/fixtures/bakery"
+      ],
+      "expectations": [
+        "Labels the basis as judgment (loyalty is not named in any project doc)",
+        "Verdict is not to build it for v1",
+        "Treats 'customers keep asking' as weak evidence, not as a requirement",
+        "Proposes a line to add to PRODUCT.md's Out of scope section (a Record it), and states it wrote nothing",
+        "Does not endorse starting the backend tables tonight with the UI later"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Act as the PM: we have one day before launch. Either fix the bug where the confirmation shows the pickup weekday one day off, or refactor the messy order module. Which, and how do we know it worked?",
+      "expected_output": "Fixes the weekday bug (a felt correctness bug beats a refactor), tied to acceptance flow A-02.",
+      "files": [
+        "evals/fixtures/bakery"
+      ],
+      "expectations": [
+        "Chooses the weekday bug over the refactor",
+        "Cites acceptance flow A-02 as the success check",
+        "The Done-when names something visible (the weekday shown on the confirmation, or A-02's test passing), not 'works correctly'"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Staff can now mark orders collected at the counter; I built the button yesterday and clicked it once, it works. Can we call the counter flow done for launch?",
+      "expected_output": "No: A-03 counts only once its end-to-end test exists and passes; a manual click is not done.",
+      "files": [
+        "evals/fixtures/bakery"
+      ],
+      "expectations": [
+        "Cites acceptance flow A-03",
+        "Says it is not done until its end-to-end test exists and passes",
+        "Does not accept one manual click as success"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Before launch I want to build a general notifications framework (email, SMS, push, templates) since we'll need it later anyway. It's foundational. OK to start?",
+      "expected_output": "Not before launch: v1 sends one confirmation email only, and a prerequisite ships with the first release that needs it.",
+      "files": [
+        "evals/fixtures/bakery"
+      ],
+      "expectations": [
+        "Cites the rule that v1 sends only the confirmation email",
+        "Rejects building it now because it is foundational or needed later",
+        "Says such work goes with the first release that actually needs it"
+      ]
+    }
+  ]
+}
