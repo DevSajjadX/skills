@@ -72,7 +72,9 @@ Done when every behavior change is reflected in docs, or the report says why non
 
 Run the project's own gates: tests, typecheck, lint, whatever the repo defines. Fix what fails.
 
-Done when the gates pass and the report quotes the commands run.
+A red gate is compared before anyone fixes it: rerun the same command on a clean copy of the default branch (`git worktree add --detach <tmp> $R/$DEF`, then `git worktree remove --force <tmp>`, as the gate run leaves caches in it; never stash the session's work for this). Red there the same way → it predates the change: leave it unfixed, name it under Needs you, and the commit goes ahead. Green there → the change broke it: fix it.
+
+Done when the gates pass, or every red one is shown red on the default branch too, and the report quotes the commands run.
 
 ## 7. Squash (careful)
 
