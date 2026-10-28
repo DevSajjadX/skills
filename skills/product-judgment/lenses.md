@@ -18,6 +18,7 @@ Use a lens only after the project's own sources are read (SKILL.md step 2). A le
 
 - **The release's own bar first**: anything on the acceptance path, demo script or release criteria beats anything off it.
 - **RICE** (Intercom): reach × impact × confidence ÷ effort, used to challenge a ranking, never as the verdict.
+- **First dependent release**: a prerequisite ships with the first release that can't be demonstrated without it, never earlier "because it's foundational".
 - **Cost of delay** (Reinertsen): what does a week without it cost? Divide by duration; the highest wins.
 
 ## Is this feedback real evidence?
