@@ -2,10 +2,10 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, RenderChildren } from 'claude-code'
 
 import type { Stats } from '../types'
-import { bandSvg, bandText, bandWidth, fmtSpan, fmtTokens, slotPx } from './pills'
+import { bandSvg, bandText, bandWidth, fmtSpan, fmtTokens, meterColor, slotPx } from './pills'
 import { NO_SCAN, SCAN_AWK, SCAN_SH, parseScan } from './scan'
 import { isCode, isTestCommand, testOutcome } from './testrun'
-import { ACCENT, ALERT } from './cells'
+import { ACCENT } from './cells'
 import { buildView, layouts } from './view'
 
 type ClientEl = (p: { key: string; module: string; props: unknown; width: string; height?: string }) => never
@@ -358,7 +358,7 @@ export const register: Register = on => {
             ? [note('none', 'No reading yet.')]
             : limits.flatMap(l => [
                 headline(`h-${l.kind}`, `${l.kind === 'five_hour' ? '5-hour' : '7-day'} · ${Math.round(l.pct)}% used`, l.left !== undefined ? `resets in ${fmtSpan(l.left)}` : ''),
-                bar(`b-${l.kind}`, [{ n: l.pct, color: l.alert ? ALERT[l.alert] : '#8db27a' }], 100, { at: l.mark }),
+                bar(`b-${l.kind}`, [{ n: l.pct, color: meterColor(l.pct) }], 100, { at: l.mark }),
                 ...(l.fullIn !== undefined ? [note(`f-${l.kind}`, `At this pace it is full in ~${fmtSpan(l.fullIn)}, before the reset.`, true)] : []),
               ]),
         )}
