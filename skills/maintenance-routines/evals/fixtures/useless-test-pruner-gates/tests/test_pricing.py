@@ -1,4 +1,4 @@
-from pricing import total_cents, is_free_shipping
+from pricing import is_free_shipping, total_cents
 
 
 def test_total_tautology():

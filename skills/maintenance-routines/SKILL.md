@@ -1,6 +1,6 @@
 ---
 name: maintenance-routines
-description: Use when asked to run an autonomous maintenance pass over one scope of a codebase and prove each change before it lands - removing dead or unused code, unifying duplicated logic, fixing a test that sometimes fails (flaky), finding code that contradicts its documented intent (logic bugs), simplifying convoluted code without changing behaviour, or pruning tests that can never fail. Not for a bug the user can already reproduce (debug it directly), for a feature, for missing coverage, or for a test that fails every time (that is a real bug).
+description: Use when asked to run an autonomous maintenance pass over one scope of a codebase and prove each change before it lands - removing dead or unused code, unifying duplicated logic, fixing a test that sometimes fails (flaky), finding code that contradicts its documented intent (logic bugs), simplifying convoluted code without changing behaviour, or pruning tests that can never fail ("only test their own mocks", "our coverage is fake", "slim the test suite"). Not for a bug the user can already reproduce (debug it directly), for a feature, for missing coverage, or for a test that fails every time (that is a real bug).
 argument-hint: "[routine] [scope, or for flaky-test-fixer a log or test name]"
 category: Maintenance
 tags: [routine, maintenance]
@@ -53,10 +53,9 @@ The proof is pasted output, not an assertion that you ran something. A filtered 
 
 The gate is the project's own full check list, verbatim, in full, as its `AGENTS.md` or `CLAUDE.md` names it. It is usually one aggregate command (`pnpm gates`, `make check`, `just ci`, `uv run poe check`) or a short list (test, lint, type-check, format, build, repo checks). Run what the file says; never invent a lighter list.
 
-A routine may skip the part of the list its scope cannot affect (a frontend-only change does not need the backend formatter, a docs-only scope needs no build) by naming the gates it runs, but it names what it skipped and why. Before every ship, and before the last commit when there is no ship, run the project's own secret scanner if it names one (for example `gitleaks dir . --redact`).
+A routine may skip the part of the list its scope cannot affect (a frontend-only change does not need the backend formatter, a docs-only scope needs no build) by naming the gates it runs (for example `make check-frontend check-repo`), but it names what it skipped and why. Before every ship, and before the last commit when there is no ship, run the project's own secret scanner if it names one (for example `gitleaks dir . --redact`).
 
 **If no automated check covers the changed behaviour, STOP and report the finding instead of shipping it.** That is the whole point of a proof standard.
-
 
 ## Ship protocol
 
@@ -64,7 +63,7 @@ A routine may skip the part of the list its scope cannot affect (a frontend-only
 
 **One shipment per run.** After the gates pass over all of the run's commits, ship them together, once:
 
-- **The project has a ship or PR command** (a `/ship` skill, a `make pr`, a documented script) **and its instruction file names it, and this run is authorized to use it** (the user invoked the routine knowing it ships, or the project's rules say routines ship that way): compose that command. It opens the PR, because it is the project's only path to the default branch and its gates run locally, not in CI. You made the changes in this session, so run it session-aware: stage exactly the files you touched, write the message from what you know. One finding per commit, one PR per run, never one PR per finding.
+- **The project has a ship or PR command** (a `/ship` skill, a `make pr`, a documented script) **and its instruction file names it, and this run is authorized to use it** (the request asks to ship or open a PR, or the instruction file says routines ship through it): compose that command. It opens the PR (in projects where that command is the only path to the default branch, it is also where the gates run). You made the changes in this session, so run it session-aware: stage exactly the files you touched, write the message from what you know. One finding per commit, one PR per run, never one PR per finding.
 - **Otherwise** (no such command, or the run is not authorized to use it): stay on your own `routine/<name>-<scope>` branch with one commit per finding, and **do not push**. Pushing, opening a PR and merging are the user's call (the `wrap` skill does them).
 
 ## Budget

@@ -14,7 +14,7 @@ Code that **provably contradicts its documented intent**. Not code you would hav
 4. **The glossary** (`CONTEXT.md` or equivalent): a term used to mean something it does not.
 5. **Docstrings and comments at the code**: the text that says what the function guarantees.
 
-A gap between code and a doc is not automatically a code bug. When two documents disagree (a docstring against an ADR), the higher one in this list wins. When the doc is the stale one, the fix is the doc, which is a documentation change, not a code change. A stale ADR, `AGENTS.md` or `CLAUDE.md` is never-touch: write a handoff that quotes the code and the stale line. Only docstrings, comments and the glossary are fixed here. **Decide which is wrong before you fix either.** Fixing a stale comment is its own finding: it needs no failing test, only the higher-ranked source quoted. The doc fix goes through the project's own documents skill or process when it has one.
+A gap between code and a doc is not automatically a code bug. When two documents disagree (a docstring against an ADR), the higher one in this list wins. **Code is truth**: when the doc is the stale one, the fix is the doc, which is a documentation change, not a code change. A stale ADR, `AGENTS.md` or `CLAUDE.md` is never-touch: write a handoff that quotes the code and the stale line. Only docstrings, comments and the glossary are fixed here. **Decide which is wrong before you fix either.** Fixing a stale comment is its own finding: it needs no failing test, only the higher-ranked source quoted. The doc fix goes through the project's own documents skill or process when it has one.
 
 ## Where to look first
 
@@ -37,7 +37,7 @@ The proof is a **failing test that names the wrong behaviour**, written before t
 3. Fix the cause. Not the symptom: if the wrong value arrives from two layers up, the fix is two layers up, even when a local guard would make the test green.
 4. Run it again. It passes, and the whole suite still passes.
 
-A candidate you cannot turn into a failing test is **not a finding**. Report it as skipped with what you could not reproduce. That is honest and useful; a speculative fix is neither.
+A candidate you cannot turn into a failing test is **not a finding** (except a stale doc, above). Report it as skipped with what you could not reproduce. That is honest and useful; a speculative fix is neither.
 
 ## Fix
 
@@ -58,7 +58,7 @@ The project's full gate list, plus:
 Beyond the universal list:
 
 - **The "bug" is a documented decision.** Read the scope's card first. Several things look wrong and are not (a deliberate cross-tenant read such as a market view that lists other tenants' rows, an identical answer given to avoid leaking whether an account exists, a counterparty's audit row attributed to a tenant the actor is not in because it commits with the actor's own row and a lone one would be the bug).
-- **The doc is the stale one.** Fix the doc and say so. Do not change working code to match a sentence nobody updated.
+- **The doc is the stale one.** Fix a stale docstring, comment or glossary entry as its own finding and say so; a stale ADR or instruction file is a handoff. Do not change working code to match a sentence nobody updated.
 - **The fix changes an error key or a route constant.** Ask first: the error class name is the wire key, and the route is every caller's and every test's contract.
 - **The fix amends an ADR.** That is a design decision with a human in it.
 - **The behaviour is wrong only under a race you cannot reproduce.** Report it; a fix with no failing test is a guess with a commit message.

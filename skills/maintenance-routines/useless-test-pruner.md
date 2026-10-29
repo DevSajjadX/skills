@@ -6,7 +6,7 @@ Shared rules (preconditions, scope, proof standard, gates, ship protocol, budget
 
 A useless test **stays green when the code it covers is wrong**. It costs a run on every commit and, worse, it reports coverage that does not exist, so the next session believes the behaviour is pinned when nothing holds it. Reading the test finds a suspect; **only sabotage proves one**.
 
-Suspect shapes, each listed with the code it claims to cover:
+Suspect shapes. When you list a suspect, name the code it claims to cover:
 
 - **Tautology:** asserts on a value the test built itself.
 - **Over-mocked:** every collaborator is a mock, or the code under test itself is, so the test asserts the mocks were called in the order the test wired them. It tests the wiring, not the behaviour.
@@ -39,7 +39,9 @@ For each suspect:
 2. Run that test and keep the pasted output. **Green under sabotage is a finding.** Red means the test is good: keep it, say so, and move on. That is a successful check, not a wasted one.
 3. Restore the file exactly (`git checkout -- <file>`) before the next sabotage.
 
-**A tautology is sabotaged too.** The exemption for a test that touches no project code ("show that it imports or calls nothing it claims to test") is deliberately not offered. It is weaker, not better: it rests on reading, which this routine exists to distrust, while sabotaging the code the test claims to cover is as cheap and proves the same thing from the run itself. Sabotage the code its name or comments say it covers and show it stay green. That it imports or calls nothing is supporting evidence, not the proof. A test that claims to cover nothing identifiable has nothing to sabotage: report it as skipped for that reason.
+**A tautology is sabotaged too.** Sabotage the code its name or comments say it covers and show it stay green. That it imports or calls nothing is supporting evidence, not the proof, because reading is what this routine distrusts.
+
+A test that names no covered code at all (`def test_x(): assert True`) has nothing to sabotage. Show from a run that it exercises no project code (for example a coverage run of that test alone that lists no project file), and it is deleted as a tautology. If it does touch project code but you cannot tell which, report it as skipped for that reason.
 
 ## Fix with repair before delete
 
@@ -58,9 +60,8 @@ A useless test marks a behaviour someone meant to pin. Deleting it throws away t
 The project's full gate list, not only the tests (a repaired test can break lint, types or format; name any gate you skipped and why), plus:
 
 - `git status` and `git diff` show no sabotage left in source files. Check twice; a left-behind inverted condition is the worst possible outcome of this job.
-- The test count moved by exactly what you deleted. A count that dropped further means you broke test discovery, or a test went missing, not that you pruned well.
+- The test count moved by exactly what you deleted and added. A count that dropped further means you broke test discovery, or a test went missing, not that you pruned well.
 - The repaired test fails under sabotage and passes restored: both runs pasted.
-- Proof is pasted output, not a claim that something ran. A filtered gate (`| grep -v`) is a passing grep, not a passing check.
 
 ## Specific STOPs
 
@@ -69,15 +70,13 @@ Beyond the universal list. **Hand off** (write to `.claude/handoffs/` through `p
 - **The covered code is unreachable.** That is dead code ([dead-code-removal.md](dead-code-removal.md)); the test travels with it.
 - **The test fails sometimes.** That is flaky, not useless ([flaky-test-fixer.md](flaky-test-fixer.md)).
 - **A repaired assertion fails against the current code.** The code has a bug ([logic-bugfixer.md](logic-bugfixer.md) owns it). Do not fix production code in this pass. Keep the original test unchanged (or add the repaired one marked a known failure per the project's rules) and put the repaired assertion in the handoff.
-- **Anything else outside this defect class or this scope** (provably wrong code, duplicated or convoluted logic): note it and defer to its row in the owner table, never fix it here.
 
-**Stop and ask or report.** These are not out-of-scope work, so no handoff:
+**Report as skipped** (no handoff needed: the finding is fully described in the summary):
 
 - **Sabotage turns the whole suite red**, so this test's verdict cannot be isolated (a module every test imports, a shared fixture or config is the usual cause): report it as skipped, with the file restored exactly.
 - **The only test on a path is the useless one and no real assertion can be written** (the behaviour needs a live service): report it, do not delete it.
-- **A gate goes red and you cannot root-cause it:** stop and report.
-- **The repair needs a new dependency** (new test infrastructure to replace mocks): ask first.
-- **The finding conflicts with the project's anti-goals or do-not-do list:** ask.
+
+**Anything else outside this defect class or this scope** (provably wrong code, duplicated or convoluted logic): note it in the summary and defer it to its row in the owner table in [SKILL.md](SKILL.md), never fix it here, and write no handoff for it.
 
 ## Common mistakes
 
@@ -94,4 +93,4 @@ Beyond the universal list. **Hand off** (write to `.claude/handoffs/` through `p
 
 ## Summary
 
-Per the budget block: shipped (PR and SHA, or branch and SHAs, with the red-then-green evidence per repair), skipped (with the missing proof), or nothing found. Report per test: verdict (good, repaired, deleted, skipped), the sabotage used, red or green under it, and for a repair the red-then-green outputs. A candidate you could not prove is skipped, stating which proof was missing. An empty pass is a valid result: say "nothing found" plainly and never manufacture a finding to justify the run.
+Per the budget block: shipped (PR and SHA, or branch and SHAs, with the red-then-green evidence per repair), skipped (with the missing proof), or nothing found. Report per test: verdict (good, repaired, deleted, skipped), the sabotage used, red or green under it, and for a repair the red-then-green outputs. A candidate you could not prove is skipped, stating which proof was missing.

@@ -22,9 +22,7 @@ Read the failure log before reproducing. The assertion that failed, and the valu
 for i in $(seq 10); do <the project's test command> || echo "run $i failed"; done
 ```
 
-Where the runner has a repeat flag, use it (`pnpm exec playwright test --repeat-each 10`, `pytest --count 10` with pytest-repeat, `go test -count 10`). For a backend suspect, run the whole solution or test project rather than one test, because order-dependence only shows when the neighbours run too.
-
-For a suspect that depends on neighbours, run the whole suite rather than one test: order-dependence only shows when the neighbours run too. Also vary what the runner randomizes: hash seeds, test order, parallelism. Note the seed, the order and the machine state of the run that failed. That is the reproduction, and it is what proves the fix.
+Where the runner has a repeat flag, use it (`pnpm exec playwright test --repeat-each 10`, `pytest --count 10` with pytest-repeat, `go test -count 10`). For a suspect that depends on neighbours (for a backend, the whole solution or test project), run the whole suite rather than one test: order-dependence only shows when the neighbours run too. Also vary what the runner randomizes: hash seeds, test order, parallelism. Note the seed, the order and the machine state of the run that failed. That is the reproduction, and it is what proves the fix.
 
 **Cannot reproduce in ten runs?** Do not fix. Report it: the failing log, what you tried, and what you would need. An unreproduced flake "fixed" by a plausible-looking change is a flake plus a diff.
 

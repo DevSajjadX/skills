@@ -4,7 +4,7 @@ Shared rules (preconditions, scope, proof standard, gates, ship protocol, budget
 
 ## The defect
 
-Code that **nothing can reach**: no caller, no route, no registration, no test that exercises it for its own sake. Not code that is ugly (that is `logic-simplifier`), not code that is duplicated (`dup-unifier`), not code that is reachable but rarely taken. Unreachable.
+Code that **nothing can reach**: no caller, no route, no registration, no test that exercises it for its own sake. Not code that is ugly (that is `logic-simplifier`), not code that is duplicated (`dup-unifier`), not a test that can never fail (`useless-test-pruner`), not code that is reachable but rarely taken. Unreachable.
 
 ## Discover
 

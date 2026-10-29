@@ -45,7 +45,7 @@ An untested edge case you discover while pinning is itself worth committing: tha
 The project's full gate list, plus:
 
 - The pinning test passes before and after, **unedited**.
-- The full suite passes.
+- The full suite passes with zero failures (the project's full command, or its frontend check for a frontend scope).
 - `git diff --stat`: the change is smaller, or the same size and plainly clearer. A simplification that adds net lines needs a sentence explaining why.
 - No public signature changed. If one did, this was an API change, not a simplification.
 
