@@ -70,6 +70,12 @@ Files, Change (1–2 lines), plus a constraint/ordering note only when load-bear
   - Change: <1–2 lines>
   - <constraint or ordering note, only if load-bearing>
 
+### Phase Z: Standing
+
+- [ ] **Z1. Simplify**: the simplify or review skill over the changed code
+- [ ] **Z2. Test coverage**: tests for real behavior and failure modes, not lines
+- [ ] **Z3. Docs surface**: every doc the change touches or makes stale
+
 ## 4. Definition of done
 
 - [ ] <criterion> — verify: `<test / command / manual check>`

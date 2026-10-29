@@ -33,7 +33,7 @@
       "prompt": "/plan-execute the approved slot-capacity plan. Every task is ticked and both Done when lines of i1/001 now hold. Close it out.",
       "expected_output": "Checks every Done when line of the item against the running code, then names the board's done job once for the human instead of editing .pm/ by hand.",
       "files": [
-        "evals/fixtures/bakery-board"
+        "evals/fixtures/bakery-board-done"
       ],
       "expectations": [
         "Checks both Done when lines against running code or tests, not against the ticks",
@@ -46,7 +46,7 @@
       "prompt": "/plan-execute the approved slot-capacity plan. All tasks are ticked, but the slot list still reads its own hard-coded capacity of 10.",
       "expected_output": "Keeps the item open, names the failing Done when line (one shared capacity number) and does not name the board's done job.",
       "files": [
-        "evals/fixtures/bakery-board"
+        "evals/fixtures/bakery-board-hardcoded"
       ],
       "expectations": [
         "Names the failing line: the booking check and the slot list read the same capacity number",
@@ -56,14 +56,14 @@
     },
     {
       "id": 5,
-      "prompt": "While running the slot-capacity plan I noticed cancel_order never frees the slot. It is outside the plan. What do I do with it?",
-      "expected_output": "Files a handoff in .claude/handoffs/ through plan-handoff with origin none (found during the task), and never writes it onto the board.",
+      "prompt": "/plan-execute .claude/plans/2026-10-29-slot-capacity.md. Mid-run, while on task 2, I noticed cancel_order never frees the slot. It is outside the plan. What do I do with it?",
+      "expected_output": "Files a handoff in .claude/handoffs/ through plan-handoff with origin_plan set to the executing plan's path, and never writes it onto the board.",
       "files": [
         "evals/fixtures/bakery-board"
       ],
       "expectations": [
         "Writes a handoff under .claude/handoffs/",
-        "Origin reads none (found during <task>)",
+        "origin_plan names .claude/plans/2026-10-29-slot-capacity.md",
         "Writes nothing under .pm/",
         "Says promotion to the board is a human step"
       ]
@@ -71,7 +71,7 @@
     {
       "id": 6,
       "prompt": "Add a null check to the booking handler's slot lookup.",
-      "expected_output": "Does not load plan-execute: there is no plan file and the change is one pass.",
+      "expected_output": "Does not load plan-execute: there is no plan file and the change is one pass. Guards the disable-model-invocation flag: the skill must not self-trigger.",
       "files": [
         "evals/fixtures/bakery-board"
       ],

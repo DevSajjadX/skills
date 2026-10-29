@@ -114,6 +114,9 @@ and update the handoff's frontmatter: `status: planned`, `plan:` → your plan's
 edits here.) Drafting from a board brief (`BRIEF-<slug>.md`, a promoted handoff): treat its
 Contract the same way, set the plan's `from_brief:` to its path, and leave the brief untouched.
 
+Either way, record the cross-repo contract (API shape, event, schema) this plan depends
+on in §2 as a blocking assumption until the other side lands.
+
 **Drafting FROM a board item.** If the goal is a board id of the form `iN/NNN` (see
 `product-manager/board.md`), read the item, every `## Design input` brief it names and the
 iteration's `README.md` demo script. The item's `## Problem`, `## Done when` and `## Rules`
@@ -123,9 +126,6 @@ the item deliberately lacks, so §3 is yours to write; grill only what the item 
 leave open. Set `from_item: iN/NNN` in the plan's frontmatter, next to `from_handoff:`.
 Never edit the board: its job (`product-manager/board.md`) is its only writer, and
 `/plan-execute` hands it the close-out.
-
-Either way, record the cross-repo contract (API shape, event, schema) this plan depends
-on in §2 as a blocking assumption until the other side lands.
 
 **3. Grill (interview to a shared understanding).**
 Interview the requester to resolve the design tree, one question at a time, waiting for the

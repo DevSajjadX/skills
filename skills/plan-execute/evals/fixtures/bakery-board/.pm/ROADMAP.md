@@ -1,6 +1,6 @@
 # Roadmap
 
-| Iteration | Theme | Status |
+| id | demo | status |
 |---|---|---|
-| i1 | Order for pickup | open |
-| i2 | Staff day view | open |
+| i1 | A customer orders a loaf for a pickup slot | open |
+| i2 | Staff see the day's pickups in one view | open |

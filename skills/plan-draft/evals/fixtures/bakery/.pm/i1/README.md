@@ -1,4 +1,6 @@
-# i1 Order for pickup
+# i1 · Order for pickup
+
+**Demo:** A customer orders a loaf and picks a pickup slot.
 
 ## Demo script
 
@@ -7,4 +9,4 @@
 
 ## Items
 
-- [ ] i1/001 Pickup slot capacity
+- [ ] i1/001 · Pickup slot capacity

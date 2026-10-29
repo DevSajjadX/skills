@@ -163,7 +163,7 @@ line holds, name the board's `done <item>` job (`product-manager/board.md`) for 
 - If a `## Done when` line does not hold, the item stays open. Name that line, and do not name the job.
 
 **Out-of-scope finds.** A bug or debt found during execution that the plan does not cover goes
-to `.claude/handoffs/` through `plan-handoff` (origin `none (found during <task>)`), never
+to `.claude/handoffs/` through `plan-handoff` (`origin_plan:` set to the executing plan's path, the task named in Problem), never
 straight onto the board. Promotion to the board stays a human step.
 
 Do not push or open a PR unless explicitly asked.

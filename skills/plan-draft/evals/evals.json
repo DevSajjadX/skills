@@ -59,14 +59,14 @@
     },
     {
       "id": 5,
-      "prompt": "/plan-draft add a live chat widget so customers can message the baker while they pick a slot.",
+      "prompt": "/plan-draft add a loyalty points programme that rewards repeat customers.",
       "expected_output": "The goal fits no iteration on .pm/ROADMAP.md, so the roadmap fit is questioned in the grill phase before any plan is written.",
       "files": [
         "evals/fixtures/bakery"
       ],
       "expectations": [
         "Reads .pm/ROADMAP.md",
-        "Says the goal fits neither i1 nor i2",
+        "Says the goal fits neither i1 (order for pickup) nor i2 (staff day view)",
         "Asks the requester about the fit before writing the plan"
       ]
     },
