@@ -1,6 +1,6 @@
 ---
 name: plan-draft
-description: Use when a change is too large to start coding without a plan, when the user types /plan-draft, or when a goal arrives as a handoff file path, and a reviewed plan (no code) under .claude/plans/ is wanted; writes the plan and delegates a cold review to plan-review. Not for a change you can make and verify in one pass, for questions, or for running a plan that already exists (that is /plan-execute).
+description: Use when a change is too large to start coding without a plan, when the user types /plan-draft, when a goal arrives as a handoff file path or a board item id (`iN/NNN`), and a reviewed plan (no code) under .claude/plans/ is wanted; writes the plan and delegates a cold review to plan-review. Not for a change you can make and verify in one pass, for questions, or for running a plan that already exists (that is /plan-execute).
 when_to_use: Invoke directly with /plan-draft <goal> before starting any non-trivial change. Pairs with /plan-execute.
 category: Workflow
 tags: [workflow, artifacts]
@@ -62,6 +62,9 @@ say why, and stop. Don't offer or recommend a variant that routes around it ("a 
 person collects it" for "no delivery"); the only path forward is the owner lifting the
 anti-goal. If the requester then says the owner has, record that in §2 and plan it.
 
+**The roadmap bounds the goal too.** If the project has a roadmap, read it. A goal that fits
+no iteration on it is worth questioning in phase 3 before it becomes a plan.
+
 **2. Investigate the real codebase + domain.**
 Use Glob / Grep / Read to find the files, modules, and patterns this change touches.
 Reference concrete paths, not assumptions. Identify the existing conventions you must
@@ -111,6 +114,16 @@ and update the handoff's frontmatter: `status: planned`, `plan:` → your plan's
 edits here.) Drafting from a board brief (`BRIEF-<slug>.md`, a promoted handoff): treat its
 Contract the same way, set the plan's `from_brief:` to its path, and leave the brief untouched.
 
+**Drafting FROM a board item.** If the goal is a board id of the form `iN/NNN` (see
+`product-manager/board.md`), read the item, every `## Design input` brief it names and the
+iteration's `README.md` demo script. The item's `## Problem`, `## Done when` and `## Rules`
+are the settled requirement: its `## Done when` becomes §4. Decisions already settled in
+the briefs are not re-opened. The **plan owns the design and the task breakdown**, which
+the item deliberately lacks, so §3 is yours to write; grill only what the item and briefs
+leave open. Set `from_item: iN/NNN` in the plan's frontmatter, next to `from_handoff:`.
+Never edit the board: its job (`product-manager/board.md`) is its only writer, and
+`/plan-execute` hands it the close-out.
+
 Either way, record the cross-repo contract (API shape, event, schema) this plan depends
 on in §2 as a blocking assumption until the other side lands.
 
@@ -152,6 +165,12 @@ files + change + why into one long bullet line. Group tasks into phases when ord
 across groups matters. Be specific enough that the executor can follow without
 re-deriving your reasoning. Cite a `path:line` when it pins down a decision; never
 transcribe the code itself — the executor reads the file at run time.
+
+**Every plan ends with three standing tasks**, after the implementation tasks:
+
+- **Simplify**: the user's simplify or review skill (`/simplify` if present) over the changed code.
+- **Test coverage**: tests for real behavior and failure modes, not for lines.
+- **Docs surface**: every doc the change touches or makes stale, per the project's own docs rule if it has one.
 
 **6. Define done.**
 Write acceptance criteria as a checklist. For each item, specify exactly how it will be

@@ -15,6 +15,44 @@
         "Every acceptance box is a command followed by its expected output",
         "Does not change pricing.py or any test"
       ]
+    },
+    {
+      "id": 2,
+      "prompt": "There is a typo in the comment on the line of pricing.py I am already editing for the README task.",
+      "expected_output": "Fixes the one-word comment inline: a handoff for it would be noise.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "Writes no file under .claude/handoffs/",
+        "Fixes the typo on the line already being edited"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "The QA run reproduced two separate failures: shipping_cents(0) returns 499, and notifier.py sends the mail twice on a retry. Both are out of scope for my task.",
+      "expected_output": "Files one handoff per reproduced finding, each self-contained, and does not put either on the board.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "Writes two files under .claude/handoffs/, one per finding",
+        "Each Problem cites file:line and a command with its output",
+        "Neither finding is written to .pm/ or any board file"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "File that shipping bug and put it on the board in i2.",
+      "expected_output": "Writes the handoff, then points at the board's promote job for the board half and never writes the board itself.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "Writes the handoff under .claude/handoffs/",
+        "Names promote as the way onto the board",
+        "Writes nothing under .pm/"
+      ]
     }
   ]
 }

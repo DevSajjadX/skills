@@ -142,13 +142,28 @@ genuinely out of scope, log it and flag it loudly rather than marking the plan d
 **8. Close out.**
 Append an "Execution log" to the plan: files changed, per-task and verify results, any
 divergences and how they were resolved, ADR number if written. Set frontmatter
-`status: done`. If the plan has `from_brief:`, leave the brief alone (it stays with its board item) and name the
-board's `done <item>` job for the human to run. If the plan has `from_handoff:` and your verification covered every one
+`status: done`. If the plan has `from_brief:`, leave the brief alone (it stays with its board item). For the board
+item, see "The board close-out" below. If the plan has `from_handoff:` and your verification covered every one
 of its Acceptance boxes, `git rm` that handoff — its absence is what unblocks the origin
 repo's plan; if a box is still unmet, leave it `planned` and say which. (The handoff
 lives in the origin repo's `.claude/handoffs/`; this removal is a sanctioned write
 outside the cwd repo even under a handoff-only policy. Stage it there and leave the
 commit to that repo's owner.) Then write a PR-ready summary: what changed, why, how it was verified, and
 any follow-ups.
+
+**The board close-out.** When the plan carries `from_item: iN/NNN` (or a `from_brief:` whose
+promoted item you can name), the item closes **once, at close-out**, never per task: the item
+is the board's unit, and a §3 task is not. First verify every line of the item's `## Done when`
+against the running code or the project's gate, not against the task ticks. Only when every
+line holds, name the board's `done <item>` job (`product-manager/board.md`) for the human to run.
+
+- Never edit a board file yourself. The board's job is its only writer, and a second writer is
+  the drift it exists to prevent. If that job is unavailable, say so and leave the board alone
+  rather than moving the file by hand: a stale board is recoverable, one with two writers is not.
+- If a `## Done when` line does not hold, the item stays open. Name that line, and do not name the job.
+
+**Out-of-scope finds.** A bug or debt found during execution that the plan does not cover goes
+to `.claude/handoffs/` through `plan-handoff` (origin `none (found during <task>)`), never
+straight onto the board. Promotion to the board stays a human step.
 
 Do not push or open a PR unless explicitly asked.

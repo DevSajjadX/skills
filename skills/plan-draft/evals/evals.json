@@ -28,6 +28,59 @@
         "Every definition-of-done line names how it is verified",
         "Lists at least one open product question in section 2 instead of deciding it"
       ]
+    },
+    {
+      "id": 3,
+      "prompt": "/plan-draft i1/001",
+      "expected_output": "Loads the board item, its Design input brief and the iteration demo script; Problem, Done when and Rules are settled; the plan's section 4 carries the item's Done when; from_item is set; the board is untouched.",
+      "files": [
+        "evals/fixtures/bakery"
+      ],
+      "expectations": [
+        "Reads .pm/i1/001.md, BRIEF-slot-capacity.md and .pm/i1/README.md",
+        "Section 4 of the plan carries both Done when lines of the item",
+        "Plan frontmatter has from_item: i1/001",
+        "Does not re-ask the 12-orders-per-slot decision settled in the brief",
+        "Writes no file under .pm/"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "/plan-draft let customers change the pickup time of an order they already placed, up to the day before.",
+      "expected_output": "The plan's task list ends with three standing tasks after the implementation tasks: simplify, test coverage, docs surface.",
+      "files": [
+        "evals/fixtures/bakery"
+      ],
+      "expectations": [
+        "The last three tasks in section 3 are Simplify, Test coverage and Docs surface, in that order",
+        "Test coverage names behaviour and failure modes, not line coverage",
+        "Docs surface names every doc the change touches or makes stale"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "/plan-draft add a live chat widget so customers can message the baker while they pick a slot.",
+      "expected_output": "The goal fits no iteration on .pm/ROADMAP.md, so the roadmap fit is questioned in the grill phase before any plan is written.",
+      "files": [
+        "evals/fixtures/bakery"
+      ],
+      "expectations": [
+        "Reads .pm/ROADMAP.md",
+        "Says the goal fits neither i1 nor i2",
+        "Asks the requester about the fit before writing the plan"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "The order confirmation page says 'Thank you for you order'. Fix the typo.",
+      "expected_output": "Does not load plan-draft: a one-line string fix is made and verified in one pass, with no plan file.",
+      "files": [
+        "evals/fixtures/bakery"
+      ],
+      "expectations": [
+        "Does not write a plan under .claude/plans/",
+        "Does not run a grill or a cold review"
+      ]
     }
   ]
 }

@@ -15,6 +15,44 @@
         "Flags Task 1 making existing code read the wall clock without naming the tests that need a fixed clock, such as test_save10_takes_ten_percent (default flip)",
         "Flags at least one task whose only locator is a line number"
       ]
+    },
+    {
+      "id": 2,
+      "prompt": "I rewrote Task 3 of .claude/plans/2026-10-29-discount-expiry.md after your findings. Does it hold up now?",
+      "expected_output": "Re-reads the plan cold from the file and re-issues a verdict against the codebase instead of assuming the previous one.",
+      "files": [
+        "evals/fixtures/discount-expiry"
+      ],
+      "expectations": [
+        "Reads the plan file again before judging",
+        "Checks claims against pricing.py and the tests, not against memory of the earlier review",
+        "Returns APPROVE or REVISE"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Review the diff on this branch before I open the PR.",
+      "expected_output": "Does not load plan-review: there is no plan file, and a diff review belongs to reviewing-changes.",
+      "files": [
+        "evals/fixtures/discount-expiry"
+      ],
+      "expectations": [
+        "Does not issue an APPROVE or REVISE plan verdict",
+        "Treats the request as a code review"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "/plan-review .claude/plans/2026-10-29-discount-expiry.md, and fix the task ordering while you are in there.",
+      "expected_output": "Reports the ordering problem as a finding and declines to edit the plan: the author edits.",
+      "files": [
+        "evals/fixtures/discount-expiry"
+      ],
+      "expectations": [
+        "The plan file is unchanged",
+        "States that review is read-only and the author edits",
+        "Any ordering problem appears as a finding"
+      ]
     }
   ]
 }
