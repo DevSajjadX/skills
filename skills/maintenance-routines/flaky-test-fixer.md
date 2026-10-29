@@ -54,7 +54,7 @@ The project's full gate list, plus:
 
 ## Specific STOPs
 
-Beyond the universal list:
+Beyond the universal list, each of these is a STOP: skip the finding and write its handoff (§ Universal STOPs in SKILL.md):
 
 - **Not reproducible in ten runs.** Report, do not fix.
 - **It fails every time.** That is a bug, not a flake: `logic-bugfixer`.

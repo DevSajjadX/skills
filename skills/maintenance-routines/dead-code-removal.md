@@ -37,7 +37,7 @@ The sweep must come back empty **except** for the definition itself and the test
 
 - **It is registered.** A route, handler, command or plugin listed in a registry, router, config file or decorator is live even if nothing else names it. Grep the module's registration file for the symbol (the endpoint-mapping function, the handler registry, the plugin list); a use case listed there is live.
 - **It is a public API.** An export listed in a package's public surface (`__all__`, an index file, a published package) may be imported by other repos. That is a STOP, not a deletion.
-- **It is an error class or code.** Its name may be a wire key a client branches on, and may appear in message catalogs.
+- **It is an error class or code.** Its name may be a wire key a client branches on, and may appear in message catalogs. A class with no thrower today is a STOP, not a deletion.
 - **It is reached through an interface**, so the implementation has no direct caller, including an interface in a module's published contracts project.
 - **It is generated, or used by the generated client.** A type that looks orphaned in generated output (an API client, a schema file, a spec) is regenerated with the project's generator, never deleted.
 - **It is loaded by reflection or by name.** A string lookup (`globals()[name]`, `getattr`, a config file naming a function, a scan for subclasses, a resource read by name) reaches symbols with no textual reference to the symbol itself. Grep for the string pieces too. Typical cases: an error catalog that scans for exception subclasses and reads message resources by name, and a scanning library (an outbox's handler discovery, a DI container's assembly scan, a plugin loader) that loads its types the same way.
@@ -57,7 +57,7 @@ The project's full gate list, plus:
 
 ## Specific STOPs
 
-Beyond the universal list:
+Beyond the universal list, each of these is a STOP: skip the finding and write its handoff (§ Universal STOPs in SKILL.md):
 
 - **An unused public member on a shared interface** (a module's published contracts). That is a contract change, not a deletion.
 - **An error class with no thrower** is still a wire key a client may branch on. A class with no thrower today may still be in the message catalogs and in a client's branch.

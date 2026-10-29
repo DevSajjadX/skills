@@ -44,7 +44,7 @@ The project's full gate list, plus:
 
 ## Specific STOPs
 
-Beyond the universal list:
+Beyond the universal list, each of these is a STOP: skip the finding and write its handoff (§ Universal STOPs in SKILL.md):
 
 - **The two copies live in different modules.** Unifying them means a shared interface or package, a boundary design decision, not a cleanup. Write a handoff and leave both copies in place (naming the shared-interface or shared-package option, with its cost).
 - **The copies are backend and frontend.** A rule mirrored across the two needs a parity test or a redesign where only one implementation exists, not a routine's judgement call.

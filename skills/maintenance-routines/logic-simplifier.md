@@ -51,7 +51,7 @@ The project's full gate list, plus:
 
 ## Specific STOPs
 
-Beyond the universal list:
+Beyond the universal list, each of these is a STOP: skip the finding and write its handoff (§ Universal STOPs in SKILL.md):
 
 - **The behaviour cannot be pinned with a test.** The single hardest STOP to respect and the one that matters most.
 - **The code is convoluted because the domain is.** A five-branch state transition is five real states. Read the scope's card before deciding the code is worse than its subject.

@@ -55,7 +55,7 @@ The project's full gate list, plus:
 
 ## Specific STOPs
 
-Beyond the universal list:
+Beyond the universal list, each of these is a STOP: skip the finding and write its handoff (§ Universal STOPs in SKILL.md):
 
 - **The "bug" is a documented decision.** Read the scope's card first. Several things look wrong and are not (a deliberate cross-tenant read such as a market view that lists other tenants' rows, an identical answer given to avoid leaking whether an account exists, a counterparty's audit row attributed to a tenant the actor is not in because it commits with the actor's own row and a lone one would be the bug).
 - **The doc is the stale one.** Fix a stale docstring, comment or glossary entry as its own finding and say so; a stale ADR or instruction file is a handoff. Do not change working code to match a sentence nobody updated.
