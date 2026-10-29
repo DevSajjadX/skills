@@ -1,11 +1,10 @@
 ---
 name: plan-execute
-description: Use when the user types /plan-execute on a plan in .claude/plans/ whose frontmatter says status approved and which is ready to build; walks its section-3 checklist one task at a time, running the gate for each and ticking it the moment it lands, after echoing the model and effort its "Run with" line recommends; closes out by flipping the plan to done and, when the plan carries from_item, running the board's done job once for the item (it never writes the board itself). Not for a draft plan (it must be approved first: say so and stop), for work with no plan (that is /plan-draft), or for ad-hoc changes.
+description: Use when the user types /plan-execute, or a queue worker hands over, a plan in .claude/plans/ whose frontmatter says status approved and which is ready to build; walks its section-3 checklist one task at a time, running the gate for each and ticking it the moment it lands, after echoing the model and effort its "Run with" line recommends; closes out by flipping the plan to done and, when the plan carries from_item, running the board's done job once for the item (it never writes the board itself). Not for a draft plan (it must be approved first: say so and stop), for work with no plan (that is /plan-draft), or for ad-hoc changes.
 when_to_use: Invoke directly with /plan-execute after a plan from /plan-draft has been set to status approved.
 argument-hint: [path to plan, or empty for the latest approved one]
 tags: [workflow, artifacts]
 category: Workflow
-disable-model-invocation: true
 allowed-tools: "*"
 ---
 

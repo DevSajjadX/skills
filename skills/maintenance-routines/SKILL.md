@@ -30,7 +30,7 @@ Match the request to one row, then read **exactly that one file** next, not the 
 
 ## Preconditions: verify once, up front
 
-1. Check the current branch (`git branch --show-current`). A routine works on its own branch, never the default branch, and a ship command usually refuses the default branch anyway. If on the default branch, create `routine/<name>-<scope>`, or STOP and ask.
+1. Check the current branch (`git branch --show-current`). A routine works on its own branch, never the default branch, and a ship command usually refuses the default branch anyway. If on the default branch, create the routine's branch, or STOP and ask. Its name follows the Ship section's `branch-naming` in the instruction file (for example `<type>/<slug>` gives `refactor/<name>-<scope>`), else `routine/<name>-<scope>`.
 2. Check `git status`. Uncommitted work you did not do belongs to another session: surface it and ask. Never sweep unrelated changes into a routine's commits or ship.
 3. Read the project's `AGENTS.md` or `CLAUDE.md`, and any list of things it says must not be done (a "do not do" file, an anti-goals list, a decision log). Anything it forbids is a hard STOP for any finding that would conflict, however small the diff.
 4. Read the scope's own card: the nearest `AGENTS.md`, module README or architecture note (for a backend module, the kernel or a frontend feature folder, its own file). Its "rules a compiler will not catch" section (or equivalent) is exactly the list of things that look like defects and are not.
@@ -66,7 +66,7 @@ A routine may skip the part of the list its scope cannot affect (a frontend-only
 **One shipment per run.** After the gates pass over all of the run's commits, ship them together, once:
 
 - **The project has a ship or PR command** (a `/ship` skill, a `make pr`, a documented script) **and its instruction file names it, and this run is authorized to use it** (the request asks to ship or open a PR, or the instruction file says routines ship through it): compose that command. It opens the PR (in projects where that command is the only path to the default branch, it is also where the gates run). You made the changes in this session, so run it session-aware: stage exactly the files you touched, write the message from what you know. One finding per commit, one PR per run, never one PR per finding.
-- **Otherwise** (no such command, or the run is not authorized to use it): when the run is authorized to ship but the project has no command, ship through the `wrap` skill's `pr` mode; when it is not authorized, stay on your own `routine/<name>-<scope>` branch with one commit per finding, and **do not push**. Pushing, opening a PR and merging are the user's call (the `wrap` skill does them).
+- **Otherwise** (no such command, or the run is not authorized to use it): when the run is authorized to ship but the project has no command, ship through the `wrap` skill, by the Ship section's `flow`: `pr` (or no section) uses `pr` mode; `direct` lands the branch with `m` (fast-forward only) and pushes only per its `push` key. When it is not authorized, stay on your own routine branch with one commit per finding, and **do not push**. Pushing, opening a PR and merging are the user's call (the `wrap` skill does them).
 
 ## Budget
 
