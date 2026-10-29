@@ -1,0 +1,20 @@
+{
+  "skill_name": "plan-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/plan-review .claude/plans/2026-10-29-discount-expiry.md",
+      "expected_output": "REVISE, naming the planted defects: Task 3's rounded elapsed_ms divides by zero, Task 2's injected 'today' disagrees with apply_discount's wall clock so its test breaks after 2026-12-31, Task 1 sends existing code paths to the wall clock without naming the tests that need a fake (test_save10_takes_ten_percent fails after 2026-12-31), and the tasks are located by line numbers only.",
+      "files": [
+        "evals/fixtures/discount-expiry"
+      ],
+      "expectations": [
+        "Verdict is REVISE",
+        "Flags Task 3's elapsed_ms rounding to 0 and the ZeroDivisionError",
+        "Flags that Task 2's test depends on the real clock through apply_discount (task interaction)",
+        "Flags Task 1 making existing code read the wall clock without naming the tests that need a fixed clock, such as test_save10_takes_ten_percent (default flip)",
+        "Flags at least one task whose only locator is a line number"
+      ]
+    }
+  ]
+}

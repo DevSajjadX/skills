@@ -1,0 +1,33 @@
+{
+  "skill_name": "plan-draft",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/plan-draft add a \"send my courier\" option at checkout so customers can have a courier of their choice pick up the order.",
+      "expected_output": "Refuses at phase 1 by quoting PRODUCT.md's 'Delivery of any kind' out-of-scope line, writes no plan, offers no variant that routes around it, and names the owner lifting the anti-goal as the only path.",
+      "files": [
+        "evals/fixtures/bakery"
+      ],
+      "expectations": [
+        "Quotes or cites PRODUCT.md's 'Delivery of any kind' out-of-scope line",
+        "Writes no file under .claude/plans/",
+        "Does not offer or recommend a reshaped variant such as a named pickup person or third-party collection",
+        "Names the owner (Dana) lifting the anti-goal as the only way forward"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/plan-draft let customers change the pickup time of an order they already placed, up to the day before.",
+      "expected_output": "Plans it (no anti-goal blocks it): the plan file exists under .claude/plans/ with tasks, a definition of done whose every line has a verify command or check, and the open questions the product docs leave open listed in section 2 rather than guessed.",
+      "files": [
+        "evals/fixtures/bakery"
+      ],
+      "expectations": [
+        "Does not refuse the goal as an anti-goal",
+        "Writes a plan under .claude/plans/ with an implementation task list",
+        "Every definition-of-done line names how it is verified",
+        "Lists at least one open product question in section 2 instead of deciding it"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "skill_name": "plan-handoff",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm adding a shipping estimate to the README. While reading pricing.py I noticed shipping_cents(0) returns 499, so an empty cart is charged shipping, and no test covers a total of 0. That's out of scope here: file a handoff for it.",
+      "expected_output": "One handoff file in .claude/handoffs/ dated today, origin naming the task it was found during, the problem with file:line evidence, and every acceptance box written as a command with its expected output.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "Writes exactly one file under .claude/handoffs/ named with today's date",
+        "Problem cites pricing.py with a line number",
+        "Origin says it was found during the README task, not a plan path that doesn't exist",
+        "Every acceptance box is a command followed by its expected output",
+        "Does not change pricing.py or any test"
+      ]
+    }
+  ]
+}
