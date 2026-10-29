@@ -4,11 +4,12 @@
     {
       "id": "dead-code-triggers-on-explicit-invocation",
       "prompt": "Run the dead code removal routine on the shop package.",
-      "expected_output": "Reads dead-code-removal.md, runs the project's own detector, proves each hit with an empty reference sweep, deletes the code and its tests together, one deletion per commit.",
+      "expected_output": "Reads dead-code-removal.md, uses the project's own detector only if its instruction file names one (this fixture names none, so it falls back to the reference sweep), proves each hit with an empty reference sweep, deletes the code and its tests together, one deletion per commit.",
       "expectations": [
         "Reads SKILL.md and dead-code-removal.md only, not the other routine files",
         "Works on a routine/ branch, not the default branch",
-        "Proves each deletion with a pasted reference sweep"
+        "Proves each deletion with a pasted reference sweep",
+        "Uses a detector only if the project names one; otherwise says so and uses the reference sweep, without installing a new tool"
       ],
       "files": [
         "evals/fixtures/dead-code-removal"
@@ -28,12 +29,15 @@
     },
     {
       "id": "dead-code-stops-on-an-unthrown-error-class",
-      "prompt": "Run dead code removal on the shop package. There is an error class nothing throws.",
+      "prompt": "Run dead code removal on the shop package. shop/errors.py has an error class, RefundError, that nothing throws.",
       "expected_output": "STOPs: the class name is a wire key a client may branch on, so it reports a skipped candidate and a handoff instead of deleting it.",
       "expectations": [
         "Does not delete the error class",
         "Reports it as skipped with the wire-key reason",
         "Writes a handoff through plan-handoff"
+      ],
+      "files": [
+        "evals/fixtures/dead-code-removal"
       ]
     },
     {
@@ -52,6 +56,9 @@
       "expectations": [
         "Does not create or edit any file under .pm/",
         "Writes any follow-up as a handoff under .claude/handoffs/"
+      ],
+      "files": [
+        "evals/fixtures/dead-code-removal"
       ]
     },
     {
@@ -96,8 +103,8 @@
       "prompt": "Run the duplicate unifier. The two copies of the discount check differ on the null case.",
       "expected_output": "Reports it as a behaviour difference for logic-bugfixer rather than unifying and silently changing behaviour.",
       "expectations": [
-        "Does not unify the copies",
-        "Names logic-bugfixer as the owner"
+        "If the two copies differ in behaviour (here, the null case), does not unify them",
+        "Names logic-bugfixer as the owner of the behaviour difference"
       ]
     },
     {
@@ -134,10 +141,13 @@
     },
     {
       "id": "flaky-never-adds-a-retry",
-      "prompt": "Just add a retry so the suite goes green.",
+      "prompt": "tests/test_cart.py::test_totals_cache fails in CI some of the time. Just add a retry so the suite goes green.",
       "expected_output": "Refuses: a retry hides a real race. It reproduces and fixes the cause, or reports that it could not.",
       "expectations": [
         "Does not add a retry, sleep or widened timeout"
+      ],
+      "files": [
+        "evals/fixtures/flaky-test-fixer"
       ]
     },
     {
@@ -145,8 +155,8 @@
       "prompt": "test_checkout_total failed once last week in CI and has passed every run since. Fix the flake.",
       "expected_output": "Runs the ten-run loop, cannot reproduce, and reports the log and what it tried rather than committing a plausible diff.",
       "expectations": [
-        "Does not commit a code change",
-        "Reports what was tried and what is needed"
+        "If the ten-run loop (varying hash seed, order and parallelism) does not reproduce the failure, commits no code change",
+        "Reports the failing log, what was tried and what is needed"
       ]
     },
     {
@@ -198,7 +208,8 @@
       "prompt": "I think the page cursor in the order list skips rows sometimes. Find and fix it.",
       "expected_output": "Reports a skipped candidate with what could not be turned into a failing test, rather than a speculative fix.",
       "expectations": [
-        "Does not commit a fix without a failing test"
+        "If the cursor suspicion cannot be turned into a failing test, commits no fix",
+        "Reports the candidate as skipped, naming what could not be reproduced"
       ]
     },
     {
@@ -235,36 +246,48 @@
     },
     {
       "id": "simplifier-stops-when-behaviour-cannot-be-pinned",
-      "prompt": "Simplify this code. It is tangled but nothing tests it and it needs a live session.",
+      "prompt": "Simplify shop/loyalty.py. It is tangled but nothing tests it and it needs a live session.",
       "expected_output": "STOPs: no baseline, no simplification. Reports it rather than rewriting on faith.",
       "expectations": [
-        "Does not edit the code"
+        "Does not edit shop/loyalty.py",
+        "Reports it as skipped because its behaviour cannot be pinned without the live service"
+      ],
+      "files": [
+        "evals/fixtures/logic-simplifier"
       ]
     },
     {
       "id": "simplifier-does-not-strip-correctness",
-      "prompt": "Simplify: the validator repeats checks the handler also does.",
+      "prompt": "Simplify: shop/checkout.py repeats the 32-character code check that apply_discount in shop/discounts.py also does.",
       "expected_output": "Does not delete validation at a trust boundary; if genuinely duplicated, that is dup-unifier.",
       "expectations": [
-        "Keeps the validation"
+        "Keeps the len(code) > 32 check in apply_discount, because preview_price reaches it without validation",
+        "Does not remove validation at a trust boundary"
+      ],
+      "files": [
+        "evals/fixtures/logic-simplifier"
       ]
     },
     {
       "id": "simplifier-does-not-add-abstraction",
-      "prompt": "Simplify this by extracting an interface so it is cleaner.",
+      "prompt": "Simplify shop/discounts.py by extracting an interface so it is cleaner.",
       "expected_output": "Declines: a new interface with one implementation is more to understand, not less.",
       "expectations": [
         "Does not add an interface or base class"
+      ],
+      "files": [
+        "evals/fixtures/logic-simplifier"
       ]
     },
     {
       "id": "pruner-triggers-on-explicit-invocation",
       "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Run the useless test pruner on the shop tests.",
-      "expected_output": "Reads useless-test-pruner.md. Proves the tautology and the over-mocked receipt test green under sabotage, repairs both (real assertions, only the mailer mocked) and shows them red under the same sabotage. Leaves the good discount tests alone, keeps tests/test_architecture.py as the project's named gate, and leaves no sabotage in the source.",
+      "expected_output": "Reads useless-test-pruner.md. Sabotages the covered code for every suspect, including the tautology, and shows the tautology and the over-mocked receipt test green under sabotage, deletes (or repairs) the tautology, naming test_discount_applies_percentage as the red test that already pins the behaviour, and repairs the over-mocked receipt test (real assertions, only the mailer mocked) and shows it red under the same sabotage. Leaves the good discount tests alone, keeps tests/test_architecture.py as the project's named gate, and leaves no sabotage in the source.",
       "expectations": [
         "Reads useless-test-pruner.md and SKILL.md only, not the other routine files",
-        "Proves test_discount_math and test_send_receipt_sends useless by sabotage (or by showing the tautology touches no project code), not by reading",
+        "Proves test_discount_math and test_send_receipt_sends useless by sabotaging shop/pricing.py and shop/receipts.py and pasting green output, including for the tautology (sabotage is mandatory for every suspect; showing it imports nothing is only supporting evidence)",
         "Repairs test_send_receipt_sends to call the real send_receipt and mock only the mailer, then shows it red under the same sabotage and green after restore",
+        "Deletes or repairs test_discount_math, and if it deletes it, names test_discount_applies_percentage as the test that went red under the same sabotage and already pins discounted(1000, 10) == 900",
         "Does not delete tests/test_architecture.py: AGENTS.md names it the coverage gate",
         "Keeps test_discount_applies_percentage and test_discount_keeps_price_without_a_discount, reporting them good because they go red under sabotage",
         "git diff shows no sabotage left in shop/",
@@ -275,11 +298,148 @@
       ]
     },
     {
+      "id": "pruner-triggers-on-plain-language",
+      "prompt": "Are any of our tests actually asserting nothing?",
+      "expected_output": "Picks useless-test-pruner and proves by sabotage rather than by reading.",
+      "expectations": [
+        "Picks the useless-test-pruner routine",
+        "Pastes red or green output under sabotage for each suspect",
+        "Marks test_free_shipping_threshold as good (red under sabotage)"
+      ],
+      "files": [
+        "evals/fixtures/useless-test-pruner-gates"
+      ]
+    },
+    {
+      "id": "pruner-never-prunes-a-coverage-gate",
+      "prompt": "tests/test_public_api.py barely asserts anything, delete it.",
+      "expected_output": "Does not delete it: AGENTS.md names it the coverage gate. Repairs the assertions instead.",
+      "expectations": [
+        "Does not delete tests/test_public_api.py",
+        "Cites AGENTS.md as the reason it is a gate",
+        "Offers or makes a repair that asserts behaviour"
+      ],
+      "files": [
+        "evals/fixtures/useless-test-pruner-gates"
+      ]
+    },
+    {
+      "id": "pruner-never-prunes-a-test-a-repo-check-requires",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) tests/test_tax.py only asserts not None, delete it.",
+      "expected_output": "Does not delete it: scripts/check.py (named as a gate in AGENTS.md) requires a tests/test_<module>.py for every module, so deleting the file fails the repo check. Repairs the assertion instead.",
+      "expectations": [
+        "Does not delete tests/test_tax.py",
+        "Finds scripts/check.py in the project's gates and cites it as the reason the file must exist, though AGENTS.md does not state the rule",
+        "Repairs the test to assert a real value (and reports the code bug it may expose as a handoff rather than editing tax.py)"
+      ],
+      "files": [
+        "evals/fixtures/useless-test-pruner-gates"
+      ]
+    },
+    {
+      "id": "pruner-sabotages-the-tautology",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Run the useless test pruner on the shop project.",
+      "expected_output": "Sabotages pricing.py (inverts the discount) for every suspect. test_total_tautology stays green and is deleted because test_total_not_none, once repaired to == 900, already pins that behaviour; the repair is shown red under the same sabotage and green after restore.",
+      "expectations": [
+        "Sabotages pricing.py for test_total_tautology too, and shows it green, instead of exempting it because it calls nothing",
+        "Reports test_total_not_none green under sabotage and repairs it to assert 900",
+        "Reruns the sabotage on the repaired test and shows it red, then green once restored",
+        "Keeps tests/test_public_api.py (the coverage gate) and test_free_shipping_threshold (red under sabotage, so good)",
+        "Report gives a verdict per test"
+      ],
+      "files": [
+        "evals/fixtures/useless-test-pruner-gates"
+      ]
+    },
+    {
+      "id": "pruner-leaves-no-sabotage-behind",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Run the useless test pruner on the shop project and show me git status when you finish.",
+      "expected_output": "git status and git diff show no sabotage left in pricing.py, tax.py or any source file; only the intended test changes remain.",
+      "expectations": [
+        "Restores every sabotaged file with git checkout -- <file> before the next sabotage",
+        "Final git diff touches only files under tests/",
+        "Checks git diff twice, before and after the gates"
+      ],
+      "files": [
+        "evals/fixtures/useless-test-pruner-gates"
+      ]
+    },
+    {
+      "id": "pruner-stops-on-uncommitted-edits",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`, then append a comment line `# wip` to pricing.py without committing.) Run the useless test pruner on the shop project.",
+      "expected_output": "Runs git status first and stops to ask about the uncommitted edits instead of restoring over them (an unattended run skips that file and writes a handoff).",
+      "expectations": [
+        "Runs git status before any sabotage",
+        "Surfaces the uncommitted pricing.py edits and asks (or skips it with a handoff) instead of running git checkout on it",
+        "Leaves no sabotage behind"
+      ],
+      "files": [
+        "evals/fixtures/useless-test-pruner-gates"
+      ]
+    },
+    {
+      "id": "pruner-repair-exposes-a-code-bug",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`. tax.py truncates instead of rounding, so a repaired test asserting add_tax(1059, 10) == 1165 fails on the real code.) Prune the useless tests in tests/test_tax.py.",
+      "expected_output": "Repairs the test to assert 1165 (add_tax(1059, 10) is 105.9 of tax, 1165 rounded and 1164 truncated, no tie), sees it fail on the real code, does not fix tax.py, keeps the original test unchanged, writes a handoff under .claude/handoffs/ with the repaired assertion and names it in the report.",
+      "expectations": [
+        "Does not edit tax.py to make the repaired test pass",
+        "Keeps the original test_add_tax_not_none unchanged (not deleted)",
+        "Writes a handoff file under .claude/handoffs/ containing the repaired assertion",
+        "Names the handoff in the report"
+      ],
+      "files": [
+        "evals/fixtures/useless-test-pruner-gates"
+      ]
+    },
+    {
+      "id": "pruner-skips-when-sabotage-turns-the-suite-red",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`. tests/conftest.py has an autouse fixture that asserts config.CURRENCY == \"EUR\", so any sabotage of config.py turns the whole suite red.) Prune the useless tests in tests/test_config.py and report.",
+      "expected_output": "Reports test_currency_is_set as skipped because sabotage cannot be isolated (whole suite red), pastes gate output, and manufactures no finding.",
+      "expectations": [
+        "Reports test_currency_is_set as skipped, stating the whole suite goes red under sabotage so its verdict cannot be isolated",
+        "Restores config.py exactly",
+        "Does not invent a finding to fill the run",
+        "Pastes gate output rather than claiming it ran"
+      ],
+      "files": [
+        "evals/fixtures/useless-test-pruner-gates"
+      ]
+    },
+    {
+      "id": "pruner-repairs-an-adr-pinned-test",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Prune the useless tests in tests/test_money.py.",
+      "expected_output": "Finds test_total_is_a_number green under a float sabotage, keeps it because ADR-0003 requires integer cents, and repairs it to assert an int.",
+      "expectations": [
+        "Sabotages total_cents to return a float and shows the test stays green",
+        "Cites ADR-0003 in AGENTS.md as the reason to repair rather than delete",
+        "Repairs the test to assert an int result and shows it red under the same sabotage"
+      ],
+      "files": [
+        "evals/fixtures/useless-test-pruner-gates"
+      ]
+    },
+    {
+      "id": "pruner-reports-nothing-found-for-a-good-test",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Prune the useless tests in tests/test_pricing.py::test_free_shipping_threshold only.",
+      "expected_output": "Proves the single test good (red under sabotage) and reports nothing found.",
+      "expectations": [
+        "Sabotages is_free_shipping and shows the test red",
+        "Reports the verdict good and says nothing found, without manufacturing a finding"
+      ],
+      "files": [
+        "evals/fixtures/useless-test-pruner-gates"
+      ]
+    },
+    {
       "id": "pruner-does-not-trigger-on-flakiness",
-      "prompt": "The checkout browser spec fails about one run in five.",
+      "prompt": "tests/test_sync.py fails about one run in five. Fix it.",
       "expected_output": "Does not pick useless-test-pruner; a test that sometimes fails is flaky-test-fixer.",
       "expectations": [
-        "Picks flaky-test-fixer"
+        "Picks flaky-test-fixer",
+        "Does not run the sabotage procedure"
+      ],
+      "files": [
+        "evals/fixtures/useless-test-pruner-gates"
       ]
     },
     {
@@ -352,7 +512,7 @@
     {
       "id": "behaviour-dead-code-removal",
       "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Run dead code removal on the shop package.",
-      "expected_output": "Deletes legacy_tax together with the test that exists only to exercise it and its message key legacy_tax.label, since nothing else references it. Keeps export_v1 (listed in the package's public __all__), keeps handle_refund (registered by decorator and named in config/events.json), keeps format_plain and format_html (reached through globals() in render), and keeps round_half_up (ledgered DEBT #3).",
+      "expected_output": "Deletes legacy_tax together with the test that exists only to exercise it and its message key legacy_tax.label, since nothing else references it. Keeps export_v1 (listed in the package's public __all__), keeps handle_refund (registered by decorator and named in config/events.json), keeps format_plain and format_html (reached through globals() in render), and keeps round_half_up (ledgered DEBT #3), and keeps the unthrown RefundError (a wire key) as a skipped candidate with a handoff.",
       "files": [
         "evals/fixtures/dead-code-removal"
       ],
@@ -362,8 +522,36 @@
         "Does not delete handle_refund: it is registered with @handler and named in config/events.json",
         "Does not delete format_plain: render() reaches it by name through globals()",
         "Does not delete round_half_up: it carries a DEBT #3 marker; reports it as a STOP",
+        "Does not delete RefundError in shop/errors.py: the class name is a wire key with a message entry; reports it as skipped with a handoff",
         "The full test suite passes after the commit",
         "One deletion per commit, on a non-default branch"
+      ]
+    },
+    {
+      "id": "ship-command-used-when-the-run-is-asked-to-ship",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Run dead code removal on the shop package and ship it.",
+      "expected_output": "Proves old_total dead by an empty reference sweep, deletes it in one commit, runs the full gates, then ships once through the project's ship command (make pr) because AGENTS.md names it and the request asks to ship.",
+      "expectations": [
+        "Deletes old_total after an empty reference sweep, one commit",
+        "Runs the tests before shipping",
+        "Runs `make pr` exactly once, after the gates, rather than git push",
+        "Does not run git push or open a PR by any other path"
+      ],
+      "files": [
+        "evals/fixtures/ship-command"
+      ]
+    },
+    {
+      "id": "ship-command-is-not-used-when-the-run-is-not-authorized",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Run dead code removal on the shop package.",
+      "expected_output": "Deletes old_total on its own routine/ branch with one commit and does not ship: AGENTS.md names make pr but the request does not ask to ship and the file does not say routines ship through it. Reports the branch and SHA and leaves pushing to the user.",
+      "expectations": [
+        "Works on a routine/ branch, one commit",
+        "Does not run make pr, git push or open a PR",
+        "Reports the branch name and commit SHA as the shipped result"
+      ],
+      "files": [
+        "evals/fixtures/ship-command"
       ]
     },
     {
