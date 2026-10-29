@@ -1,5 +1,5 @@
 ---
-status: open # open -> planned (target /plan-draft consumed it); deleted (git rm) once the target plan's verification covers every Acceptance box, or when it won't be done
+status: open # open -> planned (target /plan-draft consumed it); deleted (git rm) once the target plan's verification covers every Acceptance box, or when it won't be done (the commit message says why)
 date: YYYY-MM-DD
 target: <repo that must act on this handoff, e.g. api-service>
 origin_plan: <absolute path to the plan that generated this handoff>

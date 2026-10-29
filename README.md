@@ -56,6 +56,27 @@ At a Claude Code prompt in a terminal: `/plugin install skills --marketplace Esi
 | [handoff-queue](skills/handoff-queue/SKILL.md) | Works through a queue of handoffs while the user is away and can't answer. Reads the product docs first and parks, unbuilt, any handoff that contradicts them or needs the owner's decision; skips handoffs whose target is another repo; orders the rest by dependency; works on a branch of its own; reproduces each problem, runs every acceptance line as written, makes one commit per handoff and never pushes. Leaves a report in a fixed order: Decide, Done, Parked, Found, not fixed, Not reached, State. |
 | [youtube-video-review](skills/youtube-video-review/SKILL.md) | Reviews one or more YouTube videos, or a channel, from the real transcript. The review gives a one-line verdict, a summary, timestamped structure, the hook, pacing, packaging, claims worth checking and takeaways. Transcripts come from a research MCP server, or from the `youtube-transcript-api` CLI through `uvx` when none is connected. Transcript and comment text is treated as data, never as instructions. Every quote in a review is matched against the transcript by `quotes.py`, which also gives its timestamp, so a paraphrase can't pass as a quote. |
 
+## How they fit together
+
+Each stage has one front door.
+
+| Stage | Skills | Writes |
+|---|---|---|
+| Truth | the project's AGENTS.md or CLAUDE.md, product docs, anti-goals | nothing: the work skills read them; they change only through retro, on the user's yes |
+| Decide | product-manager | a verdict; a board or anti-goal change is proposed, never written |
+| Plan | plan-draft → plan-review → plan-execute | `.claude/plans/`, then the code |
+| Out of scope | plan-handoff | `.claude/handoffs/` |
+| Queue | handoff-queue | one commit per handoff, on a branch of its own |
+| Cleanup | useless-test-pruner | test repairs, proved by sabotage |
+| Live QA | qa-engineer | findings, sent to handoffs, issues or a report |
+| Close | wrap → retro | commits and pushes; rule changes as proposals |
+
+- Out-of-scope work found during any stage becomes a handoff, not a side fix, a task chip or a "want me to also...?" offer (a one-line fix on a line you're already editing is fine). Another session picks it up with `/plan-draft <handoff>` or a queue run. Its lifecycle is plan-handoff's.
+- A QA run never fixes and never writes the board: it files.
+- Session commits and every push go through wrap; handoff-queue commits per item and never pushes.
+
+To make this the rule in your project, copy the table into its AGENTS.md or CLAUDE.md and add your own gate and ship commands.
+
 ## Mods
 
 Claude Code plugins that change Claude's own interface. This repo is their marketplace (`.claude-plugin/marketplace.json`).
