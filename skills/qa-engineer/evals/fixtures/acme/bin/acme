@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""Stub launcher for the fictional acme app (QA evals): stdlib only, fake data.
+
+`acme run --isolated` binds a random port, prints the dashboard line, and serves
+the web pages and the /api proxy prefix on that one origin. Known gaps on purpose:
+an unknown /api route answers 404 with a null detail, and one error key has an
+English sentence only. The first load of / carries a hot-reload overlay and the
+first /api/health answers 503 (container still starting); later loads are clean.
+"""
+import json
+import re
+import sys
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+MOBILES = {"+15550000001": "a", "+15550000002": "b", "+15550000003": "staff"}
+PRODUCTS = {1: ("a", "Widget"), 2: ("a", "Gadget"), 3: ("b", "Sprocket")}
+CODES = {}
+SEEN = {"home": False, "health": False}
+TEXT = {
+    "notFound": {"en": "Not found.", "ar": "غير موجود."},
+    "badBody": {"en": "Unreadable body."},
+}
+
+
+class H(BaseHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def who(self):
+        for part in self.headers.get("Cookie", "").split(";"):
+            k, _, v = part.strip().partition("=")
+            if k == "sess" and v in ("a", "b", "staff"):
+                return v
+
+    def out(self, status, body, ctype="application/json", headers=()):
+        data = body if isinstance(body, bytes) else json.dumps(body).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", ctype)
+        for k, v in headers:
+            self.send_header(k, v)
+        self.end_headers()
+        self.wfile.write(data)
+
+    def err(self, status, key, detail=True):
+        lang = "ar" if self.headers.get("Accept-Language", "").startswith("ar") else "en"
+        msg = TEXT[key].get(lang, TEXT[key]["en"]) if detail else None
+        self.out(status, {"status": status, "detail": msg, "errorKey": key}, "application/problem+json")
+
+    def body(self):
+        try:
+            return json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
+        except ValueError:
+            return None
+
+    def do_GET(self):
+        path, _, query = self.path.partition("?")
+        if path == "/":
+            overlay = b"" if SEEN["home"] else b'<div id="vite-error-overlay">HMR update failed</div>'
+            SEEN["home"] = True
+            return self.out(200, b"<h1>Acme</h1>" + overlay, "text/html")
+        if path == "/auth":
+            return self.out(200, b"<h1>Sign in</h1>", "text/html")
+        if path.startswith("/app/"):
+            if not self.who():
+                return self.out(302, b"", "text/html", [("Location", "/auth?next=" + path)])
+            return self.out(200, b"<h1>Products</h1>", "text/html")
+        if path == "/api/health":
+            if not SEEN["health"]:
+                SEEN["health"] = True
+                return self.out(503, {"status": "starting"})
+            return self.out(200, {"status": "ok"})
+        if path == "/api/dev/sent-sms":
+            m = re.search(r"mobile=([^&]+)", query)
+            mobile = "+" + m.group(1).lstrip("+").replace("%2B", "") if m else ""
+            return self.out(200, {"text": "Your code is " + CODES.get(mobile, "000000")})
+        if path == "/api/categories":
+            return self.out(200, [{"id": 1, "name": "Hardware"}])
+        who = self.who()
+        if path.startswith("/api/") and not who and path != "/api/health":
+            return self.err(404, "notFound")
+        if path == "/api/products":
+            return self.out(200, [{"id": i, "name": n} for i, (t, n) in PRODUCTS.items() if t == who])
+        m = re.fullmatch(r"/api/products/(\d+)", path)
+        if m:
+            row = PRODUCTS.get(int(m.group(1)))
+            return self.out(200, {"id": int(m.group(1)), "name": row[1]}) if row and row[0] == who else self.err(404, "notFound")
+        self.out(404, {"status": 404, "detail": None})
+
+    def do_POST(self):
+        path = self.path.partition("?")[0]
+        data = self.body()
+        if data is None:
+            return self.err(400, "badBody")
+        if path == "/api/auth/start":
+            if data.get("mobile") in MOBILES:
+                CODES[data["mobile"]] = "123456"
+            return self.out(202, {})
+        if path == "/api/auth/verify":
+            team = MOBILES.get(data.get("mobile"))
+            if team and CODES.get(data["mobile"]) == data.get("code"):
+                return self.out(200, {}, headers=[("Set-Cookie", "sess=%s; Path=/; HttpOnly" % team)])
+            return self.err(404, "notFound")
+        who = self.who()
+        if path == "/api/products" and who:
+            pid = max(PRODUCTS) + 1
+            PRODUCTS[pid] = (who, str(data.get("name", "")))
+            return self.out(201, {"id": pid})
+        self.err(404, "notFound")
+
+
+def main():
+    srv = HTTPServer(("127.0.0.1", 0), H)
+    print("Web: http://127.0.0.1:%d" % srv.server_port, flush=True)
+    srv.serve_forever()
+
+
+if __name__ == "__main__":
+    if sys.argv[1:3] != ["run", "--isolated"]:
+        sys.exit("usage: acme run --isolated")
+    main()

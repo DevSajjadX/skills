@@ -1,7 +1,7 @@
 # QA adapter (fixture: the fictional Acme app)
 
 ## Start the app
-`preview_start acme` (launch entry `acme`, runs `acme run --isolated`). Ports are random per run: read the web origin from the dashboard output.
+`preview_start acme` (launch entry `acme`, runs `./bin/acme run --isolated`, a stub launcher in this fixture). Ports are random per run: read the web origin from the dashboard output.
 Seed: `ACME_SEED_DEMO=true`, forwarded only when the shell already set it; creates two tenants (Company A, Company B) with one admin each, and one platform staff account.
 
 ## Read first
@@ -29,6 +29,9 @@ Proxy `web/src/proxy.ts`: signed-out pages answer 302 to `/auth?next=...`, never
 
 ## Journeys
 1. Auth and the active company. 2. Catalog. 3. Staff categories. 4. Audit log. 5. Locale and RTL. 6. Narrow viewport (375).
+
+## API journeys
+1. Error shape (problem+json, detail, errorKey, ar/en). 2. Tenant isolation A vs B on products, verification and audit entries. 3. Paging under writes. 4. Anonymous surface against the declared allow-list. 5. Rate limits and forwarded headers.
 
 ## Findings go to
 `.claude/handoffs/` via plan-handoff. Evidence `web/tmp/qa-<date>/`. Secret check `<project scanner> dir . --redact`. Dry run `DRY_RUN=1`.

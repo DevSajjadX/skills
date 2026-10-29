@@ -25,7 +25,7 @@
       ],
       "expectations": [
         "Calls through the web origin's /api proxy",
-        "Reads and changes only team A rows the run created, never modifies existing rows of another team",
+        "As team B, reads team A's rows by id (run-created and existing) and gets not found or forbidden; changes only team A rows the run created and never modifies existing rows of another team",
         "Compares responses against openapi.json"
       ]
     },
@@ -135,7 +135,7 @@
       "expectations": [
         "Loads docs/qa.md and does the preflight reads",
         "Starts the stack with the launch entry and reads the origin from the dashboard output, not an assumed 3000",
-        "Writes the run header before the first action",
+        "The reply or report shows a run header written before the first action, with branch, HEAD, dirty files, origin, browser, role and seed state",
         "Signs in through scripts/qa_login.py with docs/qa/signin.json and prints no cookie",
         "Walks the six journeys in the adapter's order"
       ]
@@ -158,15 +158,15 @@
     {
       "id": 13,
       "name": "plain-language-click-through",
-      "prompt": "Click through the app on the local stack and see what's broken.",
-      "expected_output": "Loads qa-engineer and reproduces each candidate from a fresh load before recording it; a hot-reload overlay or a container still starting is not recorded.",
+      "prompt": "Click through the app on the local stack and see what's broken. Adapter: evals/fixtures/acme/docs/qa.md.",
+      "expected_output": "Loads qa-engineer, starts the stack, and reproduces each candidate from a fresh load before recording it; the first-load hot-reload overlay and the starting 503 vanish on reload and are not recorded.",
       "files": [
         "evals/fixtures/acme"
       ],
       "expectations": [
         "Loads qa-engineer for a plain-language request",
-        "Reproduces each candidate from a fresh load before recording it",
-        "Does not record a hot-reload overlay or a container still starting"
+        "Stack starts from the launch entry and a run header with the web origin is written",
+        "After seeing the hot-reload overlay on the first load and the 'starting' 503 from /api/health, reloads fresh, sees both gone, and writes no handoff for either under .claude/handoffs/"
       ]
     },
     {
@@ -209,7 +209,7 @@
       "expectations": [
         "Declines to call the API port",
         "Names what a direct call skips (proxy, forwarded headers, cookie attributes)",
-        "Calls through the origin's /api prefix with the helper's cookies"
+        "Routes every probe through the web origin's /api prefix with the qa_login.py helper's cookies (agent-browser fetch or curl -b <jar>), never the API port"
       ]
     },
     {
@@ -281,7 +281,7 @@
         "Runs only the API probes",
         "Does not open a browser or walk the web journeys",
         "Provokes each documented failure plus framework 404 and 400",
-        "Checks content type, non-null detail and error key",
+        "Checks content type, non-null detail and error key, and catches the stub's 404 with a null detail",
         "Repeats with each Accept-Language expecting the sentence to change and the key not to"
       ]
     },
