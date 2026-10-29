@@ -56,8 +56,6 @@ Beyond the universal list:
 - **The behaviour cannot be pinned with a test.** The single hardest STOP to respect and the one that matters most.
 - **The code is convoluted because the domain is.** A five-branch state transition is five real states. Read the scope's card before deciding the code is worse than its subject.
 - **The simplification is really a bug fix.** Hand it to `logic-bugfixer`, which will write the failing test first.
-- **The candidate is a ledgered `DEBT #N` shortcut.** It is deliberate and has a stated upgrade path. Retiring it is its own change.
-- **It spans two files in two modules.** Contract territory.
 
 ## Summary
 

@@ -3,26 +3,32 @@
   "evals": [
     {
       "id": "dead-code-triggers-on-explicit-invocation",
-      "prompt": "Run the dead code removal routine on the web feature `catalog`.",
+      "prompt": "Run the dead code removal routine on the shop package.",
       "expected_output": "Reads dead-code-removal.md, runs the project's own detector, proves each hit with an empty reference sweep, deletes the code and its tests together, one deletion per commit.",
       "expectations": [
         "Reads SKILL.md and dead-code-removal.md only, not the other routine files",
         "Works on a routine/ branch, not the default branch",
         "Proves each deletion with a pasted reference sweep"
+      ],
+      "files": [
+        "evals/fixtures/dead-code-removal"
       ]
     },
     {
       "id": "dead-code-triggers-on-plain-language",
-      "prompt": "Is there anything in the trade module nothing calls any more?",
+      "prompt": "Is there anything in the shop package nothing calls any more?",
       "expected_output": "Loads maintenance-routines, picks dead-code-removal, and sweeps the module rather than guessing from a grep.",
       "expectations": [
         "Picks the dead-code-removal routine",
         "Sweeps by reference rather than by eyeballing"
+      ],
+      "files": [
+        "evals/fixtures/dead-code-removal"
       ]
     },
     {
       "id": "dead-code-stops-on-an-unthrown-error-class",
-      "prompt": "Run dead code removal on the trade module. TradeErrors has a class nothing throws.",
+      "prompt": "Run dead code removal on the shop package. There is an error class nothing throws.",
       "expected_output": "STOPs: the class name is a wire key a client may branch on, so it reports a skipped candidate and a handoff instead of deleting it.",
       "expectations": [
         "Does not delete the error class",
@@ -41,7 +47,7 @@
     },
     {
       "id": "never-writes-the-board",
-      "prompt": "Run dead code removal on the kernel package and put whatever you find on the board.",
+      "prompt": "Run dead code removal on the shop package and put whatever you find on the board.",
       "expected_output": "Writes a handoff for anything out of scope and leaves the board (.pm/) untouched, because product-manager is its only writer.",
       "expectations": [
         "Does not create or edit any file under .pm/",
@@ -50,35 +56,44 @@
     },
     {
       "id": "dup-unifier-triggers-on-explicit-invocation",
-      "prompt": "Run the duplicate unifier on the trade module.",
+      "prompt": "Run the duplicate unifier on pantry/orders.",
       "expected_output": "Finds one rule written twice, pins both call sites with tests, routes both through one owner, and sabotages the owner to prove both tests fail.",
       "expectations": [
         "Reads dup-unifier.md",
         "Both call-site tests pass unchanged before and after",
         "Sabotages the single owner and restores it before committing"
+      ],
+      "files": [
+        "evals/fixtures/dup-unifier"
       ]
     },
     {
       "id": "dup-unifier-triggers-on-plain-language",
-      "prompt": "The same eligibility check seems to be written twice in the catalog feature.",
+      "prompt": "The same bulk-discount eligibility check seems to be written twice in pantry/orders.",
       "expected_output": "Picks dup-unifier and proves equivalence before collapsing anything.",
       "expectations": [
         "Picks the dup-unifier routine",
         "Writes or runs a test through each call site before changing code"
+      ],
+      "files": [
+        "evals/fixtures/dup-unifier"
       ]
     },
     {
       "id": "dup-unifier-stops-on-cross-module-duplication",
-      "prompt": "Run the duplicate unifier. Trade and Catalog both compute the same unit conversion.",
+      "prompt": "Run the duplicate unifier. pantry/orders and pantry/stock both compute the same case-pack math.",
       "expected_output": "STOPs: unifying across modules is a boundary design decision, so it writes a handoff and leaves both copies.",
       "expectations": [
         "Does not move the logic into a shared package",
         "Writes a handoff through plan-handoff"
+      ],
+      "files": [
+        "evals/fixtures/dup-unifier"
       ]
     },
     {
       "id": "dup-unifier-does-not-unify-non-equivalent-copies",
-      "prompt": "Run the duplicate unifier. The two copies differ on the null case.",
+      "prompt": "Run the duplicate unifier. The two copies of the discount check differ on the null case.",
       "expected_output": "Reports it as a behaviour difference for logic-bugfixer rather than unifying and silently changing behaviour.",
       "expectations": [
         "Does not unify the copies",
@@ -95,20 +110,26 @@
     },
     {
       "id": "flaky-triggers-on-a-test-name",
-      "prompt": "Fix the flaky test identity.spec.ts:72, it timed out in our last run.",
+      "prompt": "Fix the flaky test tests/test_cart.py::test_totals_cache, it failed in our last CI run.",
       "expected_output": "Reads the failing log, reproduces at least once in ten local runs, then fixes the cause.",
       "expectations": [
         "Reads flaky-test-fixer.md",
         "Reproduces before changing anything"
+      ],
+      "files": [
+        "evals/fixtures/flaky-test-fixer"
       ]
     },
     {
       "id": "flaky-triggers-on-a-rerun-pass",
-      "prompt": "That Playwright spec failed in the full run but passed on rerun.",
+      "prompt": "That cart test failed in the full run but passed on rerun.",
       "expected_output": "Picks flaky-test-fixer and starts from the run, not from a guess.",
       "expectations": [
         "Picks the flaky-test-fixer routine",
         "Asks for or reads the failing log first"
+      ],
+      "files": [
+        "evals/fixtures/flaky-test-fixer"
       ]
     },
     {
@@ -121,7 +142,7 @@
     },
     {
       "id": "flaky-reports-what-it-cannot-reproduce",
-      "prompt": "CreateInquiryTests failed once last week. Fix the flake.",
+      "prompt": "test_checkout_total failed once last week in CI and has passed every run since. Fix the flake.",
       "expected_output": "Runs the ten-run loop, cannot reproduce, and reports the log and what it tried rather than committing a plausible diff.",
       "expectations": [
         "Does not commit a code change",
@@ -138,34 +159,43 @@
     },
     {
       "id": "bugfixer-triggers-on-explicit-invocation",
-      "prompt": "Run the logic bugfixer on the trade module.",
+      "prompt": "Run the logic bugfixer on the pricing package.",
       "expected_output": "Reads the ADRs and module card, writes a failing test naming the wrong behaviour, fixes the cause, and pastes red then green.",
       "expectations": [
         "Reads logic-bugfixer.md",
         "The failing test is written and run before the fix"
+      ],
+      "files": [
+        "evals/fixtures/logic-bugfixer"
       ]
     },
     {
       "id": "bugfixer-triggers-on-plain-language",
-      "prompt": "Go hunt for logic bugs in the audit feature.",
+      "prompt": "Go hunt for logic bugs in the pricing package.",
       "expected_output": "Picks logic-bugfixer and works from documented intent rather than taste.",
       "expectations": [
         "Picks the logic-bugfixer routine",
         "Cites a documented source for each candidate"
+      ],
+      "files": [
+        "evals/fixtures/logic-bugfixer"
       ]
     },
     {
       "id": "bugfixer-does-not-fix-a-documented-decision",
-      "prompt": "Run the logic bugfixer on trade. ListListings returns other companies' rows.",
-      "expected_output": "Recognises the market view as deliberate per the module card and ADR, and does not fix it.",
+      "prompt": "Run the logic bugfixer on pantry/orders. refund.py claws back the bulk discount based on member_at_purchase, not the customer's current membership. That looks wrong.",
+      "expected_output": "Recognises the purchase-time check as deliberate per the AGENTS.md 'Rules a test will not catch' section and does not change refund.py.",
       "expectations": [
-        "Does not change ListListings",
-        "Cites the module card or ADR"
+        "Does not change pantry/orders/refund.py",
+        "Cites the rule in AGENTS.md that says refund clawback is judged at purchase time"
+      ],
+      "files": [
+        "evals/fixtures/dup-unifier"
       ]
     },
     {
       "id": "bugfixer-skips-what-it-cannot-reproduce",
-      "prompt": "I think keyset paging skips rows sometimes. Find and fix it.",
+      "prompt": "I think the page cursor in the order list skips rows sometimes. Find and fix it.",
       "expected_output": "Reports a skipped candidate with what could not be turned into a failing test, rather than a speculative fix.",
       "expectations": [
         "Does not commit a fix without a failing test"
@@ -181,20 +211,26 @@
     },
     {
       "id": "simplifier-triggers-on-explicit-invocation",
-      "prompt": "Run the logic simplifier on the catalog module.",
+      "prompt": "Run the logic simplifier on the shop package.",
       "expected_output": "Pins the current behaviour with a test that passes before the change, simplifies, and re-runs the same test unedited.",
       "expectations": [
         "Reads logic-simplifier.md",
         "Baseline test passes before any edit"
+      ],
+      "files": [
+        "evals/fixtures/logic-simplifier"
       ]
     },
     {
       "id": "simplifier-triggers-on-plain-language",
-      "prompt": "This listing form component is hard to follow. Untangle it.",
+      "prompt": "apply_discount in the shop package is hard to follow. Untangle it.",
       "expected_output": "Picks logic-simplifier and establishes a baseline before touching anything.",
       "expectations": [
         "Picks the logic-simplifier routine",
         "Runs or writes a pinning test first"
+      ],
+      "files": [
+        "evals/fixtures/logic-simplifier"
       ]
     },
     {
@@ -223,16 +259,24 @@
     },
     {
       "id": "pruner-triggers-on-explicit-invocation",
-      "prompt": "Run the useless test pruner on the trade tests.",
-      "expected_output": "Sabotages the implementation, finds the tests that stay green, repairs rather than deletes where the behaviour is worth pinning, and restores the sabotage before committing.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Run the useless test pruner on the shop tests.",
+      "expected_output": "Reads useless-test-pruner.md. Proves the tautology and the over-mocked receipt test green under sabotage, repairs both (real assertions, only the mailer mocked) and shows them red under the same sabotage. Leaves the good discount tests alone, keeps tests/test_architecture.py as the project's named gate, and leaves no sabotage in the source.",
       "expectations": [
-        "Reads useless-test-pruner.md",
-        "Proves each suspect by sabotage, not by reading"
+        "Reads useless-test-pruner.md and SKILL.md only, not the other routine files",
+        "Proves test_discount_math and test_send_receipt_sends useless by sabotage (or by showing the tautology touches no project code), not by reading",
+        "Repairs test_send_receipt_sends to call the real send_receipt and mock only the mailer, then shows it red under the same sabotage and green after restore",
+        "Does not delete tests/test_architecture.py: AGENTS.md names it the coverage gate",
+        "Keeps test_discount_applies_percentage and test_discount_keeps_price_without_a_discount, reporting them good because they go red under sabotage",
+        "git diff shows no sabotage left in shop/",
+        "Works on a routine/ branch, one commit per finding, and does not push"
+      ],
+      "files": [
+        "evals/fixtures/useless-test-pruner"
       ]
     },
     {
       "id": "pruner-does-not-trigger-on-flakiness",
-      "prompt": "The trade e2e spec fails about one run in five.",
+      "prompt": "The checkout browser spec fails about one run in five.",
       "expected_output": "Does not pick useless-test-pruner; a test that sometimes fails is flaky-test-fixer.",
       "expectations": [
         "Picks flaky-test-fixer"
@@ -240,9 +284,11 @@
     },
     {
       "id": "behaviour-flaky-test-fixer",
-      "prompt": "tests/test_cart.py::test_totals_cache fails in CI some of the time and passes when I rerun it. Run the flaky test fixer on it.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) tests/test_cart.py::test_totals_cache fails in CI some of the time and passes when I rerun it. Run the flaky test fixer on it.",
       "expected_output": "Reproduces by varying the hash seed (PYTHONHASHSEED) over ten runs, finds that the cache slot is hash(key) % 32 so distinct carts collide in some processes, and fixes the cache keying while keeping the 32-cart bound with eviction. No retry, no sleep, no widened bound.",
-      "files": ["evals/fixtures/flaky-test-fixer"],
+      "files": [
+        "evals/fixtures/flaky-test-fixer"
+      ],
       "expectations": [
         "Reproduces the failure at least once in ten runs before changing code, varying PYTHONHASHSEED or running repeatedly",
         "Names hash-derived slot collisions in shopcart/cart.py as the cause",
@@ -255,9 +301,11 @@
     },
     {
       "id": "behaviour-logic-bugfixer",
-      "prompt": "Run the logic bugfixer on the pricing package.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Run the logic bugfixer on the pricing package.",
       "expected_output": "Finds that bulk_rate uses > where ADR-0001 says inclusive bounds (10 units earn 5%, 50 earn 12%), proves it with a failing test, fixes it. Also notices the shipping_for docstring says 40.00 while ADR-0003 and the code say 50.00: that is a stale doc, fixed as a doc change with no code change. Discount stacking and rounding are correct and untouched.",
-      "files": ["evals/fixtures/logic-bugfixer"],
+      "files": [
+        "evals/fixtures/logic-bugfixer"
+      ],
       "expectations": [
         "Writes a test for exactly 10 and exactly 50 units that fails before the fix, and pastes red then green",
         "Fixes pricing/tiers.py to use an inclusive lower bound (>=)",
@@ -269,9 +317,11 @@
     },
     {
       "id": "behaviour-dup-unifier",
-      "prompt": "Run the duplicate unifier on pantry/orders.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Run the duplicate unifier on pantry/orders.",
       "expected_output": "Unifies the bulk-discount eligibility written in quote.py and checkout.py into one owner in pantry/orders/pricing.py, with both call-site tests passing unchanged and a sabotage check. Leaves refund.py alone (judged at purchase time, a different rule), leaves the per-entry-point response dicts alone, and files a handoff instead of unifying the case-pack math duplicated across orders and stock.",
-      "files": ["evals/fixtures/dup-unifier"],
+      "files": [
+        "evals/fixtures/dup-unifier"
+      ],
       "expectations": [
         "Routes quote() and place_order() through one eligibility function in pantry/orders/pricing.py named after the question it answers",
         "tests/test_quote.py and tests/test_checkout.py pass unchanged; quote's eligibility path is pinned by a test written first if none exists",
@@ -284,9 +334,11 @@
     },
     {
       "id": "behaviour-logic-simplifier",
-      "prompt": "Run the logic simplifier on the shop package.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Run the logic simplifier on the shop package.",
       "expected_output": "Pins apply_discount with the existing tests (adding an edge-case test if needed) and simplifies its nested lookup and branches while keeping the 32-character cap, which preview_price relies on because it is not validated upstream. Declines to touch loyalty.py, whose behaviour cannot be pinned (live vendor service, no recorded sample).",
-      "files": ["evals/fixtures/logic-simplifier"],
+      "files": [
+        "evals/fixtures/logic-simplifier"
+      ],
       "expectations": [
         "Runs the suite green before editing shop/discounts.py and runs the same tests unedited after",
         "Keeps the len(code) > 32 ValueError in apply_discount even though checkout also checks it, because preview_price reaches apply_discount unvalidated",
@@ -299,9 +351,11 @@
     },
     {
       "id": "behaviour-dead-code-removal",
-      "prompt": "Run dead code removal on the shop package.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Run dead code removal on the shop package.",
       "expected_output": "Deletes legacy_tax together with the test that exists only to exercise it and its message key legacy_tax.label, since nothing else references it. Keeps export_v1 (listed in the package's public __all__), keeps handle_refund (registered by decorator and named in config/events.json), keeps format_plain and format_html (reached through globals() in render), and keeps round_half_up (ledgered DEBT #3).",
-      "files": ["evals/fixtures/dead-code-removal"],
+      "files": [
+        "evals/fixtures/dead-code-removal"
+      ],
       "expectations": [
         "Deletes legacy_tax together with test_legacy_tax and the legacy_tax.label key in shop/messages.json in one commit, after an empty reference sweep",
         "Does not delete export_v1: it is exported in shop/__init__.py __all__ and two other repos import it",
@@ -310,6 +364,24 @@
         "Does not delete round_half_up: it carries a DEBT #3 marker; reports it as a STOP",
         "The full test suite passes after the commit",
         "One deletion per commit, on a non-default branch"
+      ]
+    },
+    {
+      "id": "skill-stays-off-for-a-feature",
+      "prompt": "Add a CSV export to the orders page.",
+      "expected_output": "Does not load maintenance-routines or start a sweep; this is feature work.",
+      "expectations": [
+        "Does not start a maintenance routine",
+        "Does not create a routine/ branch"
+      ]
+    },
+    {
+      "id": "skill-stays-off-for-missing-coverage",
+      "prompt": "The refund module has no tests, add some.",
+      "expected_output": "Does not load maintenance-routines; missing coverage is test-writing, not a maintenance sweep.",
+      "expectations": [
+        "Does not start a maintenance routine",
+        "Does not create a routine/ branch"
       ]
     }
   ]

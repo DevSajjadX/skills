@@ -1,6 +1,7 @@
 ---
 name: maintenance-routines
 description: Use when asked to run an autonomous maintenance pass over one scope of a codebase and prove each change before it lands - removing dead or unused code, unifying duplicated logic, fixing a test that sometimes fails (flaky), finding code that contradicts its documented intent (logic bugs), simplifying convoluted code without changing behaviour, or pruning tests that can never fail. Not for a bug the user can already reproduce (debug it directly), for a feature, for missing coverage, or for a test that fails every time (that is a real bug).
+argument-hint: "[routine] [scope, or for flaky-test-fixer a log or test name]"
 category: Maintenance
 tags: [routine, maintenance]
 ---
@@ -11,7 +12,7 @@ One family of autonomous maintenance passes over a single scope: **discover, pro
 
 ## Pick the routine
 
-Match the request to one row, then read **exactly that one file** next, not the others. If nothing fits, say so; do not stretch a routine to cover it.
+Match the request to one row, then read **exactly that one file** next, not the others. The same table routes a finding outside your class: note it in the summary and defer to its row, never fix it. If nothing fits, say so; do not stretch a routine to cover it.
 
 | Request or symptom | Routine file |
 | --- | --- |
@@ -21,6 +22,9 @@ Match the request to one row, then read **exactly that one file** next, not the 
 | Behaviour provably wrong against its documented intent, including crashes found by reading | [logic-bugfixer.md](logic-bugfixer.md) |
 | Live, single, reachable code that is convoluted | [logic-simplifier.md](logic-simplifier.md) |
 | A test that can never fail | [useless-test-pruner.md](useless-test-pruner.md) |
+| Tests of code being deleted | travel with their code |
+| Two live copies across modules | STOP: a module-boundary design question, handoff |
+| A rule stated in prose that a check could hold | a handoff |
 
 ## Preconditions: verify once, up front
 
@@ -31,7 +35,7 @@ Match the request to one row, then read **exactly that one file** next, not the 
 
 ## Scope
 
-`$ARGUMENTS` names a scope: one module, package, directory or feature. When empty, survey the project's scopes, pick the single highest-value target, and announce the pick with a one-line plan before doing any work.
+`$ARGUMENTS` is `[routine] [scope]`. If the first word matches a routine in the table above, it picks that routine and the rest is the scope (for `flaky-test-fixer`, the rest is a failing log or a test name). With no routine named, pick one from the request's symptom, or ask. Never run more than one routine per invocation. A scope is one module, package, directory or feature. When the scope is empty, survey the project's scopes, pick the single highest-value target, and announce the pick with a one-line plan before doing any work.
 
 **Every finding stays inside one scope.** A finding that spans two modules is not a bigger fix. It is a boundary question, which is a STOP.
 
@@ -85,22 +89,6 @@ A STOP is not a failure. It is a **handoff**. Write it to `.claude/handoffs/` th
 - Lockfiles, toolchain pins, `.env*`, or anything secret-shaped.
 - Architecture decision records: amending an invariant is an ADR change, which is ask-first.
 - The agent instruction files (`AGENTS.md`, `CLAUDE.md`) and skill folders.
-
-## Symptom to owner
-
-When you find something outside your defect class, do not fix it. Note it in the summary and defer to its owner:
-
-| Symptom | Owner |
-| --- | --- |
-| Code nothing can reach | [dead-code-removal.md](dead-code-removal.md) |
-| Two live copies of the same logic in one module | [dup-unifier.md](dup-unifier.md) |
-| Behaviour provably wrong, including crashes | [logic-bugfixer.md](logic-bugfixer.md) |
-| Live, single, reachable, but convoluted | [logic-simplifier.md](logic-simplifier.md) |
-| A test that can never fail | [useless-test-pruner.md](useless-test-pruner.md) |
-| A test that sometimes fails | [flaky-test-fixer.md](flaky-test-fixer.md) |
-| Tests of code being deleted | travel with their code |
-| Two live copies across modules | STOP: a module-boundary design question, handoff |
-| A rule stated in prose that a check could hold | a handoff |
 
 ## Arguments
 

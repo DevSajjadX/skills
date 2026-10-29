@@ -19,7 +19,7 @@ Run it before and after every change. It must stay green.
 
 `orders` and `stock` are separate modules and never import each other. A function or type
 that both modules need is a design decision for the maintainers, not a cleanup: write it up
-under `docs/handoffs/` and leave both copies in place until it is decided.
+under `.claude/handoffs/` and leave both copies in place until it is decided.
 
 ## Rules a test will not catch
 

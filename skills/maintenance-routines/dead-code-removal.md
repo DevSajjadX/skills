@@ -44,11 +44,8 @@ The project's full gate list, plus:
 
 Beyond the universal list:
 
-- **An unused member on a cross-module interface or a public export.** That is a contract change.
-- **An error class with no thrower.** Its name is a wire key a client may branch on.
-- **A route or path constant that looks unused.** Tests reference it and clients branch on it.
-- **Code marked as ledgered debt** (`DEBT #N`). Deleting it means retiring the debt, which is its own change.
-- **A handler or slice that is genuinely unregistered.** Dead and a bug: it was meant to ship. Report it as a handoff; deleting it silently throws away the intent.
+- **An error class with no thrower** is still a wire key a client may branch on.
+- **A genuinely unregistered handler.** Dead and a bug: it was meant to ship. Report it as a handoff; deleting it silently throws away the intent.
 
 ## Summary
 

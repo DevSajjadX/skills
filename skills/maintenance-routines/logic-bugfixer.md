@@ -14,7 +14,7 @@ Code that **provably contradicts its documented intent**. Not code you would hav
 4. **The glossary** (`CONTEXT.md` or equivalent): a term used to mean something it does not.
 5. **Docstrings and comments at the code**: the text that says what the function guarantees.
 
-A gap between code and a doc is not automatically a code bug. When two documents disagree (a docstring against an ADR), the higher one in this list wins. When the doc is the stale one, the fix is the doc, which is a documentation change, not a code change. **Decide which is wrong before you fix either.** Fixing a stale comment is its own finding: it needs no failing test, only the higher-ranked source quoted.
+A gap between code and a doc is not automatically a code bug. When two documents disagree (a docstring against an ADR), the higher one in this list wins. When the doc is the stale one, the fix is the doc, which is a documentation change, not a code change. A stale ADR, `AGENTS.md` or `CLAUDE.md` is never-touch: write a handoff that quotes the code and the stale line. Only docstrings, comments and the glossary are fixed here. **Decide which is wrong before you fix either.** Fixing a stale comment is its own finding: it needs no failing test, only the higher-ranked source quoted.
 
 ## Where to look first
 
@@ -51,7 +51,6 @@ Beyond the universal list:
 
 - **The "bug" is a documented decision.** Read the scope's card first. Several things look wrong and are not (a deliberate cross-tenant read, an identical answer given to avoid leaking whether an account exists).
 - **The doc is the stale one.** Fix the doc and say so. Do not change working code to match a sentence nobody updated.
-- **The fix changes an error key or a route constant.** Ask first.
 - **The fix amends an ADR.** That is a design decision with a human in it.
 - **The behaviour is wrong only under a race you cannot reproduce.** Report it; a fix with no failing test is a guess with a commit message.
 
