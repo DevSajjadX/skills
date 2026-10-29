@@ -1,1 +1,43 @@
-{ "openapi": "3.1.0", "info": { "title": "Acme", "version": "0" }, "paths": { "/api/products": { "get": { "responses": { "200": {} } } } } }
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Acme",
+    "version": "0"
+  },
+  "paths": {
+    "/api/products": {
+      "get": {
+        "responses": {
+          "200": {},
+          "401": {
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "201": {},
+          "400": {
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/products/{id}": {
+      "get": {
+        "responses": {
+          "200": {},
+          "404": {
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      }
+    }
+  }
+}
