@@ -25,12 +25,14 @@ The targets are the instruction files this agent loaded (global and project `AGE
 
 Hand the candidates, the session moments behind them and the target files' paths to a fresh reviewer subagent following [reviewer.md](reviewer.md) in review mode. Use the user's own reviewer agent when they have one (for example a `retro-reviewer` agent), else a read-only subagent on a strong model. With no subagents available, run reviewer.md's review checklist yourself before showing anything.
 
-Show only the proposals that survive, with the reviewer's revisions, each in exactly this shape:
+Show only the proposals that survive, with the reviewer's revisions, each as its own fenced code block of exactly this shape, so the proposal renders as a box (not as chat text):
 
-    Proposal: what to add or change, in one line
-    Where:    the target file (its source, not a generated copy)
-    Because:  the moment in this session that showed the need
-    Apply?    yes / edit / no
+```
+Proposal: what to add or change, in one line
+Where:    the target file (its source, not a generated copy)
+Because:  the moment in this session that showed the need
+Apply?    yes / edit / no
+```
 
 ## 4. Apply only what is approved
 
