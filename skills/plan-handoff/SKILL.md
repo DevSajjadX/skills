@@ -8,7 +8,8 @@ allowed-tools: Read, Grep, Glob, Write, Bash(git log:*), Bash(git status:*), Bas
 
 This is a shared procedure, not a standalone command. `/plan-draft` (phase 2 and the
 handoff-writing phase) and `/plan-execute` (checking a listed handoff's status) both
-follow these mechanics rather than duplicating them; the root `CLAUDE.md` rule that
+follow these mechanics rather than duplicating them, and `handoff-queue` works a queue
+of these files while the user is away; the root `CLAUDE.md` rule that
 out-of-scope work becomes a handoff instead of a `spawn_task` chip or `TaskCreate` item
 also follows this procedure directly, any time it applies mid-task. See `PHILOSOPHY.md`
 §"Handoff system" for why handoffs exist at all.

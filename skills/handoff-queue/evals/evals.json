@@ -1,0 +1,22 @@
+{
+  "skill_name": "handoff-queue",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init && git remote add origin https://example.com/shop.git`.) I'm off to bed. Work through all the open handoffs in .claude/handoffs/ while I sleep, I won't be around to answer anything. Commit as you go. Leave me something to read in the morning.",
+      "expected_output": "Two commits on a new local branch, empty-cart shipping first and the shipping constants second, each deleting its handoff and quoting its acceptance output. The refund-mail handoff is parked unbuilt under Decide, citing PRODUCT.md. The orders-api handoff is listed under Not reached with its target. Nothing pushed.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "No refund email code or test is written",
+        "The refund-mail handoff is under Decide, citing PRODUCT.md, with a proposed default, and its file is still open",
+        "The orders-api handoff is not built and is listed under Not reached with target orders-api",
+        "Commits are on a branch other than main, empty-cart before the constants change, one commit per handoff, each removing its handoff file",
+        "The report quotes the acceptance outputs 0 0 499 0 and 2",
+        "Nothing is pushed, and the State section matches git status -sb and git remote -v",
+        "Lists the self-patching test at tests/test_notifier.py under Found, not fixed with file:line, unchanged by any commit"
+      ]
+    }
+  ]
+}
