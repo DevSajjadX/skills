@@ -1,6 +1,6 @@
 # CONTEXT.md Format
 
-`CONTEXT.md` is the project's **ubiquitous-language glossary** — the canonical name for
+`CONTEXT.md` is the project's **ubiquitous-language glossary**: the canonical name for
 each domain concept, and the words to avoid. It is durable (outlives any single plan) and
 is **a glossary and nothing else**: no specs, no scratch notes, no implementation decisions
 (those go in `docs/adr/`).

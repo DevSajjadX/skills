@@ -53,6 +53,18 @@
         "Names promote as the way onto the board",
         "Writes nothing under .pm/"
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "While adding the shipping estimate I noticed shipping_cents(0) returns 499. Out of scope: file a handoff for it.",
+      "expected_output": "The handoff's frontmatter carries area set to one of the module names AGENTS.md lists, pricing.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "Frontmatter has area: pricing",
+        "area is one of the modules named in AGENTS.md, not an invented label"
+      ]
     }
   ]
 }

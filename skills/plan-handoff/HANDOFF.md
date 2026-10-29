@@ -1,5 +1,6 @@
 ---
 status: open # open -> planned (target /plan-draft consumed it); deleted (git rm) once the target plan's verification covers every Acceptance box, or when it won't be done (the commit message says why); moved into the board as a brief when promoted (or deleted, when the board is an external tracker, with the issue link in the commit message)
+area: # optional: one of the project's own module names from its instruction file; omit when it names none
 date: YYYY-MM-DD
 target: <repo that must act: this repo's own name unless AGENTS.md declares a multi-repo workspace>
 origin_plan: <absolute path to the plan that generated this handoff, or "none (found during <task>)">

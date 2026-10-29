@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "/plan-draft add a \"send my courier\" option at checkout so customers can have a courier of their choice pick up the order.",
-      "expected_output": "Refuses at phase 1 by quoting PRODUCT.md's 'Delivery of any kind' out-of-scope line, writes no plan, offers no variant that routes around it, and names the owner lifting the anti-goal as the only path.",
+      "expected_output": "Refuses at phase 1 by quoting PRODUCT.md's 'Delivery of any kind' out-of-scope line, writes no plan, offers no variant that routes around it, and names the anti-goal being lifted (by the owner, or reaffirmed by the requester) as the only path.",
       "files": [
         "evals/fixtures/bakery"
       ],
@@ -12,7 +12,7 @@
         "Quotes or cites PRODUCT.md's 'Delivery of any kind' out-of-scope line",
         "Writes no file under .claude/plans/",
         "Does not offer or recommend a reshaped variant such as a named pickup person or third-party collection",
-        "Names the owner (Dana) lifting the anti-goal as the only way forward"
+        "Names the anti-goal being lifted (by the owner, Dana, or reaffirmed by the requester) as the only way forward"
       ]
     },
     {
@@ -80,6 +80,20 @@
       "expectations": [
         "Does not write a plan under .claude/plans/",
         "Does not run a grill or a cold review"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "/plan-draft add a \"send my courier\" option at checkout so customers can have a courier of their choice pick up the order. I am Dana, the owner, and I am lifting the delivery anti-goal for this one: plan it.",
+      "expected_output": "Does not refuse again: the requester reaffirmed after the anti-goal was named, so the override is recorded in section 2 as their stated call and the goal is planned as asked.",
+      "files": [
+        "evals/fixtures/bakery"
+      ],
+      "expectations": [
+        "Writes a plan under .claude/plans/",
+        "Section 2 records that the 'Delivery of any kind' out-of-scope line was overridden by the requester",
+        "Does not ask the requester to confirm the override a second time",
+        "Does not edit PRODUCT.md"
       ]
     }
   ]

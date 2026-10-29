@@ -31,26 +31,26 @@
     {
       "id": 3,
       "prompt": "/plan-execute the approved slot-capacity plan. Every task is ticked and both Done when lines of i1/001 now hold. Close it out.",
-      "expected_output": "Checks every Done when line of the item against the running code, then names the board's done job once for the human instead of editing .pm/ by hand.",
+      "expected_output": "Checks every Done when line of the item against the running code, then runs the board's done job once for the item instead of editing .pm/ by hand.",
       "files": [
         "evals/fixtures/bakery-board-done"
       ],
       "expectations": [
         "Checks both Done when lines against running code or tests, not against the ticks",
-        "Names the board's done i1/001 job once",
+        "Invokes the board's done i1/001 job exactly once, not once per task",
         "Does not edit or move any file under .pm/"
       ]
     },
     {
       "id": 4,
       "prompt": "/plan-execute the approved slot-capacity plan. All tasks are ticked, but the slot list still reads its own hard-coded capacity of 10.",
-      "expected_output": "Keeps the item open, names the failing Done when line (one shared capacity number) and does not name the board's done job.",
+      "expected_output": "Keeps the item open, names the failing Done when line (one shared capacity number) and does not invoke the board's done job.",
       "files": [
         "evals/fixtures/bakery-board-hardcoded"
       ],
       "expectations": [
         "Names the failing line: the booking check and the slot list read the same capacity number",
-        "Does not name or run the board's done job",
+        "Does not invoke the board's done job",
         "Does not edit any file under .pm/"
       ]
     },
@@ -78,6 +78,30 @@
       "expectations": [
         "Does not look for or require a plan under .claude/plans/",
         "Makes the change directly"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "/plan-execute the approved slot-capacity plan. Everything is done and verified. Now open the PR.",
+      "expected_output": "Hands over to the project's own ship flow named in AGENTS.md instead of pushing directly.",
+      "files": [
+        "evals/fixtures/bakery-board"
+      ],
+      "expectations": [
+        "Names /ship as the path to main, per AGENTS.md",
+        "Does not push directly"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "/plan-execute the approved slot-capacity plan. Everything is done and verified. Now open the PR.",
+      "expected_output": "The project names no ship flow, so the PR goes through the wrap skill, with no direct push.",
+      "files": [
+        "evals/fixtures/bakery-board-done"
+      ],
+      "expectations": [
+        "Uses the wrap skill for the PR",
+        "Does not push directly"
       ]
     }
   ]
