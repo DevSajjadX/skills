@@ -55,6 +55,8 @@ The gate is the project's own full check list, verbatim, in full, as its `AGENTS
 
 A routine may skip the part of the list its scope cannot affect (a frontend-only change does not need the backend formatter, a docs-only scope needs no build) by naming the gates it runs (for example `make check-frontend check-repo`), but it names what it skipped and why. Before every ship, and before the last commit when there is no ship, run the project's own secret scanner if it names one (for example `gitleaks dir . --redact`).
 
+**A routine that sabotages or temporarily edits source files proves it left none behind.** Paste `git diff --stat` (or `--name-only`) and `git status --short` into the reply before the gates and again after them (`git diff --stat` for the working tree, and `git diff <base branch> --stat` once commits exist); both must list only the intended files. A claim of "clean" without the pasted output is not the proof.
+
 **If no automated check covers the changed behaviour, STOP and report the finding instead of shipping it.** That is the whole point of a proof standard.
 
 ## Ship protocol

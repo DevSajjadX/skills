@@ -19,12 +19,20 @@ Read the failure log before reproducing. The assertion that failed, and the valu
 **Reproduce at least once in ten runs**, locally, before changing anything, with the project's own test command (repeat flags where the runner has them, otherwise a shell loop):
 
 ```bash
-for i in $(seq 10); do <the project's test command> || echo "run $i failed"; done
+for i in $(seq 10); do PYTHONHASHSEED=$i <the project's test command, varying order and workers per the checklist below> || echo "run $i failed"; done
 ```
 
-Where the runner has a repeat flag, use it (`pnpm exec playwright test --repeat-each 10`, `pytest --count 10` with pytest-repeat, `go test -count 10`). For a suspect that depends on neighbours (for a backend, the whole solution or test project), run the whole suite rather than one test: order-dependence only shows when the neighbours run too. Also vary what the runner randomizes: hash seeds, test order, parallelism. Note the seed, the order and the machine state of the run that failed. That is the reproduction, and it is what proves the fix.
+A repeat flag (`pnpm exec playwright test --repeat-each 10`, `pytest --count 10` with pytest-repeat, `go test -count 10`) speeds the loop up, but a repeat flag or a plain loop alone does not satisfy the checklist below: vary seed, order and parallelism across the ten runs (for example `PYTHONHASHSEED=$i`, `-p randomly -p "randomly_seed=$i"`, `-n 2` versus `-n 0`). For a suspect that depends on neighbours (for a backend, the whole solution or test project), run the whole suite rather than one test: order-dependence only shows when the neighbours run too. Also vary what the runner randomizes: hash seeds, test order, parallelism. Note the seed, the order and the machine state of the run that failed. That is the reproduction, and it is what proves the fix.
 
-**Cannot reproduce in ten runs?** Do not fix. Report it: the failing log, what you tried, and what you would need. An unreproduced flake "fixed" by a plausible-looking change is a flake plus a diff.
+**The minimum loop is this exact checklist, and the reply pastes it filled in before declaring a flake not reproduced.** Ten numbered runs, each line giving: run number, seed (where the runtime randomizes hashing, for example `PYTHONHASHSEED=n`; otherwise the runner's shuffle or random seed, or `seed=n/a` with the reason), test order (default, reversed or randomized with its seed), parallelism (serial, or the worker count), and the pasted result output. Across the ten, vary all three: at least three distinct seeds, at least one run in a different order, and at least one serial and one parallel run. Where the runner genuinely cannot vary a dimension (no parallel mode, one test), write `n/a` with the reason on that line instead of inventing a run. Fewer than ten filled lines, or lines without output, mean the loop was not run and the flake may not be called not reproduced.
+
+```text
+run 1  seed=<n>  order=<default|reversed|random:<n>>  parallel=<serial|N workers>  -> <output>
+...
+run 10 seed=<n>  order=<...>  parallel=<...>  -> <output>
+```
+
+**Cannot reproduce in ten runs?** Do not fix. Report it: the failing log (assertion and values quoted), the filled checklist above, and what you would need (for example the CI runner's parallelism or seed). An unreproduced flake "fixed" by a plausible-looking change is a flake plus a diff.
 
 ## Categories, in the order worth checking
 
