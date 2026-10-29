@@ -3,11 +3,11 @@
 # ///
 """Sign a QA account in and put its session cookies straight into an agent-browser session.
 
-No cookie value is printed, written to disk or returned to the caller: the values go from the
+No cookie value is printed or returned to the caller (the only file is the 0600 --jar, below): the values go from the
 sign-in response to `agent-browser cookies set ... --httpOnly` as process arguments, so the
 agent's transcript only ever sees "signed in". (agent-browser's file import, `cookies set --curl`,
 drops the HttpOnly flag, which is why this sets cookies one by one.)
-shortcut: the values sit in that child process's argv for its lifetime (milliseconds), readable by
+Shortcut, declared debt: the values sit in that child process's argv for its lifetime (milliseconds), readable by
 the same OS user; move to a stdin or socket import if agent-browser grows an attribute-keeping one.
 
 The sign-in steps come from the project's recipe (JSON), so one helper fits SMS codes read from a
@@ -16,10 +16,15 @@ dev inbox, passwords from env vars, or anything else that is plain HTTP:
   uv run qa_login.py --origin http://localhost:3000 --recipe docs/qa/signin.json \\
       --role company-a --session qa-a
 
+  uv run qa_login.py --origin ... --recipe ... --role company-a --jar web/tmp/qa-<date>/a.jar
+
   uv run qa_login.py selftest
 
+--jar writes a Netscape cookie file (mode 0600) for `curl -b`, and prints only its path. Put it in the
+adapter's ignored evidence folder and delete it at cleanup. --session and --jar may be given together.
+
 Exit codes: 0 ok · 2 bad arguments or recipe · 3 a step got an unexpected status ·
-4 sign-in set no cookie · 5 an extract found nothing · 6 agent-browser failed.
+4 sign-in set no cookie · 5 an extract found nothing, or a step marked dev_read answered 401/404 (the sender looks real) · 6 agent-browser failed.
 """
 
 from __future__ import annotations
@@ -99,14 +104,18 @@ def sign_in(origin: str, recipe: dict, role: str, extra: dict[str, str]) -> list
     jar: dict[str, object] = {}
     for i, raw in enumerate(steps, 1):
         step = fill(raw, values)
-        # An inbox step can run before the message lands, so a step with an extract may ask again.
+        # An inbox step can run before the message lands, so a step with an extract may ask again,
+        # but only while the status is fine and the pattern has not matched yet.
+        ok = step.get("ok", DEFAULT_OK)
         for attempt in range(step.get("retries", 5) + 1 if step.get("extract") else 1):
             if attempt:
                 time.sleep(step.get("retry_delay", 0.5))
             status, text, set_cookies = request(conn_cls, url, step, recipe, jar)
-            if status in step.get("ok", DEFAULT_OK) and all(re.search(p, text) for p in step.get("extract", {}).values()):
+            if status not in ok or all(re.search(p, text) for p in step.get("extract", {}).values()):
                 break
-        if status not in step.get("ok", DEFAULT_OK):
+        if step.get("dev_read") and status in (401, 404):
+            raise Fail(f"step {i} {step['path'].split('?')[0]} answered HTTP {status}: no dev inbox, the sender looks real; stop", 5)
+        if status not in ok:
             # Status only: a body is a sentence for a person and may echo the input.
             raise Fail(f"step {i} {step.get('method', 'GET')} {step['path'].split('?')[0]} answered HTTP {status}", 3)
         for header in set_cookies:
@@ -147,6 +156,17 @@ def inject(cookies: list, origin: str, session: str, browser: str, open_first: b
         run(args)
 
 
+def write_jar(cookies: list, origin: str, path: str) -> None:
+    """Netscape cookie file for `curl -b`, created 0600; HttpOnly rows carry the #HttpOnly_ prefix."""
+    host = urlsplit(origin).hostname or ""
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write("# Netscape HTTP Cookie File\n")
+        for m in cookies:
+            prefix = "#HttpOnly_" if m["httponly"] else ""
+            f.write(f"{prefix}{host}\tFALSE\t{m['path'] or '/'}\t{'TRUE' if m['secure'] else 'FALSE'}\t0\t{m.key}\t{m.value}\n")
+
+
 def main(argv: list[str]) -> int:
     if argv[:1] == ["selftest"]:
         return selftest()
@@ -154,7 +174,8 @@ def main(argv: list[str]) -> int:
     p.add_argument("--origin", required=True, help="the web origin the browser uses, e.g. http://localhost:3000")
     p.add_argument("--recipe", required=True, help="the project's sign-in recipe (JSON)")
     p.add_argument("--role", required=True, help="a role named in the recipe")
-    p.add_argument("--session", required=True, help="the agent-browser session to load the cookies into")
+    p.add_argument("--session", help="the agent-browser session to load the cookies into")
+    p.add_argument("--jar", help="also (or only) write a 0600 Netscape cookie file here for curl -b; prints the path, never a value")
     p.add_argument("--var", action="append", default=[], metavar="NAME=VALUE", help="override a recipe var")
     p.add_argument("--no-open", action="store_true", help="the session already has the origin open")
     p.add_argument("--agent-browser", default="agent-browser", help=argparse.SUPPRESS)
@@ -163,14 +184,20 @@ def main(argv: list[str]) -> int:
         recipe = json.load(open(a.recipe, encoding="utf-8"))
         extra = dict(v.split("=", 1) for v in a.var)
         cookies = sign_in(a.origin.rstrip("/"), recipe, a.role, extra)
-        inject(cookies, a.origin.rstrip("/"), a.session, a.agent_browser, not a.no_open)
+        if not a.session and not a.jar:
+            raise Fail("give --session, --jar or both", 2)
+        if a.session:
+            inject(cookies, a.origin.rstrip("/"), a.session, a.agent_browser, not a.no_open)
+        if a.jar:
+            write_jar(cookies, a.origin.rstrip("/"), a.jar)
     except Fail as e:
         print(f"qa_login: {e}", file=sys.stderr)
         return e.code
     except (OSError, ValueError) as e:
         print(f"qa_login: {e}", file=sys.stderr)
         return 2
-    print(f"signed in {a.role} into agent-browser session {a.session} ({len(cookies)} cookies, values not shown)")
+    where = ", ".join(x for x in (a.session and f"agent-browser session {a.session}", a.jar and f"jar {a.jar}") if x)
+    print(f"signed in {a.role} into {where} ({len(cookies)} cookies, values not shown)")
     return 0
 
 
@@ -195,6 +222,10 @@ def selftest() -> int:
                 return self._send(400)
             if self.path == "/api/start":
                 return self._send(200, cookies=["pending=p1; Path=/; HttpOnly; SameSite=Lax"])
+            if self.path == "/api/start429":
+                return self._send(429, cookies=["pending=p1; Path=/; HttpOnly; SameSite=Lax"])
+            if self.path == "/api/verify429":
+                return self._send(429, b"a sentence for a person")
             if self.path == "/api/verify":
                 if data.get("code") == "123456" and "pending=p1" in (self.headers.get("Cookie") or ""):
                     return self._send(200, cookies=["pending=; Path=/; Max-Age=0", "sess=s3cr3t; Path=/; HttpOnly; SameSite=Strict"])
@@ -202,6 +233,7 @@ def selftest() -> int:
             self._send(404)
 
         reads = 0
+        real_reads = 0
 
         def do_GET(self):
             if self.path.startswith("/api/dev/sms"):
@@ -209,6 +241,9 @@ def selftest() -> int:
                 # The first read finds an empty inbox, as when the message lands after the start step.
                 inbox = [] if Origin.reads == 1 else [{"text": "Your code is 123456"}]
                 return self._send(200, json.dumps(inbox).encode())
+            if self.path.startswith("/api/dev/real"):
+                Origin.real_reads += 1
+                return self._send(401)
             self._send(404)
 
     server = ThreadingHTTPServer(("127.0.0.1", 0), Origin)
@@ -268,6 +303,38 @@ def selftest() -> int:
         checks.append(("an extract that finds nothing stops with exit 5 and a hint", False))
     except Fail as e:
         checks.append(("an extract that finds nothing stops with exit 5 and a hint", e.code == 5 and "mock sender" in str(e)))
+    # A resend wait (429 on the step that sends the code) still signs in with the live code.
+    resend = {**recipe, "flows": {"sms": [{**flow[0], "path": "/api/start429", "ok": [200, 429]}, *flow[1:]]}}
+    checks.append(("a resend wait (429 in ok) still signs in", [m.key for m in sign_in(origin, resend, "a", {})] == ["sess"]))
+    strict = {**recipe, "flows": {"sms": [{**flow[0], "path": "/api/start429"}, *flow[1:]]}}
+    try:
+        sign_in(origin, strict, "a", {})
+        checks.append(("a 429 not listed in ok stops with exit 3", False))
+    except Fail as e:
+        checks.append(("a 429 not listed in ok stops with exit 3", e.code == 3 and "HTTP 429" in str(e)))
+
+    # A rate-limited verify reports the status only, never the body.
+    limited = {**recipe, "flows": {"sms": [*flow[:2], {**flow[2], "path": "/api/verify429"}]}}
+    try:
+        sign_in(origin, limited, "a", {})
+        checks.append(("a rate-limited verify exits 3 with the status only", False))
+    except Fail as e:
+        checks.append(("a rate-limited verify exits 3 with the status only", e.code == 3 and "HTTP 429" in str(e) and "sentence" not in str(e)))
+
+    # A real sender has no dev inbox: the read answers 401 and the run stops rather than going around it.
+    real = {**recipe, "flows": {"sms": [flow[0], {**flow[1], "path": "/api/dev/real", "dev_read": True}, flow[2]]}}
+    try:
+        sign_in(origin, real, "a", {})
+        checks.append(("a real sender (no dev inbox) stops with exit 5", False))
+    except Fail as e:
+        checks.append(("a real sender (no dev inbox) stops with exit 5", e.code == 5 and "HTTP 401" in str(e) and Origin.real_reads == 1))
+
+    with tempfile.TemporaryDirectory() as d:
+        jar_path = os.path.join(d, "a.jar")
+        write_jar(cookies, origin, jar_path)
+        lines = open(jar_path).read().splitlines()
+        mode = os.stat(jar_path).st_mode & 0o777
+    checks.append(("--jar writes a 0600 Netscape file with the HttpOnly prefix", mode == 0o600 and lines[1].startswith("#HttpOnly_127.0.0.1\tFALSE\t/\tFALSE\t0\tsess\t")))
 
     server.shutdown()
     for name, ok in checks:
