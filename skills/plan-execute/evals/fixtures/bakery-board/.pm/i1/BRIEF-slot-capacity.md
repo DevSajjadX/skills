@@ -1,3 +1,5 @@
+promoted: 2026-10-20 to .pm/i1/001 (was .claude/handoffs/2026-10-18-slot-capacity.md)
+
 # Slot capacity
 
 ## Contract
