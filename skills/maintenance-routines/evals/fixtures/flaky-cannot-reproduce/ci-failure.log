@@ -1,0 +1,6 @@
+CI run 2026-10-22, runner ci-2 (2 workers, random order, seed 8841)
+tests/test_checkout.py::test_checkout_total FAILED
+    def test_checkout_total():
+>       assert checkout_total([1000, 500], 10) == 1650
+E       assert 1500 == 1650
+Re-run of the same commit: 1 passed.

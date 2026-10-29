@@ -36,7 +36,7 @@ These stay, however trivial or tautological they look (some are tautological on 
 For each suspect:
 
 1. Break the covered behaviour for real: invert a condition, return a constant, skip a write. A compile error proves nothing: a test that fails because the code no longer builds says nothing about the test. Never sabotage or edit generated code, applied migrations, lockfiles, env or secret files (see Never touch in [SKILL.md](SKILL.md)): it proves nothing, or regeneration masks the change.
-2. Run that test and keep the pasted output. **Green under sabotage is a finding.** Red means the test is good: keep it, say so, and move on. That is a successful check, not a wasted one.
+2. Run that test and keep the pasted output. **Green under sabotage is a finding.** Red means the test is good: keep it, say so, and move on. A test reported good must be shown red under a sabotage of the case it pins. If it stays green because your sabotage misses its input (for example a 0% discount under a sign flip), run a second sabotage that breaks that case (return a constant such as 0) and paste it red before calling the test good; otherwise report it unverified, never good. That is a successful check, not a wasted one.
 3. Restore the file exactly (`git checkout -- <file>`) before the next sabotage.
 
 **A tautology is sabotaged too.** Sabotage the code its name or comments say it covers and show it stay green. That it imports or calls nothing is supporting evidence, not the proof, because reading is what this routine distrusts.
@@ -59,7 +59,7 @@ A useless test marks a behaviour someone meant to pin. Deleting it throws away t
 
 The project's full gate list, not only the tests (a repaired test can break lint, types or format; name any gate you skipped and why), plus:
 
-- `git status` and `git diff` show no sabotage left in source files. Check twice; a left-behind inverted condition is the worst possible outcome of this job.
+- `git status` and `git diff` show no sabotage left in source files. Check twice, before and after the gates, and quote both outputs in the summary; a left-behind inverted condition is the worst possible outcome of this job.
 - The test count moved by exactly what you deleted and added. A count that dropped further means you broke test discovery, or a test went missing, not that you pruned well.
 - The repaired test fails under sabotage and passes restored: both runs pasted.
 
@@ -93,4 +93,4 @@ Beyond the universal list. **Hand off** (write to `.claude/handoffs/` through `p
 
 ## Summary
 
-Per the budget block: shipped (PR and SHA, or branch and SHAs, with the red-then-green evidence per repair), skipped (with the missing proof), or nothing found. Report per test: verdict (good, repaired, deleted, skipped), the sabotage used, red or green under it, and for a repair the red-then-green outputs. A candidate you could not prove is skipped, stating which proof was missing.
+Per the budget block: shipped (PR and SHA, or branch and SHAs, with the red-then-green evidence per repair), skipped (with the missing proof), or nothing found. Report per test, in the reply itself: verdict (good, repaired, deleted, skipped), the sabotage used, and the pasted pytest result line under it (for example `1 failed, 1 passed` or `3 passed`); for a repair, both the red and the green result lines. A prose "it went red" is not the proof. A candidate you could not prove is skipped, stating which proof was missing.

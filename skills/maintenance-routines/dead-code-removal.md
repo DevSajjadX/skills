@@ -8,7 +8,7 @@ Code that **nothing can reach**: no caller, no route, no registration, no test t
 
 ## Discover
 
-Use the project's own dead-code detector if it has one; its `AGENTS.md` or `CLAUDE.md` says which, and it is usually already part of the gate list, so a hit here is a hit the gate also sees. Installing a new detector is a new dependency, which is a STOP, so use what already ships.
+Use the project's own dead-code detector if it has one; its `AGENTS.md` or `CLAUDE.md` says which, and it is usually already part of the gate list, so a hit here is a hit the gate also sees. Installing a new detector is a new dependency, which is a STOP, so use what already ships. A detector run ad hoc through `uvx` or `uv run --with` that the project does not ship counts as a new detector: sweep by references (grep across code, config and tests) instead.
 
 **Use the language's own unused-code analyzer.** Every common language ships one; run the strictest form the project already configures:
 
@@ -67,4 +67,4 @@ Beyond the universal list, each of these is a STOP: skip the finding and write i
 
 ## Summary
 
-Per the budget block: shipped (PR and SHA, or branch and SHAs), skipped (with the missing proof), or nothing found. An empty pass is a good result: say so plainly.
+Per the budget block: shipped (PR and SHA, or branch and SHAs), skipped (with the missing proof), or nothing found. For each shipped deletion, paste the reference sweep command and its full output (before the deletion: only the definition and its own test; after: empty) in the summary or the commit body. An empty pass is a good result: say so plainly.

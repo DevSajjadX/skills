@@ -6,10 +6,11 @@
       "prompt": "Run the dead code removal routine on the shop package.",
       "expected_output": "Reads dead-code-removal.md, uses the project's own detector only if its instruction file names one (this fixture names none, so it falls back to the reference sweep), proves each hit with an empty reference sweep, deletes the code and its tests together, one deletion per commit.",
       "expectations": [
-        "Reads SKILL.md and dead-code-removal.md only, not the other routine files",
+        "The reply names the routine file it followed (dead-code-removal.md) and no other routine file",
         "Works on a routine/ branch, not the default branch",
-        "Proves each deletion with a pasted reference sweep",
-        "Uses a detector only if the project names one; otherwise says so and uses the reference sweep, without installing a new tool"
+        "Proves each deletion with a pasted reference sweep: the reply or commit body holds the sweep command and its output, before (only the definition and its own test) and after (empty)",
+        "Uses a detector only if the project names one; otherwise says so and uses the reference sweep, without installing a new tool",
+        "Each STOP finding (DEBT-marked code, error class with no thrower, __all__ export) has a file in .claude/handoffs/ that the summary names"
       ],
       "files": [
         "evals/fixtures/dead-code-removal"
@@ -21,7 +22,8 @@
       "expected_output": "Loads maintenance-routines, picks dead-code-removal, and sweeps the module rather than guessing from a grep.",
       "expectations": [
         "Picks the dead-code-removal routine",
-        "Sweeps by reference rather than by eyeballing"
+        "Sweeps by reference rather than by eyeballing",
+        "Writes a .claude/handoffs/ file for each STOP it reports (export_v1, RefundError, round_half_up)"
       ],
       "files": [
         "evals/fixtures/dead-code-removal"
@@ -152,11 +154,14 @@
     },
     {
       "id": "flaky-reports-what-it-cannot-reproduce",
-      "prompt": "test_checkout_total failed once last week in CI and has passed every run since. Fix the flake.",
-      "expected_output": "Runs the ten-run loop, cannot reproduce, and reports the log and what it tried rather than committing a plausible diff.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) test_checkout_total failed once last week in CI (log: ci-failure.log) and has passed every run since. Fix the flake.",
+      "expected_output": "Reads ci-failure.log, runs the ten-run loop varying seed, order and parallelism, cannot reproduce, and reports the log, what it tried and what it would need rather than committing a plausible diff.",
       "expectations": [
-        "If the ten-run loop (varying hash seed, order and parallelism) does not reproduce the failure, commits no code change",
-        "Reports the failing log, what was tried and what is needed"
+        "Runs the test at least ten times varying hash seed, order and parallelism (output pasted); git log --all shows no new commit and no routine/* branch with a code change",
+        "Reply quotes the assertion and values from ci-failure.log, lists the ten-run commands tried with seeds, order and parallelism, and states what it would need (for example the CI runner's parallelism or seed)"
+      ],
+      "files": [
+        "evals/fixtures/flaky-cannot-reproduce"
       ]
     },
     {
@@ -284,12 +289,12 @@
       "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Run the useless test pruner on the shop tests.",
       "expected_output": "Reads useless-test-pruner.md. Sabotages the covered code for every suspect, including the tautology, and shows the tautology and the over-mocked receipt test green under sabotage, deletes (or repairs) the tautology, naming test_discount_applies_percentage as the red test that already pins the behaviour, and repairs the over-mocked receipt test (real assertions, only the mailer mocked) and shows it red under the same sabotage. Leaves the good discount tests alone, keeps tests/test_architecture.py as the project's named gate, and leaves no sabotage in the source.",
       "expectations": [
-        "Reads useless-test-pruner.md and SKILL.md only, not the other routine files",
+        "The reply names the routine file it followed (useless-test-pruner.md) and no other routine file",
         "Proves test_discount_math and test_send_receipt_sends useless by sabotaging shop/pricing.py and shop/receipts.py and pasting green output, including for the tautology (sabotage is mandatory for every suspect; showing it imports nothing is only supporting evidence)",
         "Repairs test_send_receipt_sends to call the real send_receipt and mock only the mailer, then shows it red under the same sabotage and green after restore",
         "Deletes or repairs test_discount_math, and if it deletes it, names test_discount_applies_percentage as the test that went red under the same sabotage and already pins discounted(1000, 10) == 900",
         "Does not delete tests/test_architecture.py: AGENTS.md names it the coverage gate",
-        "Keeps test_discount_applies_percentage and test_discount_keeps_price_without_a_discount, reporting them good because they go red under sabotage",
+        "Keeps test_discount_applies_percentage and test_discount_keeps_price_without_a_discount, reporting each good with a pasted red run under a sabotage that breaks its case (a second sabotage is fine for the 0% test)",
         "git diff shows no sabotage left in shop/",
         "Works on a routine/ branch, one commit per finding, and does not push"
       ],
@@ -326,11 +331,11 @@
     {
       "id": "pruner-never-prunes-a-test-a-repo-check-requires",
       "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) tests/test_tax.py only asserts not None, delete it.",
-      "expected_output": "Does not delete it: scripts/check.py (named as a gate in AGENTS.md) requires a tests/test_<module>.py for every module, so deleting the file fails the repo check. Repairs the assertion instead.",
+      "expected_output": "Does not delete it: scripts/check.py (named as a gate in AGENTS.md) requires a tests/test_<module>.py for every module, so deleting the file fails the repo check. Writes the repaired assertion, which fails against the flooring tax.py, so it keeps the original test and hands off the assertion and the bug without editing tax.py.",
       "expectations": [
         "Does not delete tests/test_tax.py",
         "Finds scripts/check.py in the project's gates and cites it as the reason the file must exist, though AGENTS.md does not state the rule",
-        "Repairs the test to assert a real value (and reports the code bug it may expose as a handoff rather than editing tax.py)"
+        "Writes a real-value assertion (e.g. add_tax(1059, 10) == 1165), shows it failing against the current tax.py, keeps tests/test_tax.py unchanged, and puts the repaired assertion and the rounding bug in a .claude/handoffs/ file without editing tax.py"
       ],
       "files": [
         "evals/fixtures/useless-test-pruner-gates"
@@ -354,11 +359,11 @@
     {
       "id": "pruner-leaves-no-sabotage-behind",
       "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Run the useless test pruner on the shop project and show me git status when you finish.",
-      "expected_output": "git status and git diff show no sabotage left in pricing.py, tax.py or any source file; only the intended test changes remain.",
+      "expected_output": "git status and git diff show no sabotage left in pricing.py, tax.py or any source file; only the intended test changes and any handoff remain.",
       "expectations": [
         "Restores every sabotaged file with git checkout -- <file> before the next sabotage",
-        "Final git diff touches only files under tests/",
-        "Checks git diff twice, before and after the gates"
+        "Final git diff touches only files under tests/ and .claude/handoffs/; no source file (pricing.py, tax.py, config.py) differs from main",
+        "The final reply quotes git diff --stat (or --name-only) output from before the gates and again from after the gates, and both show no source file"
       ],
       "files": [
         "evals/fixtures/useless-test-pruner-gates"
@@ -484,12 +489,12 @@
       ],
       "expectations": [
         "Routes quote() and place_order() through one eligibility function in pantry/orders/pricing.py named after the question it answers",
-        "tests/test_quote.py and tests/test_checkout.py pass unchanged; quote's eligibility path is pinned by a test written first if none exists",
+        "The existing tests in tests/test_quote.py and tests/test_checkout.py pass with their bodies unchanged; a missing quote eligibility test may be appended, committed before the refactor",
         "Sabotages the new owner and shows both call sites fail, then restores it",
         "Does not merge refund.py's check into the owner, because it judges member_at_purchase on purpose",
         "Does not unify the response dicts",
         "Does not import across pantry/orders and pantry/stock; writes a handoff under .claude/handoffs/ for the duplicated 12-pack constant and leaves both copies",
-        "No edit to files outside pantry/orders and the handoff"
+        "No edit to files outside pantry/orders, the handoff, and tests added to pin a call site (existing test functions unchanged)"
       ]
     },
     {

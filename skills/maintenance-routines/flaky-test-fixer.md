@@ -10,7 +10,7 @@ A test whose result depends on something other than the code under test: executi
 
 ## Input
 
-`$ARGUMENTS` is either a failing local run's log or a test name. The expensive suites (full browser end-to-end, database-container integration) often run only locally or before a release, and that is where flakes surface. With no argument, STOP and ask (an unattended run writes a handoff saying it was given nothing to reproduce, and ends). Hunting for flakes by re-running suites at random burns hours and finds the one that failed today, not the one that fails most.
+`$ARGUMENTS` is either a failing local run's log or a test name. The expensive suites (full browser end-to-end, database-container integration) often run only locally or before a release, and that is where flakes surface. With no argument, STOP and ask (an unattended run writes a handoff saying it was given nothing to reproduce, and ends). A vague reference ("that cart test", "the one that failed in CI") is not a test name. When the user mentions a failed run but pastes no log, ask for that run's log or the exact test id before any local run: running the suite to work out which test they meant is a guess, not a reproduction. The unattended handoff path applies only when no human is in the conversation. Hunting for flakes by re-running suites at random burns hours and finds the one that failed today, not the one that fails most.
 
 Read the failure log before reproducing. The assertion that failed, and the values, usually name the category before a single local run.
 
@@ -47,7 +47,7 @@ Where the runner has a repeat flag, use it (`pnpm exec playwright test --repeat-
 
 The project's full gate list, plus:
 
-- The same ten-run loop that reproduced the failure now passes **ten out of ten**. Paste it.
+- The same ten-run loop that reproduced the failure now passes **ten out of ten**. Paste that loop's raw output (one line per run) verbatim into the final reply to the user, not only into working notes.
 - The full suite passes with zero failures on a full run, not only the one test.
 - If the fix touched production code, a test pins the behaviour that was flaky.
 - `git diff` contains no retry, no sleep, no widened timeout.
@@ -63,4 +63,4 @@ Beyond the universal list, each of these is a STOP: skip the finding and write i
 
 ## Summary
 
-Per the budget block: shipped (PR and SHA, or branch and SHA, with the before and after ten-run evidence and the category), skipped (with what you could not reproduce), or nothing found.
+Per the budget block: shipped (PR and SHA, or branch and SHA, with the before ten-run evidence (failing seeds or runs and the assertion), the after ten-run loop output pasted verbatim, and the category), skipped (with what you could not reproduce), or nothing found.
