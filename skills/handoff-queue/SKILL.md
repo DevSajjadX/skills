@@ -79,7 +79,7 @@ The brief, Never, Human QA, Parking, Common mistakes and Steps 1 and 2 apply to 
    When the queue is empty, run the project's full gates once on the final tip. A failure becomes a handoff under Found, not fixed. Only now move the found handoffs from the state folder into `.claude/handoffs/`, uncommitted.
 
 7. **Leave the report**, in this order, as your final message (and kept current in the state folder). Open with a headline count (done, parked, not reached); within each section, red items first; details in [reference.md](reference.md):
-   - **Decide**: one line per parked item that needs the user: the question, the rule or evidence it hit (`PRODUCT.md:4`), your proposed default.
+   - **Decide**: one line per parked item that needs the user: the question, the rule or evidence it hit (`PRODUCT.md:4`, copied from `grep -n` output, never counted by eye), your proposed default.
    - **Done**: per item, the commit, each Acceptance command with its real output, the gate result, and the Human QA evidence or the line recording that no screen shows the effect.
    - **Decisions I took for you**: one line per ambiguous line you resolved, with the reading you built.
    - **Parked**: items parked for a failing gate or no repro, with the output and the last green check.
@@ -95,6 +95,8 @@ The brief, Never, Human QA, Parking, Common mistakes and Steps 1 and 2 apply to 
 One rule: **every item walks the screen that shows its effect.** A backend-only item is not exempt: walk the screen that renders the change, or the staff screen that reads it. An item whose effect no screen reaches (a refactor, a constant no page renders, a project with no UI at all) records that line in the report, "no screen shows this effect", and uses the real output of its real interface (the acceptance commands) as the evidence. Never skip a walk because the item looks backend only without first looking for the screen.
 
 Walk every acceptance line as a person would, in a real browser (when the host offers a browser pane, a new tab made with `tabs_create` and its tab id passed on every call, since other workers share the pane; a project's own browser driver otherwise). Start the item's own stack in the background from its worktree (milestone queue) or the checkout (handoff queue): the project's full-stack run command, with demo seed data on if it has one, or open the built page from disk when the project says so. Read the web origin from its output, never assume a port.
+
+If the browser cannot open a `file://` page, serve its folder in the background (`uv run python -m http.server 0 --directory <dir>`, read the port from its output) and walk `http://127.0.0.1:<port>/<page>`. If no browser can reach the page at all, the item is not Done: list it under a "Walk blocked" line in the report with the reason and the page's generated text, and the headline counts it separately.
 
 - Sign in through the screens, reading any code from the dev menu or equivalent. No login helper, `fetch`, `javascript_tool`, API call or browser-driver script to reach a state a person would reach by screens: click, type, read, wait.
 - Walk every acceptance line, then the states around it: empty, denied, a reload, the alternate locale (when the product's default is another), right-to-left layout if the product supports it.
@@ -124,6 +126,7 @@ A parked item gets the tracker's blocked label (for example `glab issue update <
 | Asking the user, or waiting for an answer | Never: decide from the sources and log it, or park the item. |
 | Two e2e runs at once | Only one e2e run at a time: the merge queue's in a milestone run, the serial item loop's in a handoff queue. |
 | Skipping the walk because the item "looks backend only" | Human QA: find the screen that shows the effect first; skip only when none does, and say so. |
+| Moving an item to Done with a "walk limit" note | Serve the page over http first; a walk that never happened is never green. |
 | A screenshot of a login wall or blank page as evidence | Capture failure: the assertion names a value only the change produces. |
 | Building an item that lands where an ADR or AGENTS.md says ask first | Park it under Decide unless the item cites the owner's approval. |
 | Reporting green from an agent's say-so | Read the exit codes and evidence in its status file. |

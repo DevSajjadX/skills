@@ -18,6 +18,8 @@ The cap is the machine: each worker builds the project, runs its containers and 
 
 For each item, the orchestrator, not the worker, cuts the ground:
 
+Before cutting any worktree or relabelling, confirm this session can launch subagents (the `Agent` tool). If it cannot, stop after section 0, write that in `decisions.md`, and leave the tracker labels unchanged.
+
 ```bash
 WT=<main checkout>/.claude/worktrees/hq-<iid>-<slug>
 git worktree add -b handoff-queue/<iid>-<slug> "$WT" origin/main
@@ -49,6 +51,7 @@ The orchestrator holds an item's build while another in-flight item's plan touch
 The only place e2e runs, so no two e2e runs ever overlap (a run lock would queue a second one, and its timeouts under load read as failures). Take `READY-TO-SHIP` items in arrival order; for each:
 
 1. `SendMessage` the worker: "your turn". It rebases on `origin/main` and runs all gates (the end-to-end gate included) plus every e2e spec its commit added or changed (`<e2e spec command> <spec>`, for example `pnpm --filter web test:e2e <spec>`). A rebase that pulled in other code but no conflict does not repeat the browser walk; a conflict does.
+Copy each run's gate output and the `e2e.log` lines into `.claude/handoff-queue/<date>/wi-<iid>/` before its worktree is removed.
 2. Green: ship it with the project's ship command (`Closes #<iid>` closes the issue when `main` moves). Red: back to section 3 with the output; the queue takes the next item.
 3. Record the merged SHA. Recompute the ready set from the tracker (the merge may have unblocked items) and launch workers into any free slot (section 1).
 

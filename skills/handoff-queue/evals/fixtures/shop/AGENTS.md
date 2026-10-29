@@ -8,7 +8,7 @@ Tests: `uv run --with pytest pytest -q` (must pass before any commit).
 
 ## Cart page
 
-`uv run python page.py` rebuilds `site/index.html`, a static cart page that shows the discounted total and shipping for a sample cart. Open it from disk (`file://.../site/index.html`) to see a pricing change on a screen. There is no server and no login. `site/index.html` is tracked: commit the regenerated page in the same commit as the item that changes it.
+`uv run python page.py` rebuilds `site/index.html`, a static cart page that shows the discounted total and shipping for a sample cart. Serve it with `uv run python -m http.server 0 --directory site` (read the port from its output) and open `http://127.0.0.1:<port>/index.html` to see a pricing change on a screen; the browser pane does not render `file://` pages. There is no login. `site/index.html` is tracked: commit the regenerated page in the same commit as the item that changes it.
 
 ## Ask first
 

@@ -117,7 +117,7 @@
     },
     {
       "id": 9,
-      "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init`; the tracker CLI is `bin/glab`, which logs every call to glab.log.) /handoff-queue (items #17 and #20 finish their browser walk at the same minute)",
+      "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init`; the tracker CLI is `bin/glab`, which logs every call to glab.log.) /handoff-queue (items #17, #20 and #21 finish their browser walk at the same minute)",
       "expected_output": "Workers gate with the slow end-to-end gate skipped; the merge queue runs e2e for one item, ships it, then takes the second.",
       "files": [
         "evals/fixtures/tracker"
@@ -126,7 +126,9 @@
         "Worker gates run `python gates.py --skip e2e`",
         "Only the orchestrator's merge queue runs the e2e gate, one item at a time: e2e.log never shows a second start before the previous end, and no gate output says another e2e run holds e2e.lock",
         "The second item waits for the first to ship (glab.log shows its mr merge) before its e2e run starts",
-        "A rebase that pulled in code but no conflict does not repeat the browser walk; a conflict does"
+        "A rebase that pulled in other code but no conflict does not repeat the browser walk (#21 touches only util.py, so its rebase onto the merged #17 is clean): its wi-21 evidence folder shows no second walk",
+        "A rebase that conflicts (#20 against the merged #17 in app.py) repeats the browser walk, with the new evidence saved in .claude/handoff-queue/<date>/wi-20/",
+        "The merge queue's gate output and e2e.log lines are kept under .claude/handoff-queue/<date>/wi-<iid>/ before each worktree is removed"
       ]
     },
     {
@@ -170,11 +172,12 @@
         "evals/fixtures/shop"
       ],
       "expectations": [
-        "Opens a new tab and passes its tabId on every browser call",
+        "Opens a new tab and names its tabId in the reply; browser-calls.txt in the item's evidence folder lists the tabId on every browser call",
         "Saves one screenshot per acceptance line under .claude/handoff-queue/<date>/ in a folder for the item",
         "Reads each screenshot against its acceptance line before reporting",
         "Reproduces the problem first: the before screenshot shows 40.00 on the base",
-        "Walks the states around the line (a reload) and does not use a login helper, fetch or a driver script",
+        "Walks the states around the line (a reload)",
+        "Uses no login helper, fetch, javascript_tool or driver script to reach the state",
         "No screenshot or state file appears in any commit"
       ]
     },
@@ -195,11 +198,11 @@
     {
       "id": 14,
       "prompt": "Do #40 for me, I'm here.",
-      "expected_output": "Does not load handoff-queue; one item with the owner present is plan-draft then plan-execute.",
+      "expected_output": "Does not load handoff-queue; one item with the owner present is plan-draft then plan-execute, or worked directly. If #40 cannot be resolved, asks which tracker or repo it is in instead of guessing.",
       "files": [],
       "expectations": [
         "Does not load handoff-queue",
-        "Uses plan-draft then plan-execute, or works the item directly with the user present"
+        "Routes #40 as a single item for a present user (plan-draft then plan-execute, or plain work), and if #40 cannot be resolved against any tracker or handoff file, asks which tracker or repo it is in instead of guessing"
       ]
     }
   ]
