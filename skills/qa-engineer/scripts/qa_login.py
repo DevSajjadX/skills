@@ -120,7 +120,7 @@ def sign_in(origin: str, recipe: dict, role: str, extra: dict[str, str]) -> list
         for name, pattern in step.get("extract", {}).items():
             m = re.search(pattern, text)
             if not m:
-                raise Fail(f"step {i}: nothing in the response matched the {name!r} pattern", 5)
+                raise Fail(f"step {i}: nothing in the response matched the {name!r} pattern (is the dev inbox or mock sender running?)", 5)
             values[name] = m.group(1) if m.groups() else m.group(0)
     if not jar:
         raise Fail("sign-in finished but set no cookie", 4)
@@ -254,6 +254,20 @@ def selftest() -> int:
         checks.append(("a refused step stops with exit 3 and no body", False))
     except Fail as e:
         checks.append(("a refused step stops with exit 3 and no body", e.code == 3 and "HTTP 400" in str(e)))
+
+    nocookie = {**recipe, "flows": {"sms": [{"method": "GET", "path": "/api/dev/sms?m={mobile}"}]}}
+    try:
+        sign_in(origin, nocookie, "a", {})
+        checks.append(("a sign-in that sets no cookie stops with exit 4", False))
+    except Fail as e:
+        checks.append(("a sign-in that sets no cookie stops with exit 4", e.code == 4))
+
+    empty = {"method": "GET", "path": "/api/dev/none", "ok": [404], "extract": {"code": r"\d{6}"}, "retries": 1, "retry_delay": 0}
+    try:
+        sign_in(origin, {**recipe, "flows": {"sms": [empty]}}, "a", {})
+        checks.append(("an extract that finds nothing stops with exit 5 and a hint", False))
+    except Fail as e:
+        checks.append(("an extract that finds nothing stops with exit 5 and a hint", e.code == 5 and "mock sender" in str(e)))
 
     server.shutdown()
     for name, ok in checks:

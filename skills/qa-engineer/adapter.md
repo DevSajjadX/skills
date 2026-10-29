@@ -8,7 +8,7 @@ One file per project, `docs/qa.md` by default, plus its sign-in recipe. The skil
 # QA adapter
 
 ## Start the app
-<command, e.g. the launch config entry>; the web origin is <where to read it: a log line, a fixed port>.
+<command, e.g. the launch config entry>; the web origin is <where to read it: a log line, a fixed port>. Never assume a default port.
 Seed: <env flag or command that loads test data, or "none">.
 
 ## Roles
@@ -16,6 +16,7 @@ Seed: <env flag or command that loads test data, or "none">.
 |---|---|---|
 | <company-a> | <files requests in company A> | company-a |
 
+Dev sign-in code: <where a dev OTP or magic link is read, e.g. the mock SMS inbox route, or none>.
 Recipe: `docs/qa/signin.json`. Test accounts come only from <the fixture range, e.g. mobiles starting 09999>.
 Secrets the recipe reads from env: <QA_ADMIN_PASSWORD, where it is set>, or none.
 
@@ -24,6 +25,7 @@ API spec: <path to the committed OpenAPI file, or none>. Product rules: <PRODUCT
 Required request headers: <e.g. X-Requested-With: app-web on every non-GET>.
 
 ## Journeys
+In run order; each leaves state the next one uses.
 1. <name>: <steps a user takes>; watch for <the high-value failure>.
 
 ## Isn't a bug
@@ -32,7 +34,7 @@ Required request headers: <e.g. X-Requested-With: app-web on every non-GET>.
 ## Findings go to
 <a handoff file per finding at .claude/handoffs/YYYY-MM-DD-<slug>.md | an issue via task-summary | one report>.
 Evidence folder: <an ignored path, e.g. web/tmp/qa-<date>/>.
-Secret check: <a command that must print nothing, e.g. `grep -rliE 'cookie|authorization|password|bearer' <evidence folder>`, or the project's scanner if it takes a folder>.
+Secret check: <a command that must print nothing over the evidence folder and the filed handoffs, e.g. `grep -rliE '(cookie|authorization):[[:space:]]*[^<[:space:]]|bearer [A-Za-z0-9._-]{12,}' <evidence folder> .claude/handoffs`, which matches values and not the words, or the project's scanner if it takes a folder>.
 ```
 
 ## Sign-in recipe

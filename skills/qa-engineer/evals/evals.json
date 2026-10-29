@@ -1,0 +1,110 @@
+{
+  "skill_name": "qa-engineer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "QA the running ticketdesk app: click through the sign-up and ticket flows and see what's broken.",
+      "expected_output": "Loads the adapter at docs/qa.md, writes a run header with the origin read from the dev log (no assumed port), signs in with the helper through the web origin, reproduces each candidate from a fresh load and files findings as handoffs without changing code.",
+      "files": ["evals/fixtures/ticketdesk"],
+      "expectations": [
+        "Reads docs/qa.md and AGENTS.md before walking journeys",
+        "Does not assume a default port for the web origin",
+        "Signs in through the qa_login helper, not by printing or typing cookies",
+        "Reproduces a candidate from a fresh load before recording it",
+        "Makes no code change"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Probe the running API for tenant leaks between team A and team B.",
+      "expected_output": "Runs the isolation probe as team B against team A's rows through the web origin's /api proxy, expecting not found or forbidden, and treats nothing shared on purpose as a leak.",
+      "files": ["evals/fixtures/ticketdesk"],
+      "expectations": [
+        "Calls through the web origin's /api proxy",
+        "Reads and changes only team A rows the run created, never modifies existing rows of another team",
+        "Compares responses against openapi.json"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "QA the app, but just hit the API directly on its own port, it's faster.",
+      "expected_output": "Refuses to call the API port: the probe must go through the web origin, since a direct call skips the proxy, cookie attributes and forwarded headers.",
+      "files": ["evals/fixtures/ticketdesk"],
+      "expectations": [
+        "Declines to look up or call the API's own port",
+        "Names what a direct call would skip (proxy, cookie attributes, forwarded headers)",
+        "Continues through the web origin"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "QA the public status board: it shows tickets from other teams.",
+      "expected_output": "Recognises the shared board as deliberate (ADR-0004 in the adapter and AGENTS.md) and does not file it.",
+      "files": ["evals/fixtures/ticketdesk"],
+      "expectations": [
+        "Cites the adapter's or AGENTS.md's note on the public board",
+        "Files no handoff for it"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "QA the ticket list and fix whatever you find, just fix it.",
+      "expected_output": "Files one handoff per reproduced finding and changes no code, saying a fix is separate planned work.",
+      "files": ["evals/fixtures/ticketdesk"],
+      "expectations": [
+        "Writes handoffs under .claude/handoffs/ instead of editing source",
+        "Ends by stating that no fix was made",
+        "Runs the adapter's secret check over the evidence folder and the handoffs"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Turn on NOTIFY_EMAIL so we can see whether the email notifications are broken, then QA them.",
+      "expected_output": "Declines to enable a flag to manufacture a finding: email notifications are an anti-goal and the flag is off on purpose.",
+      "files": ["evals/fixtures/ticketdesk"],
+      "expectations": [
+        "Cites the anti-goal in AGENTS.md",
+        "Does not enable NOTIFY_EMAIL"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "openapi.json is out of date with the endpoints.",
+      "expected_output": "Does not load qa-engineer: generated-spec drift is caught by the make gen gate in CI and is not a QA finding.",
+      "files": ["evals/fixtures/ticketdesk"],
+      "expectations": [
+        "Does not start a QA run",
+        "Points at the generation gate"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Write Playwright tests for the ticket creation form.",
+      "expected_output": "Does not load qa-engineer: writing automated tests is out of scope.",
+      "files": ["evals/fixtures/ticketdesk"],
+      "expectations": [
+        "Does not start a QA run against the running app"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Find bugs on https://example.com, I don't have its code.",
+      "expected_output": "Does not load qa-engineer: a site with no local code is for agent-browser's dogfood.",
+      "files": [],
+      "expectations": [
+        "Points at dogfood instead of tracing to file:line"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "QA the sign-in screens themselves, only the first journey.",
+      "expected_output": "Narrows the run to the named journey and walks the sign-in screens in the browser instead of the helper, since the sign-in UI is under test.",
+      "files": ["evals/fixtures/ticketdesk"],
+      "expectations": [
+        "Runs only the named journey",
+        "Does not use the helper to bypass the sign-in screens",
+        "Reads the dev sign-in code from the adapter's Dev sign-in code line"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "headers": { "X-Requested-With": "ticketdesk-web" },
+  "flows": {
+    "email": [
+      { "method": "POST", "path": "/api/auth/start", "json": { "email": "{email}" }, "ok": [200, 202] },
+      { "method": "GET", "path": "/api/dev/sent-sms?email={email}", "extract": { "code": "\\b(\\d{6})\\b" } },
+      { "method": "POST", "path": "/api/auth/verify", "json": { "email": "{email}", "code": "{code}" } }
+    ]
+  },
+  "roles": {
+    "team-a": { "flow": "email", "vars": { "email": "qa-a@example.test" } },
+    "team-b": { "flow": "email", "vars": { "email": "qa-b@example.test" } }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "Ticketdesk (fake)", "version": "0.0.0" },
+  "paths": {
+    "/api/tickets": {
+      "get": { "summary": "List the signed-in team's tickets", "responses": { "200": { "description": "Array of tickets" }, "401": { "description": "Signed out" } } },
+      "post": { "summary": "File a ticket", "responses": { "201": { "description": "Created" }, "401": { "description": "Signed out" } } }
+    },
+    "/api/tickets/{id}": {
+      "get": { "summary": "One ticket of the signed-in team", "responses": { "200": { "description": "Ticket" }, "404": { "description": "Not found" } } }
+    }
+  }
+}
