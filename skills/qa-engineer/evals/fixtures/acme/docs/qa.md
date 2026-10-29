@@ -17,8 +17,8 @@ Sign-in limits: defined in `api/src/Modules/Identity/SignInLimits.cs` (read it; 
 ## Oracles
 Spec `api/openapi/acme.json`, regenerated with `pnpm gen:api`. Header `X-Requested-With: acme-web` on every non-GET.
 Error shape: `application/problem+json` with non-null `detail` and `errorKey`, including framework 404 and 400. Catalogs `api/src/Modules/<M>/Text/messages.{ar,en}.json`. Languages: ar, en.
-Tenant-owned resources: products, verification, audit entries.
-Proxy `web/src/proxy.ts`: signed-out pages answer 302 to `/auth?next=...`, never 307.
+Tenant-owned resources: products, verification, audit entries (read and change by id: `/api/products/{id}`, `/api/verification/{id}`, `/api/audit/{id}`; create with POST `/api/products`, `/api/verification`).
+Proxy `web/src/proxy.ts`: signed-out pages answer 302 to `/auth?next=...`, never 307. Sign-in returns to `next`: verify takes an optional `next` and answers `{"next": ...}`.
 
 ## Isn't a bug
 - The cross-company market view in `web/src/features/trade/AGENTS.md` is the product.
