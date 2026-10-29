@@ -201,3 +201,5 @@ Mods run from this checkout once the folder is added as a marketplace; edits the
 claude plugin marketplace add "$(pwd)"
 claude plugin install usage-band@esi-abolfazl
 ```
+
+Any change under `mods/<mod>/` outside `tests/` and `bench/` bumps `version` in `mods/<mod>/.claude-plugin/plugin.json` in the same commit: an install from the GitHub marketplace lives in `~/.claude/plugins/cache/esi-abolfazl/<mod>/<version>/`, and `claude plugin update <mod>@esi-abolfazl` only picks up a new version.
