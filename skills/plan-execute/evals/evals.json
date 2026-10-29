@@ -1,0 +1,84 @@
+{
+  "skill_name": "plan-execute",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/plan-execute .claude/plans/2026-10-29-slot-capacity.md",
+      "expected_output": "Reads the plan, confirms status: approved, walks section 3 one task at a time and ticks each checkbox as it lands.",
+      "files": [
+        "evals/fixtures/bakery-board"
+      ],
+      "expectations": [
+        "Confirms status: approved before changing code",
+        "Announces each task as K/N",
+        "Flips each checkbox in the plan file as the task lands",
+        "Runs the plan's section 4 checks at the end"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/plan-execute .claude/plans/2026-10-29-pickup-reminder.md",
+      "expected_output": "Finds status: draft, refuses to implement, shows the summary and task list and asks the human to approve first.",
+      "files": [
+        "evals/fixtures/bakery-board"
+      ],
+      "expectations": [
+        "Does not create reminders.py",
+        "Says the plan is not approved",
+        "Shows the task list and asks for the status change"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/plan-execute the approved slot-capacity plan. Every task is ticked and both Done when lines of i1/001 now hold. Close it out.",
+      "expected_output": "Checks every Done when line of the item against the running code, then names the board's done job once for the human instead of editing .pm/ by hand.",
+      "files": [
+        "evals/fixtures/bakery-board-done"
+      ],
+      "expectations": [
+        "Checks both Done when lines against running code or tests, not against the ticks",
+        "Names the board's done i1/001 job once",
+        "Does not edit or move any file under .pm/"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "/plan-execute the approved slot-capacity plan. All tasks are ticked, but the slot list still reads its own hard-coded capacity of 10.",
+      "expected_output": "Keeps the item open, names the failing Done when line (one shared capacity number) and does not name the board's done job.",
+      "files": [
+        "evals/fixtures/bakery-board-hardcoded"
+      ],
+      "expectations": [
+        "Names the failing line: the booking check and the slot list read the same capacity number",
+        "Does not name or run the board's done job",
+        "Does not edit any file under .pm/"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "/plan-execute .claude/plans/2026-10-29-slot-capacity.md. Mid-run, while on task 2, I noticed cancel_order never frees the slot. It is outside the plan. What do I do with it?",
+      "expected_output": "Files a handoff in .claude/handoffs/ through plan-handoff with origin_plan set to the executing plan's path, and never writes it onto the board.",
+      "files": [
+        "evals/fixtures/bakery-board"
+      ],
+      "expectations": [
+        "Writes a handoff under .claude/handoffs/",
+        "origin_plan names .claude/plans/2026-10-29-slot-capacity.md",
+        "Writes nothing under .pm/",
+        "Says promotion to the board is a human step"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Add a null check to the booking handler's slot lookup.",
+      "expected_output": "Does not load plan-execute: there is no plan file and the change is one pass. Guards the disable-model-invocation flag: the skill must not self-trigger.",
+      "files": [
+        "evals/fixtures/bakery-board"
+      ],
+      "expectations": [
+        "Does not look for or require a plan under .claude/plans/",
+        "Makes the change directly"
+      ]
+    }
+  ]
+}

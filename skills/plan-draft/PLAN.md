@@ -7,6 +7,8 @@ execution_model: sonnet # recommended model for /plan-execute: haiku | sonnet | 
 execution_effort: medium # recommended reasoning effort: low | medium | high
 handoffs: [] # handoff files this plan generated (sibling side must be planned+executed first; /plan-execute gates on their status)
 from_handoff: # path of the handoff this plan was drafted from, if any
+from_brief: # path of the promoted board brief (BRIEF-<slug>.md) this plan was drafted from, if any
+from_item: # board item id (iN/NNN) this plan was drafted from, if any
 ---
 
 <!--
@@ -67,6 +69,12 @@ Files, Change (1–2 lines), plus a constraint/ordering note only when load-bear
   - Files: `path/one.cs`, `path/two.cs` (new)
   - Change: <1–2 lines>
   - <constraint or ordering note, only if load-bearing>
+
+### Phase Z: Standing
+
+- [ ] **Z1. Simplify**: the simplify or review skill over the changed code
+- [ ] **Z2. Test coverage**: tests for real behavior and failure modes, not lines
+- [ ] **Z3. Docs surface**: every doc the change touches or makes stale
 
 ## 4. Definition of done
 

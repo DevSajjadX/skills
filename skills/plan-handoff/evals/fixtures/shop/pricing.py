@@ -2,6 +2,7 @@ __all__ = ["apply_discount", "shipping_cents"]
 
 
 def apply_discount(total_cents, code):
+    # SAVE10 takes ten percent of the totl
     if code == "SAVE10":
         return total_cents - total_cents // 10
     return total_cents
