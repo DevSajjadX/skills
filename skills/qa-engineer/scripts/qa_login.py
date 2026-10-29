@@ -27,13 +27,16 @@ adapter's ignored evidence folder and delete it at cleanup. --session and --jar 
 
 --handover is for a browser context agent-browser cannot reach (the browser pane, a preview tool, any
 other driver). It prints one loopback URL, valid 60 s, and waits. The first GET of that URL answers
-{"cookies": [<Set-Cookie strings>]} so the context can take the session; every later GET answers 410,
-a wrong token answers a bare 404 (status only, never cookies), and after 60 s nothing listens. The URL
-is the only thing printed, so a leaked URL in a log is worth nothing once used or expired. It may be
-combined with --session and --jar.
+302 to the origin carrying the session as Set-Cookie headers (HttpOnly kept, no script or transcript
+touches a value): navigate the browser to the URL and it lands signed in. The URL is bound to the
+origin's own hostname (browsers ignore the port when matching cookies), so the origin must be loopback
+(localhost, 127.0.0.1, [::1]); anything else exits 2. Every later GET answers 410, a wrong token answers
+a bare 404 (status only, never cookies), and after 60 s nothing listens. The URL is the only
+secret-bearing line on stdout, so a leaked URL in a log is worth nothing once used or expired. It may be
+combined with --session and --jar. Start it in the background: it blocks until the fetch or 60 s.
 
 Exit codes: 0 ok · 2 bad arguments or recipe · 3 a step got an unexpected status ·
-4 sign-in set no cookie · 5 an extract found nothing, or a step marked dev_read answered 401/404 (the sender looks real) · 6 agent-browser failed.
+4 sign-in set no cookie · 5 an extract found nothing, or a step marked dev_read answered 401/404 (the sender looks real) · 6 agent-browser failed · 7 the handover expired unused.
 """
 
 from __future__ import annotations
@@ -182,15 +185,16 @@ def write_jar(cookies: list, origin: str, path: str) -> None:
 
 
 class Handover:
-    """One-use, self-expiring loopback server: the first GET of the token path gets the payload."""
+    """One-use, self-expiring loopback server: the first GET of the token path answers 302 to `location` with the cookies as Set-Cookie headers."""
 
-    def __init__(self, payload: dict, ttl: float = HANDOVER_TTL, grace: float = HANDOVER_GRACE, host: str = "127.0.0.1"):
+    def __init__(self, cookies: list[str], location: str, ttl: float = HANDOVER_TTL, grace: float = HANDOVER_GRACE, host: str = "127.0.0.1"):
         self.token = secrets.token_hex(24)
         self.deadline = time.monotonic() + ttl
         self.grace = grace
         self.spent = threading.Event()
         self._lock = threading.Lock()
-        self._body = json.dumps(payload).encode()
+        self._cookies = cookies
+        self._location = location
         outer = self
 
         class H(BaseHTTPRequestHandler):
@@ -211,14 +215,17 @@ class Handover:
                         outer.spent.set()
                 if not live:
                     return self._status(410)
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.send_header("Content-Length", str(len(outer._body)))
+                self.send_response(302)
+                for c in outer._cookies:
+                    self.send_header("Set-Cookie", c)
+                self.send_header("Location", outer._location)
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Length", "0")
                 self.end_headers()
-                self.wfile.write(outer._body)
 
         self.server = ThreadingHTTPServer((host, 0), H)
-        self.url = f"http://{host}:{self.server.server_address[1]}/{self.token}"
+        shown = f"[{host}]" if ":" in host else host
+        self.url = f"http://{shown}:{self.server.server_address[1]}/{self.token}"
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
 
     def wait(self) -> bool:
@@ -251,6 +258,9 @@ def main(argv: list[str]) -> int:
         cookies = sign_in(a.origin.rstrip("/"), recipe, a.role, extra)
         if not a.session and not a.jar and not a.handover:
             raise Fail("give --session, --jar, --handover or a combination", 2)
+        hand_host = urlsplit(a.origin).hostname or ""
+        if a.handover and not (hand_host in ("localhost", "127.0.0.1", "::1") or hand_host.endswith(".localhost")):
+            raise Fail(f"--handover needs a loopback origin (localhost, 127.0.0.1, [::1]); got {hand_host or a.origin}", 2)
         if a.session:
             inject(cookies, a.origin.rstrip("/"), a.session, a.agent_browser, not a.no_open)
         if a.jar:
@@ -262,14 +272,15 @@ def main(argv: list[str]) -> int:
         print(f"qa_login: {e}", file=sys.stderr)
         return 2
     if a.handover:
-        # The URL is the only secret-bearing line; keep the confirmation off stdout so it stays the one thing printed.
-        h = Handover({"cookies": [m.OutputString() for m in cookies]})
+        # The URL is the only secret-bearing line on stdout; the notes go to stderr.
+        h = Handover([m.OutputString() for m in cookies], a.origin.rstrip("/") + "/", host=hand_host)
         print(h.url, flush=True)
         print(f"qa_login: handover for {a.role} valid {int(HANDOVER_TTL)} s, one fetch", file=sys.stderr)
-        if not h.wait():
+        used = h.wait()
+        if not used:
             print("qa_login: handover expired unused", file=sys.stderr)
         if not (a.session or a.jar):
-            return 0
+            return 0 if used else 7
     where = ", ".join(x for x in (a.session and f"agent-browser session {a.session}", a.jar and f"jar {a.jar}") if x)
     print(f"signed in {a.role} into {where} ({len(cookies)} cookies, values not shown)")
     return 0
@@ -412,27 +423,33 @@ def selftest() -> int:
 
     # Handover: once then 410, a wrong token never gets cookies, expiry leaves nothing listening.
     def get(url):
+        u = urlsplit(url)
         try:
-            with urllib.request.urlopen(url, timeout=5) as r:
-                return r.status, r.read()
-        except urllib.error.HTTPError as e:
-            return e.code, e.read()
-        except urllib.error.URLError as e:
-            return "refused", b"" if isinstance(e.reason, ConnectionRefusedError) else str(e.reason).encode()
+            c = http.client.HTTPConnection(u.hostname, u.port, timeout=5)
+            c.request("GET", u.path)
+            r = c.getresponse()
+            out = (r.status, r.read(), r.getheaders())
+            c.close()
+            return out
+        except ConnectionRefusedError:
+            return "refused", b"", []
 
-    payload = {"cookies": [m.OutputString() for m in cookies]}
-    h = Handover(payload, ttl=30, grace=0)
+    set_cookies = [m.OutputString() for m in cookies]
+    h = Handover(set_cookies, origin + "/", ttl=30, grace=0)
     wrong = get(h.url.rsplit("/", 1)[0] + "/not-the-token")
-    checks.append(("handover: a wrong token answers a bare 404, never cookies", wrong == (404, b"") and b"sess" not in wrong[1]))
+    checks.append(("handover: a wrong token answers a bare 404, never cookies", wrong[:2] == (404, b"") and not any(k.lower() == "set-cookie" for k, _ in wrong[2])))
     first = get(h.url)
-    checks.append(("handover: the first fetch returns the cookies", first[0] == 200 and json.loads(first[1]) == payload))
+    got = [v for k, v in first[2] if k.lower() == "set-cookie"]
+    loc = [v for k, v in first[2] if k.lower() == "location"]
+    checks.append(("handover: the first fetch answers 302 to the origin", first[0] == 302 and loc == [origin + "/"] and first[1] == b""))
+    checks.append(("handover: the first fetch sets the cookies as headers, HttpOnly kept", got == set_cookies and any("httponly" in c.lower() for c in got)))
     second = get(h.url)
-    checks.append(("handover: the second fetch answers 410, never cookies", second[0] == 410 and b"sess" not in second[1]))
+    checks.append(("handover: the second fetch answers 410, never cookies", second[0] == 410 and not any(k.lower() == "set-cookie" for k, _ in second[2])))
     checks.append(("handover: wait() reports it was used and closes", h.wait() is True and get(h.url)[0] == "refused"))
-    gone = Handover(payload, ttl=0.3, grace=0)
+    gone = Handover(set_cookies, origin + "/", ttl=0.3, grace=0)
     time.sleep(0.5)
     late = get(gone.url)
-    checks.append(("handover: after the ttl nothing returns cookies (410 or refused)", late[0] in (410, "refused") and b"sess" not in late[1]))
+    checks.append(("handover: after the ttl nothing returns cookies (410 or refused)", late[0] in (410, "refused") and not any(k.lower() == "set-cookie" for k, _ in late[2])))
     checks.append(("handover: an unused handover expires and wait() says so", gone.wait() is False and get(gone.url)[0] == "refused"))
 
     server.shutdown()

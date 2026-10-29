@@ -25,6 +25,7 @@ Proxy `web/src/proxy.ts`: signed-out pages answer 302 to `/auth?next=...`, never
 - A seller reading its own inquiries via `IgnoreQueryFilters` (ADR-10).
 - Cross-tenant allow-list: `api/tests/IgnoreQueryFiltersTests.cs` `AllowList`.
 - Category tree shared by all companies (platform-owned).
+- Audit entries are editable by their owner (fixture simplification).
 - Same code step for numbers with and without an account.
 
 ## Journeys

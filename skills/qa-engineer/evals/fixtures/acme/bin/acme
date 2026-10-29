@@ -30,6 +30,7 @@ TEXT = {
 
 
 TABLES = {"products": PRODUCTS, "verification": VERIFICATIONS, "audit": AUDIT}
+NEXT = {"products": 4, "verification": 3, "audit": 3}
 VALUE = {"products": "name", "verification": "status", "audit": "text"}
 AUTH_PAGE = b"""<h1>Sign in</h1><form id=f>
 <input name=mobile placeholder=mobile><input name=code placeholder=code><button>Sign in</button></form>
@@ -40,7 +41,7 @@ if(r.ok)location=(await r.json()).next}</script>"""
 
 
 def safe_next(value):
-    return value if value.startswith("/") and not value.startswith("//") else "/"
+    return value if value.startswith("/") and not value.startswith(("//", "/\\")) and "\\" not in value else "/"
 
 
 class H(BaseHTTPRequestHandler):
@@ -128,13 +129,16 @@ class H(BaseHTTPRequestHandler):
             return self.err(404, "notFound")
         who = self.who()
         if path == "/api/products" and who:
-            pid = max(PRODUCTS) + 1
+            pid = NEXT["products"]
+            NEXT["products"] += 1
             PRODUCTS[pid] = (who, str(data.get("name", "")))
-            aid = max(AUDIT) + 1
+            aid = NEXT["audit"]
+            NEXT["audit"] += 1
             AUDIT[aid] = (who, "product %d created" % pid)
             return self.out(201, {"id": pid})
         if path == "/api/verification" and who:
-            vid = max(VERIFICATIONS) + 1
+            vid = NEXT["verification"]
+            NEXT["verification"] += 1
             VERIFICATIONS[vid] = (who, "pending")
             return self.out(201, {"id": vid})
         self.err(404, "notFound")
