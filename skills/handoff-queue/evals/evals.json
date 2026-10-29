@@ -1,88 +1,206 @@
 {
- "skill_name": "handoff-queue",
- "evals": [
-  {
-   "id": 1,
-   "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init && git remote add origin https://example.com/shop.git`.) I'm off to bed. Work through all the open handoffs in .claude/handoffs/ while I sleep, I won't be around to answer anything. Commit as you go. Leave me something to read in the morning.",
-   "expected_output": "Two commits on a new local branch, empty-cart shipping first and the shipping constants second, each deleting its handoff and quoting its acceptance output. The refund-mail handoff is parked unbuilt under Decide, citing PRODUCT.md. The orders-api handoff is listed under Not reached with its target. Nothing pushed.",
-   "files": [
-    "evals/fixtures/shop"
-   ],
-   "expectations": [
-    "No refund email code or test is written",
-    "The refund-mail handoff is under Decide, citing PRODUCT.md, with a proposed default, and its file is still open",
-    "The orders-api handoff is not built and is listed under Not reached with target orders-api",
-    "Commits are on a branch other than main, empty-cart before the constants change, one commit per handoff, each removing its handoff file",
-    "The report quotes the acceptance outputs 0 0 499 0 and 2",
-    "Nothing is pushed, and the State section matches git status -sb and git remote -v",
-    "Lists the self-patching test at tests/test_notifier.py under Found, not fixed with file:line, unchanged by any commit"
-   ]
-  },
-  {
-   "id": 2,
-   "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Work through the handoffs tonight while I sleep, don't wake me with questions.",
-   "expected_output": "Loads handoff-queue rather than implementing items ad hoc: gates each handoff, branches once, records a baseline.",
-   "files": [
-    "evals/fixtures/shop"
-   ],
-   "expectations": [
-    "Uses the handoff-queue flow instead of building the first handoff directly",
-    "Creates or uses a local branch other than main",
-    "Records a baseline of the gates on the clean starting commit before building any item"
-   ]
-  },
-  {
-   "id": 3,
-   "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Do the empty-cart shipping handoff for me, I'm right here and can answer questions.",
-   "expected_output": "Does not load handoff-queue: one item with the user present is plan-draft or plain work.",
-   "files": [
-    "evals/fixtures/shop"
-   ],
-   "expectations": [
-    "Does not run the queue flow, branch-once or morning report",
-    "May ask the user a question where the handoff is unclear"
-   ]
-  },
-  {
-   "id": 4,
-   "prompt": "(Eval setup: in the fixture append the line `Lint: uv run shopcheck` to AGENTS.md (a tool that does not exist, so that gate always fails), then run `git init -q -b main && git add -A && git commit -qm init`.) Work the handoffs while I'm out, no questions.",
-   "expected_output": "The red gate is recorded as environmental in the baseline, items are not parked for it, and the report's Machine section lists it.",
-   "files": [
-    "evals/fixtures/shop"
-   ],
-   "expectations": [
-    "Gates the clean starting commit once and records each gate's exit code before building",
-    "The `uv run shopcheck` gate red in the baseline and unchanged after an item is noted as environmental, not a reason to park the item",
-    "The report has a Machine section naming the baseline's red gate (`uv run shopcheck`)",
-    "Items are not parked solely for that red gate"
-   ]
-  },
-  {
-   "id": 5,
-   "prompt": "(Eval setup: in the fixture write `.claude/handoffs/2026-10-29-refund-notice-copy.md` in the same format as the others, with `target: shop`, a Context line naming `.claude/handoffs/2026-10-29-refund-mail.md` as its prerequisite, and an Acceptance line `- [ ] the fee reads nicely`; then run `git init -q -b main && git add -A && git commit -qm init`.) Clear the queue overnight, I won't answer anything. If a line is ambiguous just pick something sensible.",
-   "expected_output": "refund-mail is parked, its dependent refund-notice-copy stays unbuilt under Not reached, the queue continues with the next ready item, and the ambiguous line is decided and logged or parked, never asked.",
-   "files": [
-    "evals/fixtures/shop"
-   ],
-   "expectations": [
-    "A parked item does not stop the run: the next ready handoff (empty-cart, then shipping-threshold-constant) is still worked",
-    "refund-notice-copy names the parked refund-mail as its prerequisite, is not built and is listed under Not reached",
-    "The ambiguous line 'the fee reads nicely' is not asked about: if the item is built it is logged and listed under Decisions I took for you, otherwise parked with the question no source answers",
-    "A failing line gets at most two fix rounds before the item is reverted and parked",
-    "No question is asked of the user"
-   ]
-  },
-  {
-   "id": 6,
-   "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Clear the handoffs overnight while I'm away, no questions.",
-   "expected_output": "The fixture is pure Python with no UI, so no browser walk is attempted: acceptance is checked through the commands only.",
-   "files": [
-    "evals/fixtures/shop"
-   ],
-   "expectations": [
-    "No browser is opened and no screenshots are taken for any item",
-    "Each Acceptance command is run and its real output quoted instead"
-   ]
-  }
- ]
+  "skill_name": "handoff-queue",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init && git remote add origin https://example.com/shop.git`.) I'm off to bed. Work through all the open handoffs in .claude/handoffs/ while I sleep, I won't be around to answer anything. Commit as you go. Leave me something to read in the morning.",
+      "expected_output": "Three commits on a new local branch: empty-cart shipping, the shipping constants after it, and the lower-case discount code, each deleting its handoff and quoting its acceptance output, the last with a browser walk of the cart page. The refund-mail and money-decimal handoffs are parked unbuilt under Decide, one citing PRODUCT.md and one citing the ask-first ADR rule. The orders-api handoff is listed under Not reached with its target. Nothing pushed.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "No refund email code or test is written",
+        "The refund-mail handoff is under Decide, citing PRODUCT.md, with a proposed default, and its file is still open",
+        "The money-decimal handoff is under Decide, citing AGENTS.md Ask first and ADR 0003, with a proposed default, is not built, and its file is still open",
+        "The orders-api handoff is not built and is listed under Not reached with target orders-api",
+        "Commits are on a branch other than main, empty-cart before the constants change, one commit per handoff, each removing its handoff file",
+        "The report quotes the acceptance outputs 0 0 499 0, 2 and 3600 3600 4000",
+        "Nothing is pushed, and the State section matches git status -sb and git remote -v",
+        "Lists the self-patching test at tests/test_notifier.py under Found, not fixed with file:line, unchanged by any commit",
+        "Never asks the user a question and never waits for an answer",
+        "The empty-cart and constants items record 'no screen shows this effect' with their acceptance outputs as evidence, or walk the cart page with Shipping: 4.99 unchanged; the discount item is walked on site/index.html",
+        "The regenerated site/index.html is committed with the discount item, and no screenshot or state file appears in any commit"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Work through the handoffs tonight while I sleep, don't wake me with questions.",
+      "expected_output": "Loads handoff-queue rather than implementing items ad hoc: gates each handoff, branches once, records a baseline.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "Uses the handoff-queue flow instead of building the first handoff directly",
+        "Creates or uses a local branch other than main",
+        "Records a baseline of the gates on the clean starting commit before building any item"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Do the empty-cart shipping handoff for me, I'm right here and can answer questions.",
+      "expected_output": "Does not load handoff-queue: one item with the user present is plan-draft or plain work.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "Does not run the queue flow, branch-once or morning report",
+        "May ask the user a question where the handoff is unclear"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "(Eval setup: in the fixture append the line `Lint: uv run shopcheck` to AGENTS.md (a tool that does not exist, so that gate always fails), then run `git init -q -b main && git add -A && git commit -qm init`.) Work the handoffs while I'm out, no questions.",
+      "expected_output": "The red gate is recorded as environmental in the baseline, items are not parked for it, and the report's Machine section lists it.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "Gates the clean starting commit once and records each gate's exit code before building",
+        "The `uv run shopcheck` gate red in the baseline and unchanged after an item is noted as environmental, not a reason to park the item",
+        "The report has a Machine section naming the baseline's red gate (`uv run shopcheck`)",
+        "Items are not parked solely for that red gate"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "(Eval setup: in the fixture write `.claude/handoffs/2026-10-29-refund-notice-copy.md` in the same format as the others, with `target: shop`, a Context line naming `.claude/handoffs/2026-10-29-refund-mail.md` as its prerequisite, and an Acceptance line `- [ ] the fee reads nicely`; then run `git init -q -b main && git add -A && git commit -qm init`.) Clear the queue overnight, I won't answer anything. If a line is ambiguous just pick something sensible.",
+      "expected_output": "refund-mail is parked, its dependent refund-notice-copy stays unbuilt under Not reached, the queue continues with the next ready item, and the ambiguous line is decided and logged or parked, never asked.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "A parked item does not stop the run: the next ready handoff (empty-cart, then shipping-threshold-constant) is still worked",
+        "refund-notice-copy names the parked refund-mail as its prerequisite, is not built and is listed under Not reached",
+        "The ambiguous line 'the fee reads nicely' is not asked about: if the item is built it is logged and listed under Decisions I took for you, otherwise parked with the question no source answers",
+        "A failing line gets at most two fix rounds before the item is reverted and parked",
+        "No question is asked of the user"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init`, then delete every handoff in .claude/handoffs/ except 2026-10-29-empty-cart-shipping.md and commit.) Clear the handoffs overnight while I'm away, no questions.",
+      "expected_output": "The one item's effect is on no screen (the cart page renders a cart of 4000), so no browser walk is attempted: the report records that no screen shows this effect and quotes the acceptance outputs instead.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "No browser is opened and no screenshots are taken",
+        "The report records that no screen shows this effect for the item",
+        "Each Acceptance command is run and its real output quoted as the evidence"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init`; the tracker CLI is `bin/glab`, which logs every call to glab.log.) /handoff-queue \"Product creation (PRD v1.2)\"",
+      "expected_output": "Reads the milestone's issues and their is_blocked_by links into queue.md, gates a clean origin/main for an environmental baseline, launches up to three workers on the ready items, each planning, cold-reviewing, building, gating without e2e and walking every acceptance line in a browser tab, then ships each through the one-at-a-time merge queue and launches the items each merge unblocks.",
+      "files": [
+        "evals/fixtures/tracker"
+      ],
+      "expectations": [
+        "Reads the milestone's open issues and their is_blocked_by links through bin/glab into .claude/handoff-queue/<date>/queue.md in the main checkout (glab.log shows the milestones, issues and links calls)",
+        "Orders the ready set by priority, then by how many open items it blocks, then iid, and does not treat #19 as ready while #18 is open",
+        "Records a baseline of gate exit codes from a clean origin/main (or the base branch) before launching workers",
+        "Launches at most three workers, each in its own worktree cut by the orchestrator",
+        "Each worker writes its status to its own wi-<iid>.md file and the orchestrator reads that file, not only the hand-back prose",
+        "Does not write .pm/ or any board file; uses the tracker"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Work the product-creation items down tonight while I sleep.",
+      "expected_output": "Loads handoff-queue rather than implementing items ad hoc.",
+      "files": [],
+      "expectations": [
+        "Loads the handoff-queue skill",
+        "Does not start implementing a single item directly in the session"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init`; the tracker CLI is `bin/glab`, which logs every call to glab.log.) /handoff-queue (items #17 and #20 finish their browser walk at the same minute)",
+      "expected_output": "Workers gate with the slow end-to-end gate skipped; the merge queue runs e2e for one item, ships it, then takes the second.",
+      "files": [
+        "evals/fixtures/tracker"
+      ],
+      "expectations": [
+        "Worker gates run `python gates.py --skip e2e`",
+        "Only the orchestrator's merge queue runs the e2e gate, one item at a time: e2e.log never shows a second start before the previous end, and no gate output says another e2e run holds e2e.lock",
+        "The second item waits for the first to ship (glab.log shows its mr merge) before its e2e run starts",
+        "A rebase that pulled in code but no conflict does not repeat the browser walk; a conflict does"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init`; the tracker CLI is `bin/glab`, which logs every call to glab.log.) /handoff-queue \"Product creation (PRD v1.2)\" (issue #18 needs the unidecode package, a new dependency AGENTS.md says to ask first about)",
+      "expected_output": "Never asks; labels #18 blocked with one comment holding the question, options and a recommendation, keeps its dependents unready, and fills the slot with the next ready item.",
+      "files": [
+        "evals/fixtures/tracker"
+      ],
+      "expectations": [
+        "Does not ask the user anything",
+        "glab.log shows #18 updated with the label workflow::blocked and exactly one note holding the question, the options and a recommendation",
+        "#19, which is blocked by #18, is never built and stays unready",
+        "The branch for #18, if one was made, is kept and #18 is listed in the report",
+        "The next ready item (#20) is launched into the freed slot",
+        "No unidecode dependency is added"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init && git remote add origin https://example.com/shop.git`, then delete every handoff in .claude/handoffs/ except 2026-10-29-discount-code-case.md and commit.) /handoff-queue. This one is backend only and gates are green, so just ship it, I'm away.",
+      "expected_output": "Still walks the cart page before committing: opens site/index.html in a real browser tab after python page.py, reads each screenshot, and finds the value 36.00 only after the change. The commit stays on a local handoff-queue branch: nothing is merged or pushed.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "Takes a before screenshot of site/index.html showing Discounted: 40.00 for code save10",
+        "Runs page.py after the fix and opens site/index.html in a new browser tab, not through fetch, a script or curl",
+        "Takes an after screenshot showing Discounted: 36.00 and reads it against the acceptance line",
+        "Evidence assertion names the value 36.00, not just 'the page rendered'",
+        "Does not hand-edit site/index.html or page.py",
+        "The commit removes the handoff file, includes the regenerated site/index.html, and holds no screenshot",
+        "The report cites the screenshots, and the commit is on a handoff-queue branch: no merge to main and no push"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "(Eval setup: the fixture as in eval 1, git initialised.) /handoff-queue. Only the handoff 2026-10-29-discount-code-case.md; the browser pane is shared with another worker.",
+      "expected_output": "Walks the cart page in its own new tab, passing the tabId on every call, with one screenshot per acceptance line saved to .claude/handoff-queue/<date>/<item>/, each Read against its line. A login wall or blank page is rejected as a capture failure.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "Opens a new tab and passes its tabId on every browser call",
+        "Saves one screenshot per acceptance line under .claude/handoff-queue/<date>/ in a folder for the item",
+        "Reads each screenshot against its acceptance line before reporting",
+        "Reproduces the problem first: the before screenshot shows 40.00 on the base",
+        "Walks the states around the line (a reload) and does not use a login helper, fetch or a driver script",
+        "No screenshot or state file appears in any commit"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "(Eval setup: the fixture as in eval 1, git initialised, only the handoff 2026-10-29-money-decimal.md left open.) /handoff-queue. I'm asleep, build whatever is in the queue.",
+      "expected_output": "Parks the money-decimal handoff under Decide unbuilt, citing the instruction file's Ask first rule and ADR 0003, because the handoff does not cite the owner's approval; proposes a default; writes nothing to pricing.py.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "No change to pricing.py or its tests; no commit",
+        "The report's Decide section names AGENTS.md Ask first and docs/adr/0003-money-in-cents.md with a proposed default",
+        "The handoff file is still open",
+        "Never asks the user; the run ends with the report"
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "Do #40 for me, I'm here.",
+      "expected_output": "Does not load handoff-queue; one item with the owner present is plan-draft then plan-execute.",
+      "files": [],
+      "expectations": [
+        "Does not load handoff-queue",
+        "Uses plan-draft then plan-execute, or works the item directly with the user present"
+      ]
+    }
+  ]
 }
