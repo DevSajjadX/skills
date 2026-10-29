@@ -31,14 +31,14 @@
     {
       "id": 3,
       "prompt": "/plan-execute the approved slot-capacity plan. Every task is ticked and both Done when lines of i1/001 now hold. Close it out.",
-      "expected_output": "Checks every Done when line of the item against the running code, then runs the board's done job once for the item instead of editing .pm/ by hand.",
+      "expected_output": "Checks every Done when line of the item against the running code, then runs the board's done job once for the item instead of editing .pm/ by hand. Runs with the product-manager skill available.",
       "files": [
         "evals/fixtures/bakery-board-done"
       ],
       "expectations": [
         "Checks both Done when lines against running code or tests, not against the ticks",
         "Invokes the board's done i1/001 job exactly once, not once per task",
-        "Does not edit or move any file under .pm/"
+        "Every .pm/ change comes from the done job (001.md moved to i1/done/), none made by hand"
       ]
     },
     {
@@ -85,7 +85,7 @@
       "prompt": "/plan-execute the approved slot-capacity plan. Everything is done and verified. Now open the PR.",
       "expected_output": "Hands over to the project's own ship flow named in AGENTS.md instead of pushing directly.",
       "files": [
-        "evals/fixtures/bakery-board"
+        "evals/fixtures/bakery-board-done-ship"
       ],
       "expectations": [
         "Names /ship as the path to main, per AGENTS.md",

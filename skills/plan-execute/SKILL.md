@@ -1,6 +1,6 @@
 ---
 name: plan-execute
-description: Use when the user types /plan-execute on a plan in .claude/plans/ whose frontmatter says status approved and which is ready to build; walks its section-3 checklist one task at a time, running the gate for each and ticking it the moment it lands, on the model and effort its "Run with" line names; closes out by flipping the plan to done and, when the plan carries from_item, running the board's done job once for the item (it never writes the board itself). Not for a draft plan (it must be approved first), for work with no plan (that is /plan-draft), or for ad-hoc changes.
+description: Use when the user types /plan-execute on a plan in .claude/plans/ whose frontmatter says status approved and which is ready to build; walks its section-3 checklist one task at a time, running the gate for each and ticking it the moment it lands, after echoing the model and effort its "Run with" line recommends; closes out by flipping the plan to done and, when the plan carries from_item, running the board's done job once for the item (it never writes the board itself). Not for a draft plan (it must be approved first: say so and stop), for work with no plan (that is /plan-draft), or for ad-hoc changes.
 when_to_use: Invoke directly with /plan-execute after a plan from /plan-draft has been set to status approved.
 argument-hint: [path to plan, or empty for the latest approved one]
 tags: [workflow, artifacts]
@@ -30,7 +30,10 @@ Then check frontmatter `handoffs:`. If non-empty, look for each listed handoff f
 **missing file means done**: the work landed and the handoff was deleted. Except a handoff
 promoted onto the board: first run `grep -rl '<handoff file name>' <its repo>/.pm` (git
 history doesn't show a rename for a single deleted path). A brief whose `promoted:` line names
-it means the work hasn't landed, and this plan is **blocked** until that board item is done. For any that
+it points at `.pm/iN/NNN`: the work has landed only when that item exists as `iN/done/NNN.md`
+or under `done/iN/`, and until then this plan is **blocked**. If no `.pm` brief names it, read
+the deleting commit (`git log --diff-filter=D -1 --format=%B -- <path>`): if it carries an
+issue link, the work has landed only when that issue is closed. For any that
 still exists (`open` or `planned`), it may simply not have been removed yet: verify
 against ground truth before blocking:
 
@@ -39,7 +42,7 @@ against ground truth before blocking:
   in the Execution log, and treat it as satisfied.
 - Otherwise ask the human directly: "handoff `<slug>` is still `<status>`: has the
   `<target>` side actually been executed?" If they confirm it's done, `git rm` the
-  handoff (log the confirmation) and proceed. If not done: **blocked**: tell the human to
+  handoff (log the confirmation) and proceed. If not done, it is **blocked**. Tell the human to
   open a session in the target repo, run `/plan-draft` from the handoff, approve and
   `/plan-execute` it, then come back. Proceed past a genuinely unfinished handoff only if
   the human explicitly says the dependency is not actually blocking (record that override
@@ -135,7 +138,7 @@ project's verification commands from its manifest/config (e.g. `package.json` sc
 stack. **If an automated test suite exists, run it** for the touched area, plus any
 type-check and lint the project defines. **If no test suite exists**, fall back to other
 verification: type-check, lint, build, a runnable smoke check, or the manual/visual checks
-named in section 4: and say which you used and why. For criteria not automatable (visual
+named in section 4. Say which you used and why. For criteria not automatable (visual
 UI, behavior), report as manual check needed. If something fails, fix it; if the fix is
 genuinely out of scope, log it and flag it loudly rather than marking the plan done.
 
@@ -144,18 +147,16 @@ Append an "Execution log" to the plan: files changed, per-task and verify result
 divergences and how they were resolved, ADR number if written. Set frontmatter
 `status: done`. If the plan has `from_brief:`, leave the brief alone (it stays with its board item). For the board
 item, see "The board close-out" below. If the plan has `from_handoff:` and your verification covered every one
-of its Acceptance boxes, `git rm` that handoff in the same change (when it sits in this repo): its absence is what unblocks the origin
-repo's plan; if a box is still unmet, leave it `planned` and say which. (The handoff
-lives in the origin repo's `.claude/handoffs/`; this removal is a sanctioned write
-outside the cwd repo even under a handoff-only policy. In another repo, stage it there and leave the
-commit to that repo's owner.) Then write a PR-ready summary: what changed, why, how it was verified, and
+of its Acceptance boxes, `git rm` that handoff: its absence is what unblocks the origin
+repo's plan. If the handoff is in this repo, remove it in the same change. If it is in the origin repo, `git rm` it there (a sanctioned write
+outside the cwd repo, even under a handoff-only policy) and leave that commit to its owner. If a box is still unmet, leave it `planned` and say which. Then write a PR-ready summary: what changed, why, how it was verified, and
 any follow-ups.
 
 **The board close-out.** When the plan carries `from_item: iN/NNN` (or a `from_brief:` whose
 promoted item you can name), the item closes **once, at close-out**, never per task: the item
 is the board's unit, and a §3 task is not. First verify every line of the item's `## Done when`
 against the running code or the project's gate, not against the task ticks. Only when every
-line holds, invoke the board's `done <item>` job (`product-manager/board.md`, or the project's own board command) **once** for the item.
+line holds, invoke the board's `done <item>` job (`${CLAUDE_SKILL_DIR}/../product-manager/board.md`, or the project's own board command) **once** for the item.
 
 - Never edit a board file yourself. The board's job is its only writer, and a second writer is
   the drift it exists to prevent. If that job is unavailable, say so and leave the board alone
@@ -164,7 +165,7 @@ line holds, invoke the board's `done <item>` job (`product-manager/board.md`, or
 
 **Out-of-scope finds.** A bug or debt found during execution that the plan does not cover goes
 to `.claude/handoffs/` through `plan-handoff` (`origin_plan:` set to the executing plan's path, the task named in Problem), never
-straight onto the board. Promotion to the board stays a human step.
+straight onto the board. The board's `promote` job is what turns a handoff into board work, and a human triggers it.
 
 Do not push or open a PR unless explicitly asked. When the human does ask for a PR, hand
 over to the project's own ship or PR flow when its instruction file names one (it is the only

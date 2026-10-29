@@ -17,7 +17,16 @@ adr: none
 
 ## 3. Implementation tasks
 
-### Task 1: Expire SAVE10
+### Task 1: Expiry reminder in the paid mail
+
+**Files:**
+- Modify: `notifier.py:1-3`
+- Test: `tests/test_notifier.py`
+
+- [ ] Give `notify_paid` a `today` parameter (default `date.today()`), and when the order has `code == "SAVE10"` and `EXPIRES - today <= 7 days`, send `"Paid. Your SAVE10 code expires soon"` instead of `"Paid"`. It computes the discounted total with `apply_discount` for the mail body.
+- [ ] Add `test_reminder_near_expiry`, calling `notify_paid(order, mailer, today=date(2026, 12, 28))` and asserting the reminder text and the discounted total 900 in the body.
+
+### Task 2: Expire SAVE10
 
 **Files:**
 - Modify: `pricing.py:4-7`
@@ -36,15 +45,6 @@ def apply_discount(total_cents, code):
 ```
 
 - [ ] Add `test_save10_expired`, which patches `pricing.date` to return 2027-01-01 and asserts 1000 stays 1000.
-
-### Task 2: Expiry reminder in the paid mail
-
-**Files:**
-- Modify: `notifier.py:1-3`
-- Test: `tests/test_notifier.py`
-
-- [ ] Give `notify_paid` a `today` parameter (default `date.today()`), and when the order has `code == "SAVE10"` and `EXPIRES - today <= 7 days`, send `"Paid. Your SAVE10 code expires soon"` instead of `"Paid"`. It computes the discounted total with `apply_discount` for the mail body.
-- [ ] Add `test_reminder_near_expiry`, calling `notify_paid(order, mailer, today=date(2026, 12, 28))` and asserting the reminder text and the discounted total 900 in the body.
 
 ### Task 3: Measure discount throughput
 

@@ -11,7 +11,7 @@
       "expectations": [
         "Writes exactly one file under .claude/handoffs/ named with today's date",
         "Problem cites pricing.py with a line number",
-        "Origin says it was found during the README task, not a plan path that doesn't exist",
+        "origin_plan says it was found during the README task, not a plan path that doesn't exist",
         "Every acceptance box is a command followed by its expected output",
         "Does not change pricing.py or any test"
       ]

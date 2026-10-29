@@ -13,8 +13,7 @@ Answer all four. A "yes" to any of the first three means **no ADR**: the rule
 belongs somewhere better, and a second copy is drift waiting to happen.
 
 1. **Is it already a written code rule?** Check the project's convention docs
-   (in this repo, `docs/conventions/README.md`'s routing table, by ID: `con-`,
-   `str-`, `data-`, `cmp-`, `sty-`, `i18n-`, `ajt-`, `log-`). If a rule covers
+   (e.g. a `docs/conventions/` routing table keyed by rule IDs). If a rule covers
    it, correct or extend that rule in place and keep its ID. Conventions outrank
    ADRs in review: putting the rule in an ADR instead makes the weaker copy the
    one people read.
@@ -38,11 +37,11 @@ prune:
 
 - No destructive procedure ever accepts a password in its input;
   re-authentication is a separate call.
-- AI `cost_irr` never enters a company-facing payload.
-- Sends are at-most-once, `failed` is terminal, there is no attempt counter.
+- An internal cost field never enters a customer-facing payload.
+- Sends are at-most-once, `failed` is terminal, there is no attempt counter:
   deliberately contradicting the convention that says jobs must be idempotent
   and safe to retry.
-- Persian message bodies live in the template registry, not the i18n catalog.
+- Localized message bodies live in the template registry, not the i18n catalog:
   a deliberate exception to the locale rule.
 - A foreign key is recorded but never read to resolve the live set.
 
@@ -99,7 +98,7 @@ confidence.
 
 Read `ls docs/adr/` and take the next free number: do not infer it from the
 highest number you remember. Add the new ADR's one-clause summary wherever the
-project indexes them (in this repo, `AGENTS.md` → Key docs) in the same change.
+project indexes them (e.g. a Key docs list in the instruction file) in the same change.
 
 ## Maintenance: ADRs are live, not archival
 

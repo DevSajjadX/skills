@@ -1,6 +1,6 @@
 ---
 name: plan-draft
-description: Use when a change is too large to start coding without a plan, when the user types /plan-draft, when a goal arrives as a handoff file path or a board item id (`iN/NNN`), and a reviewed plan (no code) under .claude/plans/ is wanted; reads the project's anti-goals and roadmap first and refuses a goal that conflicts; writes the plan and delegates a cold review to plan-review. Not for a change you can make and verify in one pass, for questions, or for running a plan that already exists (that is /plan-execute).
+description: Use when a change is too large to start coding without a plan, when the user types /plan-draft, when a goal arrives as a handoff file path or a board item id (`iN/NNN`), and a reviewed plan (no code) under .claude/plans/ is wanted; reads the project's anti-goals and roadmap first and refuses a goal that conflicts; writes one self-contained, execution-ready plan and delegates a cold review to a subagent running plan-review. Not for a change you can make and verify in one pass, for questions, or for running a plan that already exists (that is /plan-execute).
 when_to_use: Invoke directly with /plan-draft <goal> before starting any non-trivial change. Pairs with /plan-execute.
 category: Workflow
 tags: [workflow, artifacts]
@@ -107,7 +107,7 @@ context: follow it. The two policies:
   needing a new backend API), say so in §1: the requester passes the handoff's absolute
   path to a session in the target repo, which plans and executes it **first**.
   `/plan-execute` will refuse to run this plan while any listed handoff still exists
-  (a handoff is deleted when its work lands).
+  (a handoff is deleted when its work lands), or was promoted and its board item is not done.
 
 **Drafting FROM a handoff:** if the goal points at a handoff file (usually an absolute
 path into the origin repo's `.claude/handoffs/`), read it and treat its Contract section
@@ -122,13 +122,13 @@ Either way, record the cross-repo contract (API shape, event, schema) this plan 
 on in §2 as a blocking assumption until the other side lands.
 
 **Drafting FROM a board item.** If the goal is a board id of the form `iN/NNN` (see
-`product-manager/board.md`), read the item, every `## Design input` brief it names and the
+`${CLAUDE_SKILL_DIR}/../product-manager/board.md`), read the item, every `## Design input` brief it names and the
 iteration's `README.md` demo script. The item's `## Problem`, `## Done when` and `## Rules`
 are the settled requirement: its `## Done when` becomes §4. Decisions already settled in
 the briefs are not re-opened. The **plan owns the design and the task breakdown**, which
 the item deliberately lacks, so §3 is yours to write; grill only what the item and briefs
 leave open. Set `from_item: iN/NNN` in the plan's frontmatter, next to `from_handoff:`.
-Never edit the board: its job (`product-manager/board.md`) is its only writer (the project's
+Never edit the board: its job (`${CLAUDE_SKILL_DIR}/../product-manager/board.md`) is its only writer (the project's
 board check, if it has one, exists to catch a second writer), and `/plan-execute` closes the
 item through that job.
 

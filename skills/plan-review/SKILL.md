@@ -1,6 +1,6 @@
 ---
 name: plan-review
-description: Use when a plan under .claude/plans/ needs a cold APPROVE or REVISE verdict checked against the real codebase (the user types /plan-review, a plan was edited, or plan-draft hands over its review). Read-only. Not for reviewing code or a diff (that is reviewing-changes), and never for editing the plan: it reports, the author edits.
+description: Use when a plan under .claude/plans/ needs a cold APPROVE or REVISE verdict verified against the real codebase: checks the task list is atomic, ordered and verifiable, and returns prioritised findings (the user types /plan-review, a plan was edited, or plan-draft hands over its review). Read-only. Not for reviewing code or a diff (that is reviewing-changes), and never for editing the plan: it reports, the author edits.
 when_to_use: Run manually with /plan-review <plan path> to re-review a plan after edits, or in a fresh session for a second opinion. /plan-draft phase 11 also runs this automatically via a cold reviewer subagent.
 argument-hint: [path to plan file, or empty for the latest draft]
 category: Workflow

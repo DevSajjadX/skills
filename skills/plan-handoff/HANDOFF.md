@@ -32,7 +32,7 @@ finding.>
 ## Contract
 
 <The expected behavior or fix shape; for a cross-repo need, the API shape / event / schema the
-origin side depends on. Endpoints, DTOs, error shapes, verbatim, with before/after payload examples if a contract changes. This
+origin side depends on. Endpoints, DTOs, error codes, rule IDs, verbatim, with before/after payload examples if a contract changes. This
 section is the whole point of the file: the receiving plan builds to exactly this.>
 
 ## Acceptance

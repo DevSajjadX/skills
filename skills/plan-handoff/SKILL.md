@@ -1,6 +1,6 @@
 ---
 name: plan-handoff
-description: Use when out-of-scope work turns up mid-task (a bug, a debt, a reproduced QA finding, a change another repo must make) and needs a durable, self-contained file in .claude/handoffs/ instead of a chat offer or a task chip; plan-draft and plan-execute point here for the mechanics. Not for a trivial fix on a line you are already editing, for work inside the current task's scope, or for writing board files (the board's promote job turns a handoff into board work).
+description: Use when out-of-scope work turns up mid-task (a bug, a debt, a reproduced finding from a routine or QA run, a change another repo must make) and needs a durable, self-contained file in .claude/handoffs/ instead of a chat offer or a task chip; plan-draft and plan-execute point here for the mechanics. Not for a trivial fix on a line you are already editing, for work inside the current task's scope, or for writing board files (the board's promote job turns a handoff into board work).
 category: Workflow
 tags: [workflow, artifacts, handoff]
 allowed-tools: Read, Grep, Glob, Write, Bash(git log:*), Bash(git status:*), Bash(date:*), Bash(ls:*)
@@ -25,8 +25,7 @@ more becomes this file.
 Read this repo's `AGENTS.md`, `CLAUDE.md` or `.claude/CLAUDE.md` for a declared "Multi-repo workspace"
 table.
 
-- No table declared (this repo's current state) → `target:` is this repo's own name
- : the handoff is for a _future session_ of this same repo, not a sibling.
+- No table declared → `target:` is this repo's own name: the handoff is for a _future session_ of this same repo, not a sibling.
 - Table declared and the issue clearly belongs to a listed sibling → `target:` is that
   sibling's name. If it's ambiguous which repo owns the issue, ask before writing.
 - That table's cross-repo policy (inline vs handoff-only) governs whether you may also
