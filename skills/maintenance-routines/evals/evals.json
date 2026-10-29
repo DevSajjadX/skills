@@ -157,8 +157,8 @@
       "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) test_checkout_total failed once last week in CI (log: ci-failure.log) and has passed every run since. Fix the flake.",
       "expected_output": "Reads ci-failure.log, runs the ten-run loop varying seed, order and parallelism, cannot reproduce, and reports the log, what it tried and what it would need rather than committing a plausible diff.",
       "expectations": [
-        "Pastes a ten-line checklist, each line with run number, hash seed, order, parallelism and output, varying all three; git log --all shows no new commit and no routine/* branch with a code change",
-        "Reply quotes the assertion and values from ci-failure.log, lists the ten-run commands tried with seeds, order and parallelism, and states what it would need (for example the CI runner's parallelism or seed)"
+        "Pastes a ten-line checklist, each line with run number, seed, order, parallelism and output, with at least three distinct seeds, at least one non-default order, and at least one serial and one parallel run (or an n/a with a reason where the runner cannot vary a dimension); git log --all shows no new commit and no routine/* branch with a code change",
+        "Reply quotes the assertion and values from ci-failure.log and states what it would need (for example the CI runner's parallelism or seed)"
       ],
       "files": [
         "evals/fixtures/flaky-cannot-reproduce"
@@ -304,7 +304,7 @@
     },
     {
       "id": "pruner-triggers-on-plain-language",
-      "prompt": "Are any of our tests actually asserting nothing?",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Are any of our tests actually asserting nothing?",
       "expected_output": "Picks useless-test-pruner and proves by sabotage rather than by reading.",
       "expectations": [
         "Picks the useless-test-pruner routine",
