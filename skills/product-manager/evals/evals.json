@@ -110,6 +110,75 @@
         "Rejects building it now because it is foundational or needed later",
         "Says such work goes with the first release that actually needs it"
       ]
+    },
+    {
+      "id": 9,
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Put the empty-cart handoff (.claude/handoffs/2026-10-29-empty-cart-shipping.md) on the board, in i1.",
+      "expected_output": "Item .pm/i1/003.md (001 is done, 002 open) stating the problem with the pricing.py evidence and observable Done-when lines; the handoff git mv'd to .pm/i1/BRIEF-empty-cart-shipping.md without status:/plan:, the item pointing at it; a new unchecked line in i1/README.md; no code touched.",
+      "files": [
+        "evals/fixtures/shop-board"
+      ],
+      "expectations": [
+        "A new item .pm/i1/003.md exists with id i1/003, a kind and status open",
+        "The item states the problem with the pricing.py evidence and observable Done-when lines; no Steps, Files, Tasks, Implementation or Approach section; the handoff's Contract is not copied into it",
+        "The handoff was moved by git mv into .pm/i1/ as a brief without its status:/plan: lines and with a promoted: line, and the item points at the brief",
+        ".pm/i1/README.md gained an unchecked line for i1/003",
+        "No code file changed"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Break down 'buyers want to know where their order is' into board items for us. Some buyers asked for SMS updates and live courier tracking.",
+      "expected_output": "A text-only proposal: status items placed in i2 because its demo needs them, SMS/push and courier tracking rejected by quoting .pm/DO_NOT_DO.md, no duplicate of existing board work, ending with a priority summary and the exact board jobs to materialize it.",
+      "files": [
+        "evals/fixtures/shop-board"
+      ],
+      "expectations": [
+        "No file was created, changed or deleted",
+        "SMS/push notifications and live courier tracking are rejected by quoting .pm/DO_NOT_DO.md, not reshaped",
+        "Each item is a problem with a kind and observable Done-when lines; no steps, files or estimates",
+        "Items are placed in i2 for its demo; no demo step is invented to justify a placement",
+        "Every doc citation is the path plus words that really appear in that file",
+        "It ends with a priority-ordered summary and the exact board jobs to materialize the proposal"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Add to our board: buyers should be able to reorder a past order with one click.",
+      "expected_output": "No board exists, so the default .pm/ board is created (a README that explains the layout, ROADMAP.md, a DO_NOT_DO.md naming PRODUCT.md without copying its rules, inbox/) and the idea is filed as .pm/inbox/001.md stating the buyer's problem, not the one-click solution; the line naming the board in AGENTS.md is proposed, not written.",
+      "files": [
+        "evals/fixtures/shop-noboard"
+      ],
+      "expectations": [
+        "It says the project has no board and creates the default .pm/ layout: a README.md that explains the layout to a reader of the repo, ROADMAP.md, inbox/, and a DO_NOT_DO.md that names the files holding rules without copying any rule text",
+        "The idea is filed as .pm/inbox/001.md stating the problem, not the one-click solution",
+        "No code file, PRODUCT.md or AGENTS.md changed; the AGENTS.md line naming the board is proposed in the reply"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Add to the board: buyers should be able to reorder a past order with one click.",
+      "expected_output": "AGENTS.md names GitHub issues as the board, so no .pm/ folder is created; the idea is filed as a GitHub issue with the board label (gh issue create, or the exact command when gh can't reach a remote), stated as the buyer's problem.",
+      "files": [
+        "evals/fixtures/shop-tracker"
+      ],
+      "expectations": [
+        "No .pm/ folder or other board file is created in the repo",
+        "It files the idea through the named tracker: a gh issue create command with the board label, run or given exactly when gh has no remote to reach",
+        "The issue states the buyer's problem, not the one-click solution"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Promote .claude/handoffs/2026-10-29-orders-api-currency.md onto the board, in i2.",
+      "expected_output": "Refused: the handoff's target is orders-api, another repo, so it stays where it is and no board item is created.",
+      "files": [
+        "evals/fixtures/shop-board"
+      ],
+      "expectations": [
+        "It refuses, naming the handoff's target orders-api as the reason",
+        "No file was created, moved or changed"
+      ]
     }
   ]
 }

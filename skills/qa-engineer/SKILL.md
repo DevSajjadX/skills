@@ -32,9 +32,9 @@ Hunts real bugs in the **running** product the way a QA engineer on the team wou
    - Reproduce it from a fresh load. A dev overlay, a hot-reload warning or a service still starting is not a bug.
    - Capture evidence: a screenshot path, the request and response with secrets removed, the console line.
    - Compare the screen with the response, and name which failure it is: no data, not found, forbidden, unauthenticated, malformed input or server failure.
-   - Trace it to `file:line` (producer, serializer, consumer) and the rule it breaks, or write "cause unverified".
+   - Trace it to `file:line` (producer, serializer, consumer; the line copied from `grep -n` output, never counted) and the rule it breaks, or write "cause unverified".
    - Blast radius: other callers and routes, and a working control that shows the difference.
-   - Dedupe: the project's issues or handoffs (open and done) and `git log -S '<term>'`. Fixed on the default branch already means a stale build, not a finding.
+   - Dedupe: the project's issues, handoffs (open and done), board items and briefs, and `git log -S '<term>'`. Fixed on the default branch already means a stale build, not a finding.
 
 8. **Record each finding** in this shape:
 
@@ -50,7 +50,7 @@ Hunts real bugs in the **running** product the way a QA engineer on the team wou
    Dedupe: what was searched, and the result
    ```
 
-9. **File and finish.** Send each finding to the adapter's sink (a handoff file, an issue through task-summary, or a report); with none named, one dated report in the repo's ignored tmp folder. Never edit code, never write a board or backlog, never "just fix it". Then clean up: remove only data you created (prefix it `qa-<yyyymmdd>-` and note ids as you go), close every browser session you opened (`agent-browser --session <s> close`), stop only processes you started, and run the adapter's secret check over the evidence folder. End with: findings by severity, journeys covered and skipped, dedupe and filing status, cleanup status, the scan result, and "no fix was made".
+9. **File and finish.** Send each finding to the adapter's sink (a handoff file, an issue through task-summary, or a report). With none named: in a git repo, one handoff per finding through plan-handoff (`.claude/handoffs/`): the finding's evidence, the expected behavior as its Contract (never a fix design) and its repro as the Acceptance command, so the board can promote it or a queue run can pick it up. Outside a git repo, one dated report in `./tmp/`. Never edit code, never write a board or backlog, never "just fix it". Then clean up: remove only data you created (prefix it `qa-<yyyymmdd>-` and note ids as you go), close every browser session you opened (`agent-browser --session <s> close`), stop only processes you started, and run the adapter's secret check over the evidence folder. End with: findings by severity, journeys covered and skipped, dedupe and filing status, cleanup status, the scan result, and "no fix was made".
 
 ## Common mistakes
 
