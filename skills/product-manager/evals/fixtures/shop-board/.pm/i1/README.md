@@ -4,8 +4,8 @@
 
 ## Demo script
 
-1. A buyer adds items under 50.00 and sees a 4.99 shipping fee at checkout.
-2. A buyer adds items worth 50.00 or more and sees free shipping.
+1. A buyer adds items under 50.00 and sees a 4.99 shipping fee at checkout. [F-SHIP-01]
+2. A buyer adds items worth 50.00 or more and sees free shipping. [F-SHIP-02]
 
 ## Items
 
