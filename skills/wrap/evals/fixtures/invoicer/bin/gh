@@ -1,0 +1,12 @@
+#!/bin/sh
+# Fake host CLI (GitHub): records calls; answers pr create, pr view --json headRefOid, pr merge.
+echo "$*" >> "${FAKE_CALLS:-${TMPDIR:-/tmp}/invoicer-calls.log}"
+head=$(git rev-parse "origin/$(git branch --show-current)" 2>/dev/null)
+case "$*" in
+  "pr create"*) echo "https://github.com/acme/invoicer/pull/7" ;;
+  "pr view"*"headRefOid"*) echo "${FAKE_PR_SHA:-$head}" ;;
+  "pr merge"*)
+    sha=$(echo "$*" | sed -n 's/.*--match-head-commit \([0-9a-f]*\).*/\1/p')
+    [ "$sha" = "$head" ] || { echo "head mismatch" >&2; exit 1; }
+    git push -q origin "$sha:refs/heads/main" ;;
+esac

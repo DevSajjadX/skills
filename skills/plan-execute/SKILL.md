@@ -170,4 +170,4 @@ straight onto the board. The board's `promote` job is what turns a handoff into 
 Do not push or open a PR unless explicitly asked. When the human does ask for a PR, hand
 over to the project's own ship or PR flow when its instruction file names one (it is the only
 path to the default branch for an agent session when the project says so, because a gate that
-runs only locally would be skipped by a direct push); otherwise use the `wrap` skill.
+runs only locally would be skipped by a direct push); otherwise use the `wrap` skill's `pr` mode.

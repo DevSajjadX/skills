@@ -308,6 +308,61 @@ check "no upstream: R is the sole remote"                          '[ "$R" = up 
 check "no remote HEAD ref: DEF is the remote's own HEAD, not a guess" '[ "$(def_for)" = master ] && ! git rev-parse -q --verify refs/remotes/up/HEAD >/dev/null'
 cd "$WORK" || exit 1
 
+# =============================== step 8b: PR mode (`pr`) =================================
+# Replays the method's refusals and the merge check with a fake host CLI on PATH that records calls.
+BIN="$ROOT/bin"; CALLS="$ROOT/host-calls"; mkdir -p "$BIN"; : >"$CALLS"
+cat >"$BIN/glab" <<'FAKE'
+#!/bin/sh
+echo "$*" >>"$FAKE_CALLS"
+case "$*" in
+  "mr view"*) echo "{\"sha\":\"$FAKE_PR_SHA\"}" ;;
+esac
+FAKE
+chmod +x "$BIN/glab"
+pr_step() { # pr_step <flow> <merge:0|1> -> sets PR_RESULT (refused-flow|refused-branch|open|refused-sha|merged)
+  local flow=$1 merge=$2 head sha; PR_RESULT=
+  [ "$flow" = direct ] && { PR_RESULT=refused-flow; return 1; }
+  [ "$(git branch --show-current)" = "$DEF" ] && { PR_RESULT=refused-branch; return 1; } # pre-check: ask for a name, git switch -c, before any commit
+  printf 'what changed\n' >"$ROOT/desc.md"
+  git push -q -u "$R" HEAD 2>/dev/null; PATH="$BIN:$PATH" glab mr create --target-branch "$DEF" --title t --description-file "$ROOT/desc.md" --yes
+  PR_RESULT=open; [ "$merge" = 1 ] || return 0
+  head=$(git rev-parse HEAD); sha=$(PATH="$BIN:$PATH" glab mr view 7 -F json | sed 's/.*"sha":"\([^"]*\)".*/\1/')
+  [ "$head" = "$sha" ] || { PR_RESULT=refused-sha; return 1; }
+  PATH="$BIN:$PATH" glab mr merge 7 --sha "$head" --auto-merge=false --yes; PR_RESULT=merged
+}
+R=fork; DEF=main; export FAKE_CALLS="$CALLS"
+git checkout -q main; : >"$CALLS"
+pr_step pr 0
+MAIN_TIP=$(git rev-parse main)
+check "pr guard: on the default branch -> asks for a branch, no host call, no commit on main" '[ "$PR_RESULT" = refused-branch ] && [ ! -s "$CALLS" ] && [ "$(git rev-parse main)" = "$MAIN_TIP" ]'
+git checkout -q -b feat/pr1; commit docs/pr1.md "pr1" "feat: pr1"
+pr_step direct 0
+check "pr guard: flow direct -> refused, use m, no host call"    '[ "$PR_RESULT" = refused-flow ] && [ ! -s "$CALLS" ]'
+FAKE_PR_SHA=0000000000000000000000000000000000000000 pr_step pr 1
+check "pr guard: PR head differs from HEAD -> merge refused"     '[ "$PR_RESULT" = refused-sha ] && ! grep -q "mr merge" "$CALLS"'
+check "pr: the PR was still opened (reported as not shipped)"    'grep -q "mr create" "$CALLS"'
+FAKE_PR_SHA=$(git rev-parse HEAD) pr_step pr 1
+check "pr: head equals PR head -> merged through the host"       '[ "$PR_RESULT" = merged ] && grep -q "mr merge 7 --sha $(git rev-parse HEAD) --auto-merge=false --yes" "$CALLS"'
+check "pr: feature branch pushed with -u and tracks it"          '[ "$(git rev-parse "$R/feat/pr1")" = "$(git rev-parse HEAD)" ] && [ "$(git rev-parse --abbrev-ref @{u})" = "$R/feat/pr1" ]'
+: >"$CALLS"; FAKE_PR_SHA=x pr_step pr 0
+check "pr without --m: opens only, never merges"                 '[ "$PR_RESULT" = open ] && ! grep -q "mr merge" "$CALLS"'
+
+# 7b's flow pre-check, replayed against the flow parsed from a fixture Ship section
+ship_flow() { sed -n 's/^- flow: *\([a-z]*\).*/\1/p' "$1" | head -1; } # empty = no explicit flow
+m_pre() { [ "$(ship_flow "$1")" = pr ] && [ "$2" = "$DEF" ] && return 1; return 0; } # m_pre <AGENTS file> <target>
+printf '# P\n## Ship\n- flow: pr\n' >"$ROOT/a-pr.md"; printf '# P\n## Ship\n- flow: direct\n' >"$ROOT/a-direct.md"; printf '# P\nno ship section\n' >"$ROOT/a-none.md"
+check "m guard: explicit flow pr, target = default branch -> refused (use pr --m)" '! m_pre "$ROOT/a-pr.md" "$DEF"'
+check "m: explicit flow pr, a non-default target is fine"                          'm_pre "$ROOT/a-pr.md" release'
+check "m: no Ship section, default-branch target keeps its plain behaviour"        'm_pre "$ROOT/a-none.md" "$DEF"'
+check "m: flow direct, default-branch target is allowed"                           'm_pre "$ROOT/a-direct.md" "$DEF"'
+git checkout -q main; git checkout -q -b feat/dir; commit docs/dir.md "d" "feat: dir"
+git checkout -q main; commit docs/dir-main.md "dm" "chore: main moved under feat/dir"
+DIR_OLD=$(git rev-parse main); git merge -q --ff-only feat/dir 2>/dev/null && dff=1 || dff=0
+check "flow direct: diverged feature -> --ff-only fails, no merge commit, target unchanged" '[ $dff = 0 ] && [ "$(git rev-parse main)" = "$DIR_OLD" ] && [ -z "$(git rev-list --merges "$DIR_OLD"..main)" ]'
+git checkout -q feat/dir; git rebase -q main; git checkout -q main
+git merge -q --ff-only feat/dir && dff=1 || dff=0
+check "flow direct: after rebasing the feature onto target, --ff-only succeeds" '[ $dff = 1 ]'
+
 # =============================== parity: each replayed command, as SKILL.md words it ======
 # A FAIL here means SKILL.md changed a command: update the helper above that replays it, then this line.
 while IFS= read -r c; do check "SKILL.md: $c" 'grep -qF -- "$c" "$SKILL"'; done <<'EOF'
@@ -336,6 +391,17 @@ git merge --ff-only $FEATURE
 git merge --no-ff --no-edit $FEATURE
 git reset --hard $TARGET_OLD && git checkout $FEATURE
 git merge-base --is-ancestor $FEATURE HEAD && git branch -D $FEATURE
+git rev-parse HEAD
+git push -u $R HEAD
+git push --force-with-lease $R HEAD
+git fetch $R $DEF
+git rebase $R/$DEF
+git show :2:<path>
+glab mr view <n> -F json
+glab mr create --target-branch $DEF --title <t> --description-file <f> --yes
+glab mr merge <n> --sha <sha> --auto-merge=false --yes
+git rev-parse HEAD^{tree}
+git merge --continue
 EOF
 
 printf '\n%s\n' "$([ $FAILS = 0 ] && echo 'ALL PASS' || echo "$FAILS FAILED")"

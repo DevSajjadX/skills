@@ -23,7 +23,7 @@ Anything below that conflicts with this brief is a bug in this file.
 |---|---|---|
 | Items | files in `.claude/handoffs/` | work items in a tracker, with blockers |
 | Pipeline | Steps below, serial, one branch | [night-run.md](night-run.md) sections 0 to 6 replace Steps 3 to 7: up to three workers, a worktree each, a merge queue, a decisions log, a morning report |
-| Push, PR, merge | never | the standing brief authorizes pushing item branches and shipping through the project's ship command |
+| Push, PR, merge | never | the standing brief authorizes pushing item branches and shipping through the project's ship command, else wrap's `pr` mode |
 
 The brief, Never, Human QA, Parking, Common mistakes and Steps 1 and 2 apply to both. With no argument, use `.claude/handoffs/` when it has open items, otherwise the open milestone with the most ready items. State on disk lives under `.claude/handoff-queue/<date>/` in the main checkout for both kinds (see [reference.md](reference.md)).
 

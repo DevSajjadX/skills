@@ -1,0 +1,12 @@
+#!/bin/sh
+# Fake host CLI (GitLab): records calls; `mr view` answers the pushed head; `mr merge` fast-forwards main to it.
+echo "$*" >> "${FAKE_CALLS:-${TMPDIR:-/tmp}/invoicer-calls.log}"
+head=$(git rev-parse "origin/$(git branch --show-current)" 2>/dev/null)
+case "$*" in
+  "mr create"*) echo "https://git.example.com/acme/invoicer/-/merge_requests/7" ;;
+  "mr view"*) echo "{\"sha\":\"${FAKE_PR_SHA:-$head}\"}" ;;
+  "mr merge"*)
+    sha=$(echo "$*" | sed -n 's/.*--sha \([0-9a-f]*\).*/\1/p')
+    [ "$sha" = "$head" ] || { echo "SHA does not match the MR head" >&2; exit 1; }
+    git push -q origin "$sha:refs/heads/main" ;;
+esac

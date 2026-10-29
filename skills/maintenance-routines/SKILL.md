@@ -66,7 +66,7 @@ A routine may skip the part of the list its scope cannot affect (a frontend-only
 **One shipment per run.** After the gates pass over all of the run's commits, ship them together, once:
 
 - **The project has a ship or PR command** (a `/ship` skill, a `make pr`, a documented script) **and its instruction file names it, and this run is authorized to use it** (the request asks to ship or open a PR, or the instruction file says routines ship through it): compose that command. It opens the PR (in projects where that command is the only path to the default branch, it is also where the gates run). You made the changes in this session, so run it session-aware: stage exactly the files you touched, write the message from what you know. One finding per commit, one PR per run, never one PR per finding.
-- **Otherwise** (no such command, or the run is not authorized to use it): stay on your own `routine/<name>-<scope>` branch with one commit per finding, and **do not push**. Pushing, opening a PR and merging are the user's call (the `wrap` skill does them).
+- **Otherwise** (no such command, or the run is not authorized to use it): when the run is authorized to ship but the project has no command, ship through the `wrap` skill's `pr` mode; when it is not authorized, stay on your own `routine/<name>-<scope>` branch with one commit per finding, and **do not push**. Pushing, opening a PR and merging are the user's call (the `wrap` skill does them).
 
 ## Budget
 

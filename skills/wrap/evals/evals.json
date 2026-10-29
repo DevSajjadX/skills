@@ -1,0 +1,217 @@
+{
+  "skill_name": "wrap",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "(Eval setup, before the run: in a copy of evals/fixtures/invoicer run `git init -b main && git add -A && git commit -qm \"chore: base\" && git init -q --bare ../invoicer-remote.git && git remote add origin ../invoicer-remote.git && git push -qu origin main && git switch -qc feat/invoice`, then `export PATH=\"$PWD/bin:$PATH\" FAKE_CALLS=/tmp/invoicer-calls.log`, then add the change `echo \"export const tax = 0.2;\" >> src/invoice.ts` and commit it as `feat: tax`.) /wrap pr",
+      "expected_output": "Runs steps 1 to 8 with the gates green on the head, syncs with the remote default branch, commits by explicit path, pushes -u the feature branch, opens the MR with glab and a description filled from the template, and reports the MR as not shipped because --m was not given.",
+      "files": [
+        "evals/fixtures/invoicer"
+      ],
+      "expectations": [
+        "Never runs git add -A or --no-verify",
+        "Pushes only the feature branch with -u",
+        "Opens the MR with glab mr create using a description file",
+        "Reports the MR as open and not shipped, naming that --m was not given",
+        "Does not merge"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "(Eval setup, before the run: in a copy of evals/fixtures/invoicer run `git init -b main && git add -A && git commit -qm \"chore: base\" && git init -q --bare ../invoicer-remote.git && git remote add origin ../invoicer-remote.git && git push -qu origin main && git switch -qc feat/invoice`, then `export PATH=\"$PWD/bin:$PATH\" FAKE_CALLS=/tmp/invoicer-calls.log`, then add the change `echo \"export const tax = 0.2;\" >> src/invoice.ts` and commit it as `feat: tax`.) /wrap pr --m",
+      "expected_output": "Checks local HEAD equals the PR head SHA, merges with glab mr merge --sha, fetches the default branch, confirms origin/main equals the head (fast-forward), and prints Shipped: <URL> -> <sha> <subject>.",
+      "files": [
+        "evals/fixtures/invoicer"
+      ],
+      "expectations": [
+        "Compares git rev-parse HEAD with the host's PR head SHA before merging",
+        "Confirms step 6 gates ran green on that exact head this session",
+        "Checks the remote default branch equals the head before saying shipped",
+        "Reports URL, SHA and subject"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "(Eval setup, before the run: in a copy of evals/fixtures/invoicer run `git init -b main && git add -A && git commit -qm \"chore: base\" && git init -q --bare ../invoicer-remote.git && git remote add origin ../invoicer-remote.git && git push -qu origin main && git switch -qc feat/invoice`, then `export PATH=\"$PWD/bin:$PATH\" FAKE_CALLS=/tmp/invoicer-calls.log` but stay on main: `git switch main`, then edit src/invoice.ts and commit it as `fix: rounding` locally.) /wrap pr",
+      "expected_output": "Stops before any commit, asks for a branch name and switches to it; makes no commit on main and never pushes main.",
+      "files": [
+        "evals/fixtures/invoicer"
+      ],
+      "expectations": [
+        "Makes no commit on main",
+        "Does not push the default branch",
+        "Does not create a branch without asking for its name first",
+        "Asks one question: the branch name"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "(Eval setup, before the run: in a copy of evals/fixtures/invoicer run `git init -b main && git add -A && git commit -qm \"chore: base\" && git init -q --bare ../invoicer-remote.git && git remote add origin ../invoicer-remote.git && git push -qu origin main && git switch -qc feat/invoice`, then `export PATH=\"$PWD/bin:$PATH\" FAKE_CALLS=/tmp/invoicer-calls.log`, then add the change `echo \"export const tax = 0.2;\" >> src/invoice.ts` and commit it as `feat: tax`, run the gates, then make one more commit `fix: rounding`.) /wrap pr --m",
+      "expected_output": "Refuses to merge on stale gates: the head tree is one no gate saw. Reruns step 6 on the head before any merge.",
+      "files": [
+        "evals/fixtures/invoicer"
+      ],
+      "expectations": [
+        "Does not merge on stale gates",
+        "Compares the head tree with the tree step 6 ran on and reruns the gates",
+        "Reports the PR as not shipped until then"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "(Eval setup, before the run: in a copy of evals/fixtures/invoicer run `git init -b main && git add -A && git commit -qm \"chore: base\" && git init -q --bare ../invoicer-remote.git && git remote add origin ../invoicer-remote.git && git push -qu origin main && git switch -qc feat/invoice`, then `export PATH=\"$PWD/bin:$PATH\" FAKE_CALLS=/tmp/invoicer-calls.log`, then add the change `echo \"export const tax = 0.2;\" >> src/invoice.ts` and commit it as `feat: tax`, then `git push -u origin HEAD`, and make one more local commit `fix: rounding`.) /wrap pr --m (the host's head is now older than local HEAD)",
+      "expected_output": "Refuses the merge because local HEAD differs from the PR head SHA; says the PR is not shipped.",
+      "files": [
+        "evals/fixtures/invoicer"
+      ],
+      "expectations": [
+        "Compares local HEAD with the host's head SHA",
+        "Does not run the merge command",
+        "Says the PR is open and not shipped, naming the head mismatch"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "(Eval setup, before the run: in a copy of evals/fixtures/invoicer run `git init -b main && git add -A && git commit -qm \"chore: base\" && git init -q --bare ../invoicer-remote.git && git remote add origin ../invoicer-remote.git && git push -qu origin main && git switch -qc feat/invoice`, then `export PATH=\"$PWD/bin:$PATH\" FAKE_CALLS=/tmp/invoicer-calls.log`, then add the change `echo \"export const tax = 0.2;\" >> src/invoice.ts` and commit it as `feat: tax`, then on main add a commit that edits src/invoice.ts and src/gen/types.gen.ts (`git switch main`, edit both, commit, `git push -q origin main`, `git switch feat/invoice`), so the rebase conflicts in both files.) /wrap pr",
+      "expected_output": "Resolves src/invoice.ts first from both index stages, runs sh regen.sh inside the stopped rebase step, git adds src/gen/types.gen.ts, then git rebase --continue; never hand-edits the generated file.",
+      "files": [
+        "evals/fixtures/invoicer"
+      ],
+      "expectations": [
+        "Reads git show :2: and git show :3: for the hard conflict",
+        "Resolves the source before touching the generated file",
+        "Does not hand-resolve the generated file; runs sh regen.sh and git adds the result before --continue",
+        "Removes every conflict marker and reviews the resolved diff",
+        "Reruns the gates on the rebased tree before pushing"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "(Eval setup, before the run: in a copy of evals/fixtures/invoicer run `git init -b main && git add -A && git commit -qm \"chore: base\" && git init -q --bare ../invoicer-remote.git && git remote add origin ../invoicer-remote.git && git push -qu origin main && git switch -qc feat/invoice`, then `export PATH=\"$PWD/bin:$PATH\" FAKE_CALLS=/tmp/invoicer-calls.log`, then add the change `echo \"export const tax = 0.2;\" >> src/invoice.ts` and commit it as `feat: tax`, `git push -u origin HEAD`, then move main on with `git switch main`, a new commit on a different file, `git push -q origin main`, `git switch feat/invoice`.) /wrap pr --m (the host reports main moved)",
+      "expected_output": "Fetches and rebases, reruns the gates on the rebased tree, pushes with --force-with-lease on its own PR branch, repeats the merge checks and merges; never uses the host's Rebase button.",
+      "files": [
+        "evals/fixtures/invoicer"
+      ],
+      "expectations": [
+        "Reruns the gates after the rebase",
+        "Uses --force-with-lease, never --force",
+        "Repeats the head-SHA check before merging",
+        "Does not press or recommend the host's Rebase or Update button"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "(Eval setup, before the run: in a copy of evals/fixtures/invoicer run `git init -b main && git add -A && git commit -qm \"chore: base\" && git init -q --bare ../invoicer-remote.git && git remote add origin ../invoicer-remote.git && git push -qu origin main && git switch -qc feat/invoice`, then `export PATH=\"$PWD/bin:$PATH\" FAKE_CALLS=/tmp/invoicer-calls.log`, then add the change `echo \"export const tax = 0.2;\" >> src/invoice.ts` and commit it as `feat: tax`, delete the ## Ship section from AGENTS.md and replace bin/glab use with bin/gh (the default host).) /wrap pr",
+      "expected_output": "Uses the defaults (gh, ci on-pr, host merge method, flow pr, merge only with --m), opens the PR with gh pr create --body-file, and lists the assumed settings under Needs you only.",
+      "files": [
+        "evals/fixtures/invoicer"
+      ],
+      "expectations": [
+        "Falls back to the documented defaults without asking",
+        "Lists the assumed settings under Needs you only",
+        "Opens the PR with gh and does not merge"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "(Eval setup, before the run: in a copy of evals/fixtures/invoicer run `git init -b main && git add -A && git commit -qm \"chore: base\" && git init -q --bare ../invoicer-remote.git && git remote add origin ../invoicer-remote.git && git push -qu origin main && git switch -qc feat/invoice`, then `export PATH=\"$PWD/bin:$PATH\" FAKE_CALLS=/tmp/invoicer-calls.log`, then add the change `echo \"export const tax = 0.2;\" >> src/invoice.ts` and commit it as `feat: tax`, and change the Ship section to `flow: direct` and `push: owner-word`.) /wrap pr",
+      "expected_output": "Refuses PR mode before any commit, says to use /wrap m (--ff-only, gates before each commit) and that pushing waits for the owner's explicit word.",
+      "files": [
+        "evals/fixtures/invoicer"
+      ],
+      "expectations": [
+        "Opens no PR and makes no host call",
+        "Makes no commit",
+        "Names m as the path and that --p only follows the owner's word",
+        "Does not push"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "(Eval setup, before the run: in a copy of evals/fixtures/invoicer run `git init -b main && git add -A && git commit -qm \"chore: base\" && git init -q --bare ../invoicer-remote.git && git remote add origin ../invoicer-remote.git && git push -qu origin main && git switch -qc feat/invoice`, then `export PATH=\"$PWD/bin:$PATH\" FAKE_CALLS=/tmp/invoicer-calls.log`, then add the change `echo \"export const tax = 0.2;\" >> src/invoice.ts` and commit it as `feat: tax`, plus an untouched modified file `echo x >> src/other.ts` and a modified `.env.local`.) /wrap pr",
+      "expected_output": "Stages only the files edited this session by name, inspects the unfamiliar changes or asks, and never stages .env.local.",
+      "files": [
+        "evals/fixtures/invoicer"
+      ],
+      "expectations": [
+        "Does not use git add -A",
+        "Inspects or asks about files it did not touch",
+        "Leaves .env.local out of the commit"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "(Eval setup, before the run: in a copy of evals/fixtures/invoicer run `git init -b main && git add -A && git commit -qm \"chore: base\" && git init -q --bare ../invoicer-remote.git && git remote add origin ../invoicer-remote.git && git push -qu origin main && git switch -qc feat/invoice`, then `export PATH=\"$PWD/bin:$PATH\" FAKE_CALLS=/tmp/invoicer-calls.log`, then `mkdir -p docs && echo '- [ ] item' > docs/board.md`.) /wrap pr",
+      "expected_output": "Batching is on and only a docs file changed: commits but does not push, and reports \"waiting for the next code PR\".",
+      "files": [
+        "evals/fixtures/invoicer"
+      ],
+      "expectations": [
+        "Does not push or open a PR",
+        "Says the change waits for the next code PR"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "(Eval setup, before the run: in a copy of evals/fixtures/invoicer run `git init -b main && git add -A && git commit -qm \"chore: base\" && git init -q --bare ../invoicer-remote.git && git remote add origin ../invoicer-remote.git && git push -qu origin main && git switch -qc feat/invoice`, then `export PATH=\"$PWD/bin:$PATH\" FAKE_CALLS=/tmp/invoicer-calls.log`, then add the change `echo \"export const tax = 0.2;\" >> src/invoice.ts` and commit it as `feat: tax` and edit src/gen/types.gen.ts by running `sh regen.sh`.) /wrap pr",
+      "expected_output": "Commits the regenerated output in the same commit as its source, writes the description to a file filling each section of .gitlab/merge_request_templates/Default.md (what changed, why, how verified with the gate output, manual QA) and opens the MR with --description-file.",
+      "files": [
+        "evals/fixtures/invoicer"
+      ],
+      "expectations": [
+        "Generated files and their source are in one commit",
+        "The description fills the template's sections (What changed, Why, How verified, Manual QA)",
+        "The description includes the gate output",
+        "The create call passes the description from a file"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "(Eval setup, before the run: in a copy of evals/fixtures/invoicer run `git init -b main && git add -A && git commit -qm \"chore: base\" && git init -q --bare ../invoicer-remote.git && git remote add origin ../invoicer-remote.git && git push -qu origin main && git switch -qc feat/invoice`, then `export PATH=\"$PWD/bin:$PATH\" FAKE_CALLS=/tmp/invoicer-calls.log`, then add the change `echo \"export const tax = 0.2;\" >> src/invoice.ts` and commit it as `feat: tax`, and set may-merge: no in the Ship section.) /wrap pr --m",
+      "expected_output": "Opens the PR and refuses the merge: may-merge: no cannot be overridden by --m.",
+      "files": [
+        "evals/fixtures/invoicer"
+      ],
+      "expectations": [
+        "Does not merge",
+        "Reports not shipped and names may-merge: no"
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "(Eval setup, before the run: in a copy of evals/fixtures/invoicer run `git init -b main && git add -A && git commit -qm \"chore: base\" && git init -q --bare ../invoicer-remote.git && git remote add origin ../invoicer-remote.git && git push -qu origin main && git switch -qc feat/invoice`, then `export PATH=\"$PWD/bin:$PATH\" FAKE_CALLS=/tmp/invoicer-calls.log`, then add the change `echo \"export const tax = 0.2;\" >> src/invoice.ts` and commit it as `feat: tax`.) /wrap m main (the Ship section says flow: pr)",
+      "expected_output": "Refuses a local merge into the default branch and points to pr --m: the PR is the only path to main.",
+      "files": [
+        "evals/fixtures/invoicer"
+      ],
+      "expectations": [
+        "Does not merge locally into the default branch",
+        "Names pr --m"
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "Look at MR 42 and tell me whether it's safe to merge.",
+      "expected_output": "Does not load wrap: reviewing someone else's PR is a code review.",
+      "files": [
+        "evals/fixtures/invoicer"
+      ],
+      "expectations": [
+        "Does not run wrap",
+        "Treats it as a review"
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "(Eval setup, before the run: in a copy of evals/fixtures/invoicer run `git init -b main && git add -A && git commit -qm \"chore: base\" && git init -q --bare ../invoicer-remote.git && git remote add origin ../invoicer-remote.git && git push -qu origin main && git switch -qc feat/invoice`, then `export PATH=\"$PWD/bin:$PATH\" FAKE_CALLS=/tmp/invoicer-calls.log`, then add the change `echo \"export const tax = 0.2;\" >> src/invoice.ts` and commit it as `feat: tax`.) I think the invoice slice is done, ship it.",
+      "expected_output": "Runs step 6 (the gates) first, since nothing was run this session, then pr mode on the green head.",
+      "files": [
+        "evals/fixtures/invoicer"
+      ],
+      "expectations": [
+        "Runs the gates before any push or PR",
+        "Does not push before the gates are green"
+      ]
+    }
+  ]
+}
