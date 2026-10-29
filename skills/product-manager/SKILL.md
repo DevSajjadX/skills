@@ -1,6 +1,6 @@
 ---
 name: product-manager
-description: Use when a product or project question blocks the work and needs a PM's answer ("should we build X", "is this in scope", "what's the MVP cut", "which of these first", "a user asked for Y, do we add it", "how do we know it worked", "act as the PM", "judge this product"), or when an implementation choice would change what users can do, see or are told; also to break a topic down into board items ("break down X for the board", "what should the next iteration hold") and to keep the project's board ("add this to the board", "promote this handoff", "board status", "mark it done"). Not for how to build something already decided (engineering), or for writing the project's product docs.
+description: Use when a product or project question blocks the work and needs a PM's answer ("should we build X", "is this in scope", "what's the MVP cut", "which of these first", "a user asked for Y, do we add it", "how do we know it worked", "act as the PM", "judge this product"), or when an implementation choice would change what users can do, see or are told; also to break a topic down into board items ("break down X for the board", "what should the next iteration hold") and to keep the project's board ("add this to the board", "promote this handoff", "board status", "mark it done"). Not for how to build something already decided (engineering), or for writing the project's product docs (beyond the `planned` flow-catalog row the board job adds).
 ---
 
 # product-manager
@@ -15,7 +15,7 @@ Does a PM's three jobs on this project: **judge** a product question, **break do
 | "Break down", "brainstorm", "what goes in the next iteration" for a topic | **Break down** (below) |
 | Add, place, promote, status, done, new iteration, demo-step, anti-goal: anything that writes or reads the board | **Board**: read `board.md` and follow it |
 
-- Not for how to build something already decided (engineering), and not for writing the project's product docs (PRODUCT.md, specs, ADRs): propose the change and hand it to their owner.
+- Not for how to build something already decided (engineering), and not for writing the project's product docs (PRODUCT.md, specs, ADRs), beyond the `planned` flow-catalog row the board job adds: propose the change and hand it to their owner.
 - The board job is the only one that writes, and only to the board (plus the handoff it promotes and a `planned` row in the project's flow catalog). Whatever finishes an item (a plan executor) closes it through the board's `done` job, never by editing a board file.
 - Cite a doc (a rule, an anti-goal, product truth) as its path plus the quoted words, with no line number: counted line numbers come out wrong, and a quote can be checked. Code evidence keeps `file:line`, copied from `grep -n` output or the source handoff.
 
@@ -59,7 +59,7 @@ How a project enforces it: wrap break-down in its own command or agent with only
 5. **Apply the lens.** For each candidate answer, before proposing it:
    - **Who feels it:** the buyer, the seller, staff, an admin, or the next agent session.
    - **What is wrong or missing:** stated as a problem, with `file:line` evidence if it exists.
-   - **Which iteration needs it:** the **first** iteration whose demo script cannot be walked without it. A prerequisite belongs to the iteration that first depends on it, not an earlier one "because it's foundational". A candidate no iteration's demo needs is a later iteration, the inbox, or anti-goal material; never add a demo step to justify a placement. A demo step you do propose is a `demo-step` job in the list below.
+   - **Which iteration needs it** (per `board.md` § Placement): the **first** iteration whose demo script cannot be walked without it. A prerequisite belongs to the iteration that first depends on it, not an earlier one "because it's foundational". A candidate no iteration's demo needs is a later iteration, the inbox, or anti-goal material; never add a demo step to justify a placement. A demo step you do propose is a `demo-step` job in the list below.
    - **Observable "Done when" lines:** what a user, staff member or failing check can see. "Cleaner", "more robust", "better DX" are not observable.
 
    Prefer the correctness bug a user would feel over the refactor that reads nicer. Prefer a rule that moves from prose into a gate over a rule restated in another document.

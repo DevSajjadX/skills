@@ -183,7 +183,7 @@
     },
     {
       "id": 14,
-      "prompt": "Board status please.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Board status please.",
       "expected_output": "Reads the whole board and prints the current iteration (i1) with its open item i1/002, i2 with its open count, the inbox note, and the two open handoffs not yet on the board; flags anything wrong; runs the board self-check (the fixture has no machine gate) and reports it; touches no file.",
       "files": [
         "evals/fixtures/shop-board"
@@ -192,7 +192,7 @@
         "Names i1 as the current iteration with i1/002 open, and i2 with zero open items",
         "Lists inbox/001 and both open handoffs in .claude/handoffs/ as not yet on the board",
         "Flags i2 as an iteration whose demo step no item covers",
-        "Says there is no machine board check and reports the result of walking the self-check instead, line by line",
+        "Says there is no machine board check (the pytest gate in AGENTS.md is not one) and reports the result of walking the self-check instead, line by line",
         "No file was created, changed or moved"
       ]
     },
@@ -218,7 +218,7 @@
         "evals/fixtures/shop-board"
       ],
       "expectations": [
-        "The item is under .pm/i1/done/ only, status done, id still i1/002 (moved with git mv)",
+        "The item is under .pm/i1/done/ only, status done, id still i1/002 (moved with git mv), with no open copy left",
         "Its line in .pm/i1/README.md is ticked",
         "It asks whether the demo script passed on staging and does not move the iteration to done/ before a yes",
         "It says the self-check stays red on purpose (every item done, iteration not yet moved) until the demo passes, and reports the check output"
@@ -253,13 +253,13 @@
     },
     {
       "id": 19,
-      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) (Also run `printf 'shipping_cents returns 0 for totals <= 0; callers keep the 499 fee otherwise\\n' > design-notes.md && git add design-notes.md && git commit -qm design`.) (Also run `git rm -q .claude/handoffs/2026-10-29-empty-cart-shipping.md && git commit -qm rm`.) File an item in i1 for the empty-cart shipping problem. The earlier design is in the latest commit, design-notes.md.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) (Also run `printf 'shipping_cents returns 0 for totals <= 0; callers keep the 499 fee otherwise\\n' > design-notes.md && git add design-notes.md && git commit -qm design`.) (Also run `git rm -q .claude/handoffs/2026-10-29-empty-cart-shipping.md && git commit -qm rm`.) File an item in i1 for the empty-cart shipping problem. The earlier design is in the commit that added design-notes.md.",
       "expected_output": "A new i1 item stating the problem, with its Design input pointing at the commit as `git show <sha>:design-notes.md` and none of the design text copied into the item.",
       "files": [
         "evals/fixtures/shop-board"
       ],
       "expectations": [
-        "The item's Design input cites the latest commit's sha with the path design-notes.md (a git show reference)",
+        "The item's Design input cites the sha of the commit that added design-notes.md (HEAD~1 after setup, or any sha where `git show <sha>:design-notes.md` resolves) as a git show reference",
         "The design text itself is not copied into the item",
         "The item has no Steps, Files or Tasks section and its Done when is observable"
       ]
@@ -280,7 +280,7 @@
     },
     {
       "id": 21,
-      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Board: demo-step i2 A buyer sees the shipped date next to the status on My orders",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Board: demo-step i2 Staff see the shipped date in the back office",
       "expected_output": "Appends a numbered step to i2's demo script that cites a flow; no catalog row fits, so a new planned row is added to PRODUCT.md's flow catalog, never built.",
       "files": [
         "evals/fixtures/shop-board"
@@ -412,52 +412,6 @@
     },
     {
       "id": 31,
-      "prompt": "Break down 'buyers want to know where their order is' into board items for us. Some buyers asked for SMS updates and live courier tracking.",
-      "expected_output": "A text-only proposal: status items placed in i2 because its demo needs them, SMS/push and courier tracking rejected by quoting .pm/DO_NOT_DO.md, no duplicate of existing board work, ending with a priority summary and the exact board jobs to materialize it.",
-      "files": [
-        "evals/fixtures/shop-board"
-      ],
-      "expectations": [
-        "No file was created, changed or deleted",
-        "SMS/push notifications and live courier tracking are rejected by quoting .pm/DO_NOT_DO.md, not reshaped",
-        "Each item is a problem with a kind and observable Done-when lines; no steps, files or estimates",
-        "Items are placed in i2 for its demo; no demo step is invented to justify a placement",
-        "Every doc citation is the path plus words that really appear in that file",
-        "It ends with a priority-ordered summary and the exact board jobs to materialize the proposal"
-      ]
-    },
-    {
-      "id": 32,
-      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Board status.",
-      "expected_output": "Prints the current iteration i1 with its open item i1/002, i2 with its count, the inbox, and open handoffs not on the board, runs the project's board check if one exists and reports it, and changes no file.",
-      "files": [
-        "evals/fixtures/shop-board"
-      ],
-      "expectations": [
-        "Names i1 as the current iteration and lists i1/002 as open",
-        "Shows i2 as a later iteration with a count and lists the inbox item",
-        "Mentions the open handoffs under .claude/handoffs/ that are not yet on the board",
-        "States that no board check is defined (the pytest gate in AGENTS.md is not one)",
-        "No file was created, moved or changed"
-      ]
-    },
-    {
-      "id": 33,
-      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Mark i1/002 done, the discount code works now.",
-      "expected_output": "Sets status done, moves the file to i1/done/002.md with the id unchanged, ticks the README line, and asks whether the demo script passed before moving the iteration.",
-      "files": [
-        "evals/fixtures/shop-board"
-      ],
-      "expectations": [
-        "i1/002.md now lives only at .pm/i1/done/002.md, with no open copy left",
-        "The id in the file is still i1/002 and status is done",
-        "The line in i1/README.md is ticked",
-        "Asks whether the demo script has passed before moving i1 to done/",
-        "Does not move the iteration or mark the roadmap row done before that answer"
-      ]
-    },
-    {
-      "id": 34,
       "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Mark i1/002 done. Staff can now see the list and mark orders collected, I tried it.",
       "expected_output": "Moves the item but refuses to close the iteration: its demo script cites flow A-03, which PRODUCT.md lists as planned with no test, so it names the unbuilt flow and stops.",
       "files": [
@@ -471,60 +425,34 @@
       ]
     },
     {
-      "id": 35,
+      "id": 32,
       "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) New iteration for buyers cancelling an unpaid order.",
-      "expected_output": "Creates a new iteration only with a numbered, user-observable demo script, in execution order in the roadmap, and without inventing items beyond the ask.",
+      "expected_output": "Without a demo script from the user it proposes a numbered, user-observable one, names the next iteration id (i3), and creates no file until the user says go.",
       "files": [
         "evals/fixtures/shop-board"
       ],
       "expectations": [
-        "The new iteration has a numbered demo script of steps a buyer can observe",
-        "It gets the next free iteration number and a ROADMAP.md row after i2",
+        "It proposes a numbered demo script of steps a buyer can observe",
+        "It names i3 as the next free iteration number and a ROADMAP.md row after i2, but creates no file and changes no roadmap until the user says go",
         "Nothing in it is a task list, file list or implementation step"
       ]
     },
     {
-      "id": 36,
+      "id": 33,
       "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Add to i1: add a shared checkout-form hook and migrate every form in the shop to it.",
-      "expected_output": "Does not file the solution; restates it as the problem it solves and writes the item with no Steps or Files section.",
+      "expected_output": "Does not file the solution: the fixture has no forms, so it asks what goes wrong without the hook (or restates the problem and says so), notes that i1's demo does not need it, and writes no hook-shaped item.",
       "files": [
         "evals/fixtures/shop-board"
       ],
       "expectations": [
-        "The item title and Problem state what goes wrong for a user or developer, not the hook",
-        "The item has no Steps, Files, Tasks, Implementation, Approach or Acceptance criteria section",
-        "Done when lines are observable"
+        "It asks what goes wrong without the hook, or restates the problem and says it did, rather than filing the hook",
+        "It notes that i1's demo (the shipping fee) does not need it, so i1 is not its placement",
+        "No item titled or described as the hook is written, and no Steps, Files, Tasks, Implementation, Approach or Acceptance criteria section exists anywhere"
       ]
     },
     {
-      "id": 37,
-      "prompt": "We've decided to add a delivery-status column to the orders list. Plan it.",
-      "expected_output": "Does not load product-manager: the decision is made, so this is a plan (plan-draft), not a break-down or a judgment.",
-      "files": [
-        "evals/fixtures/shop-board"
-      ],
-      "expectations": [
-        "Does not break the change down into board items or iterations",
-        "Does not reopen whether to build it",
-        "Points to planning the change (plan-draft) or starts a plan"
-      ]
-    },
-    {
-      "id": 38,
-      "prompt": "Break down 'buyers want to know where their order is' into board items.",
-      "expected_output": "Proposes the items as text and lists the board jobs, but writes no board file until the user says to run them.",
-      "files": [
-        "evals/fixtures/shop-board"
-      ],
-      "expectations": [
-        "Each proposed item has a kind, an iteration with reason, a problem and observable Done when lines",
-        "Ends with the exact board jobs in order",
-        "No file under .pm/ was created or changed"
-      ]
-    },
-    {
-      "id": 39,
-      "prompt": "Break down 'orders need a way to be cancelled' for the board. If a new iteration is needed, propose one; we may also want a queue library and a new ADR for it.",
+      "id": 34,
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Break down 'orders need a way to be cancelled' for the board. If a new iteration is needed, propose one; we may also want a queue library and a new ADR for it.",
       "expected_output": "Places items in existing iterations where their demo can absorb them, raises the queue library and ADR as questions for the owner rather than settling them, and puts no secrets in the proposal.",
       "files": [
         "evals/fixtures/shop-board"
@@ -534,7 +462,8 @@
         "Raises the queue library and the ADR as a question for the owner, not as decided",
         "Proposes no step, file list or estimate",
         "Notes dependencies or risks between the items",
-        "No credential, connection string or real company name appears in the proposal"
+        "No credential, connection string or real company name appears in the proposal",
+        "Cites ADR 0001 ('no job queue or retry worker in v1') and calls the queue a change to that decision"
       ]
     }
   ]
