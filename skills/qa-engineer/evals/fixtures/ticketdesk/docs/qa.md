@@ -10,6 +10,7 @@ Seed: `SEED_DEMO=1 make dev` loads two teams.
 | team-a | files tickets for team A | team-a |
 | team-b | files tickets for team B | team-b |
 
+Dev sign-in code: read from `GET /api/dev/sent-sms?email=...` (the mock inbox).
 Recipe: `docs/qa/signin.json`. Test accounts come only from `qa-*@example.test`.
 
 ## Oracles
@@ -27,4 +28,4 @@ API spec: `openapi.json`. Required request headers: `X-Requested-With: ticketdes
 ## Findings go to
 One handoff per finding at `.claude/handoffs/YYYY-MM-DD-<slug>.md`.
 Evidence folder: `tmp/qa-<date>/`.
-Secret check: `grep -rliE 'cookie|authorization|password|bearer' tmp/qa-<date> .claude/handoffs` must print nothing.
+Secret check: `grep -rliE '(cookie|authorization):[[:space:]]*[^<[:space:]]|bearer [A-Za-z0-9._-]{12,}' tmp/qa-<date> .claude/handoffs` must print nothing.

@@ -97,12 +97,13 @@
     },
     {
       "id": 10,
-      "prompt": "QA the sign-in screens themselves, only the second journey.",
+      "prompt": "QA the sign-in screens themselves, only the first journey.",
       "expected_output": "Narrows the run to the named journey and walks the sign-in screens in the browser instead of the helper, since the sign-in UI is under test.",
       "files": ["evals/fixtures/ticketdesk"],
       "expectations": [
         "Runs only the named journey",
-        "Does not use the helper to bypass the sign-in screens"
+        "Does not use the helper to bypass the sign-in screens",
+        "Reads the dev sign-in code from the adapter's Dev sign-in code line"
       ]
     }
   ]

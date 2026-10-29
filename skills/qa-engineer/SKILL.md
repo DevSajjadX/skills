@@ -1,7 +1,7 @@
 ---
 name: qa-engineer
 description: Use when asked to QA, bug-hunt, test, click through or probe a running app whose code is checked out here ("QA the sign-up flow", "find bugs in the running app", "probe the API", "check tenant isolation", "act as QA"), and the findings should be reproduced, traced to file:line and filed. Not for a site with no local code (dogfood), for writing automated tests, or for fixing a bug already known.
-argument-hint: "[optional journey or surface to focus on]"
+argument-hint: "[optional journey or surface to focus on] [dry-run]"
 ---
 
 # qa-engineer
@@ -17,13 +17,13 @@ Hunts real bugs in the **running** product the way a QA engineer on the team wou
 
 1. **Load the project's QA adapter.** Look for `docs/qa.md` (or what the instruction file names). It holds: how to start the app and find its web origin, the test roles and the sign-in recipe, the API spec to check responses against, the journeys, the "looks like a bug, isn't" list and where findings go. No adapter: draft one from the repo with `adapter.md`, show it, and wait for an OK before hunting.
 
-2. **Write the run header** before the first action: branch, HEAD, dirty files, web origin, roles used, seed state. A finding without it can't be rerun. Read the origin from where the adapter says; never assume a default port, since another agent session may hold it. An argument narrows the run to one journey or surface; otherwise run the adapter's journeys in its order, because each leaves state the next one uses. `DRY_RUN=1` suppresses handoff writes: local evidence and a report only, useful for a first run on a new adapter.
+2. **Write the run header** before the first action: branch, HEAD, dirty files, web origin, roles used, seed state. A finding without it can't be rerun. Read the origin from where the adapter says; never assume a default port, since another agent session may hold it. An argument narrows the run to one journey or surface; otherwise run the adapter's journeys in its order, because each leaves state the next one uses. The argument `dry-run` files nothing (step 9): local evidence and a report only, useful for a first run on a new adapter.
 
 3. **Go through the web origin only.** The browser and every probe talk to the origin users hit; API calls go through its proxy prefix (often `/api/*`). Never look up or call the API's own port: that skips the proxy, the cookie attributes and forwarded headers, which is where bugs hide.
 
-4. **Sign in only with the helper**, one agent-browser session per role:
+4. **Sign in with the helper**, one agent-browser session per role:
    `uv run <this skill>/scripts/qa_login.py --origin <origin> --recipe <adapter's recipe> --role <role> --session qa-<role>`
-   It loads the cookies with their HttpOnly flag and prints no value. Never run `cookies get`, read `document.cookie` or storage into the transcript, show `network request <id>` without cutting its Cookie and Authorization headers, or type a password the adapter doesn't route through an env var. Use only the adapter's test accounts and number or email ranges; a real-looking number can reach a real person. When the sign-in screens themselves are under test, walk them in the browser (the adapter names where a dev code is read) instead of using the helper.
+   It loads the cookies with their HttpOnly flag and prints no value. Never run `cookies get`, read `document.cookie` or storage into the transcript, show `network request <id>` without cutting its Cookie and Authorization headers, or type a password the adapter doesn't route through an env var. Use only the adapter's test accounts and number or email ranges; a real-looking number can reach a real person. The one exception: when the sign-in screens themselves are under test, walk them in the browser (the adapter's "Dev sign-in code" line says where a dev code is read) instead of using the helper.
 
 5. **Read the rules for the area first**: the area's agent card or README, product rules, anti-goals, and the adapter's "isn't a bug" list. A deliberate behavior is not a finding. Never enable a feature (flag, config) to manufacture a finding: deliberate gaps on the roadmap are not a bug list, and anti-goals are read before proposing any follow-up.
 
@@ -37,24 +37,9 @@ Hunts real bugs in the **running** product the way a QA engineer on the team wou
    - Blast radius: other callers and routes, and a working control that shows the difference. Two similar symptoms need independent evidence before you claim one cause.
    - Dedupe: the project's issues, handoffs (open and done), board items and briefs, and `git log -S '<term>'`. Fixed on the default branch already means a stale build, not a finding.
 
-8. **Record each finding** in this shape:
+8. **Record each finding** in the shape of `finding.md` (title, severity, environment, repro, expected and actual, evidence, root cause, fix target, blast radius, adjacent states, dedupe, unverified, estimate).
 
-   ```text
-   Title · Severity (blocker | major | minor)
-   Environment: the run header, browser, role
-   Repro: route and numbered actions; result on repeat
-   Expected / Actual: observable values
-   Evidence: artifact paths; sanitized request/response or console line
-   Root cause: file:line and mechanism, or "cause unverified"
-   Fix: the target behavior and the owning module (not the patch)
-   Blast radius: callers, routes, the working control
-   Adjacent states: loading, empty, denied, expired session, network failure, right-to-left, other locale
-   Dedupe: what was searched, and the result
-   Unverified: journeys and causes not exercised
-   Estimate: rough effort, with the uncertainty if the cause is unverified
-   ```
-
-9. **File and finish.** Send each finding to the adapter's sink (a handoff file, an issue through task-summary, or a report). With none named: in a git repo, one handoff per finding through plan-handoff (`.claude/handoffs/`): Environment and Repro fill Context, Expected/Actual and Root cause fill Problem, the expected behavior is the Contract (never a fix design) and the rerun commands are the Acceptance, each with checkable output, so the board can promote it or a queue run can pick it up. Outside a git repo, one dated report in `./tmp/`. Never edit code, never write a board or backlog, never "just fix it". Then clean up: remove only data you created (prefix it `qa-<yyyymmdd>-` and note ids as you go; never modify a pre-existing row, another tenant's data or anything under `.env`), close every browser session you opened (`agent-browser --session <s> close`), stop only processes you started, and run the adapter's secret check over the evidence folder and the filed handoffs. No cookie, Authorization header, password or real customer data may appear in any handoff, report or screenshot. End with: findings by severity, journeys covered and skipped, dedupe and filing status, cleanup status stated precisely (including anything left behind), the scan result, and "no fix was made".
+9. **File and finish.** Send each finding to the adapter's sink; with none named, `finding.md` says how (a handoff per finding in a git repo, else a dated report). Never edit code, never write a board or backlog, never "just fix it". With `dry-run`, file nothing and report filing status as "dry run". Then clean up as `finding.md` describes, run the adapter's secret check, and end with: findings by severity, journeys covered and skipped, dedupe and filing status, cleanup status stated precisely (including anything left behind), the scan result, and "no fix was made".
 
 ## Common mistakes
 
