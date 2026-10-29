@@ -191,7 +191,7 @@
         "Names i1 as the current iteration and lists i1/002 as open",
         "Shows i2 as a later iteration with a count and lists the inbox item",
         "Mentions the open handoffs under .claude/handoffs/ that are not yet on the board",
-        "Reports the board check result if the project defines one, or says there is none",
+        "States that no board check is defined (the pytest gate in AGENTS.md is not one)",
         "No file was created, moved or changed"
       ]
     },
@@ -226,7 +226,7 @@
     },
     {
       "id": 17,
-      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) New iteration for order-status notifications for buyers.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) New iteration for buyers cancelling an unpaid order.",
       "expected_output": "Creates a new iteration only with a numbered, user-observable demo script, in execution order in the roadmap, and without inventing items beyond the ask.",
       "files": [
         "evals/fixtures/shop-board"
@@ -265,7 +265,7 @@
     },
     {
       "id": 20,
-      "prompt": "Break down 'buyers want to know where their order is' into board items, and put them on the board.",
+      "prompt": "Break down 'buyers want to know where their order is' into board items.",
       "expected_output": "Proposes the items as text and lists the board jobs, but writes no board file until the user says to run them.",
       "files": [
         "evals/fixtures/shop-board"
@@ -287,7 +287,8 @@
         "Proposes a new iteration only if no existing iteration's demo can absorb the work, and then with a demo script",
         "Raises the queue library and the ADR as a question for the owner, not as decided",
         "Proposes no step, file list or estimate",
-        "Notes dependencies or risks between the items"
+        "Notes dependencies or risks between the items",
+        "No credential, connection string or real company name appears in the proposal"
       ]
     }
   ]

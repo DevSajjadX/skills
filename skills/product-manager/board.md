@@ -18,7 +18,7 @@ The board says **what** to build and **in which order**, as iterations a user ca
 
 Before any write, read the roadmap and every anti-goal source. An item that hits an anti-goal is **rejected by name**: quote it, say why, stop. Never reshape it into something that slips past.
 
-If the project defines a board check (a lint, a script, a CI job), run it after every write and never report success while it fails. `status` runs it too and reports its result: a status that disagrees with the check is worthless.
+If the project defines a board check (a lint, a script, a CI job), run it after every write and never report success while it fails. `status` runs it too and reports its result (or states that the project defines none; a test gate is not a board check): a status that disagrees with the check is worthless.
 
 ## Layout
 
@@ -37,15 +37,16 @@ If the project defines a board check (a lint, a script, a CI job), run it after 
 
 - **An item states the problem, never the solution:** who hits it, what is wrong or missing, why it matters now, what becomes observable when it is solved, which product rules apply. No steps, files to touch, class or test names, estimates, or `## Steps`, `## Files`, `## Tasks`, `## Implementation`, `## Approach`, `## Acceptance criteria` sections. Code evidence that the problem exists is the one `file:line` an item carries.
 - **"Done when" is observable:** each line names something a user, staff member or failing check can see; never "works correctly" or "is improved".
+- **Name the problem:** an item or inbox title names the problem it answers, not the file it touches. Surface dependencies and risks between items. Prefer a rule that moves from prose into a gate over one restated in another document.
 - **Kinds:** `feature` (the user gains something), `bug` (the product does the wrong thing), `task` (needed work with no product change: a deploy, a removal), `debt` (a structural risk that makes the product wrong or slow to change).
 - **Placement:** an item goes in the **first iteration whose demo needs it**, never earlier "because it's foundational".
 - **End to end:** a feature's "Done when" names what the user sees **and** what the system enforces. One problem is one item, never a backend half and a frontend half. A structural gap with no screen of its own is folded into the first feature item that needs it: a paragraph of that item's Problem plus the observable "Done when" lines it adds. Only deploy and test tooling stands alone as an item (kind `task`).
-- **Every iteration is demoable:** its `## Demo script` is numbered steps a user walks, each observable. If the project keeps a catalog of flows or acceptance checks, each step cites it. An iteration whose demo script cites a flow or check that is not yet built and tested cannot be closed: `done` names the unbuilt flow and stops. A demo step with no fitting flow gets a new `planned` row, and only the change that lands the flow's test marks it built.
+- **Every iteration is demoable:** its `## Demo script` is numbered steps a user walks, each observable. If the project keeps a catalog of flows or acceptance checks, each step cites it. An iteration whose demo script cites a flow or check that is not yet built and tested cannot be closed: `done` names the unbuilt flow and stops. A demo step with no fitting flow needs a new `planned` row in the catalog: the board job proposes that row to the catalog's owner (it lives in product docs, which the board never writes), and only the change that lands the flow's test marks it built.
 - **The id is the item, the folder is its state:** `id:` is the path under `.pm/` without the extension and without any `done/` segment. Only `place` changes an existing id; it says so and repoints references.
 - **`status:` is `open` or `done`.** Work in flight is an open item on a branch.
 - **Done work leaves the open tree:** `git mv`, so history follows.
 - **Numbering:** scan the whole tree, every `done/` included, and take the next free zero-padded number in that folder. Never reuse one.
-- **No secrets** and no real customer or company names in any board file, credentials not even in a repro.
+- **No secrets or credentials** (not even in a repro), no real customer data, and no real company names in any board file.
 
 ## Jobs
 
@@ -63,7 +64,7 @@ The default is `status`. Every write job ends with `git status --short` showing 
   3. Its **Contract** is design: it stays in the brief, never in the item.
   4. `git mv` the handoff to `iN/BRIEF-<slug>.md` (the slug is its name without the date). Drop its `status:` and `plan:` lines and add `promoted: <date> to .pm/iN/NNN (was <old path>)`.
   5. The item's `## Design input` points at the brief; repoint every other reference to the old path. A promoted handoff no longer sits in `.claude/handoffs/`, so no queue run builds it twice.
-- **`new iteration <title>`:** the next free `iN/README.md` and its `ROADMAP.md` row, in execution order. An iteration exists only when its demo script can already be written.
+- **`new iteration <title>`:** the next free `iN/README.md` and its `ROADMAP.md` row, in execution order. An iteration exists only when its demo script can already be written, and only when no existing iteration's demo can absorb the work. A new module, dependency, ADR or tool is raised as a question for the owner, never settled.
 - **`done <iN/NNN>`:** set `status: done`, `git mv` to `iN/done/NNN.md` (the id stays), tick its line, then verify the item now exists only under `iN/done/` (no stale open copy) and report the board check's result. When no open item remains, check the iteration's demo script cites no unbuilt flow (Rules, Every iteration is demoable), then ask whether the demo script has passed; only on a yes, `git mv` the iteration to `done/iN/` and mark its `ROADMAP.md` row done.
 
 ## Templates
