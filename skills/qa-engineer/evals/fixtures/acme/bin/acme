@@ -4,22 +4,44 @@
 `acme run --isolated` binds a random port, prints the dashboard line, and serves
 the web pages and the /api proxy prefix on that one origin. Known gaps on purpose:
 an unknown /api route answers 404 with a null detail, and one error key has an
-English sentence only. The first load of / carries a hot-reload overlay and the
+English sentence only. Tenant-owned rows (products, verification, audit entries) are
+readable and changeable by id: the owner gets 200/201, any other tenant or a missing id gets 404
+problem+json, never the row and never a 500. Sign-in returns to the page asked for: /auth?next=...
+shows a form, verify answers {"next": ...} (same-site paths only, else "/"), and /auth with a live
+session redirects 302 to next. The first load of / carries a hot-reload overlay and the
 first /api/health answers 503 (container still starting); later loads are clean.
 """
 import json
 import re
 import sys
+from urllib.parse import parse_qs
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 MOBILES = {"+15550000001": "a", "+15550000002": "b", "+15550000003": "staff"}
 PRODUCTS = {1: ("a", "Widget"), 2: ("a", "Gadget"), 3: ("b", "Sprocket")}
+VERIFICATIONS = {1: ("a", "pending"), 2: ("b", "pending")}
+AUDIT = {1: ("a", "product 1 created"), 2: ("b", "product 3 created")}
 CODES = {}
 SEEN = {"home": False, "health": False}
 TEXT = {
     "notFound": {"en": "Not found.", "ar": "غير موجود."},
     "badBody": {"en": "Unreadable body."},
 }
+
+
+TABLES = {"products": PRODUCTS, "verification": VERIFICATIONS, "audit": AUDIT}
+NEXT = {"products": 4, "verification": 3, "audit": 3}
+VALUE = {"products": "name", "verification": "status", "audit": "text"}
+AUTH_PAGE = b"""<h1>Sign in</h1><form id=f>
+<input name=mobile placeholder=mobile><input name=code placeholder=code><button>Sign in</button></form>
+<script>f.onsubmit=async e=>{e.preventDefault();const h={"Content-Type":"application/json","X-Requested-With":"acme-web"},
+m=f.mobile.value;await fetch("/api/auth/start",{method:"POST",headers:h,body:JSON.stringify({mobile:m})});
+const r=await fetch("/api/auth/verify",{method:"POST",headers:h,body:JSON.stringify({mobile:m,code:f.code.value,next:__NEXT__})});
+if(r.ok)location=(await r.json()).next}</script>"""
+
+
+def safe_next(value):
+    return value if value.startswith("/") and not value.startswith(("//", "/\\")) and "\\" not in value else "/"
 
 
 class H(BaseHTTPRequestHandler):
@@ -59,7 +81,10 @@ class H(BaseHTTPRequestHandler):
             SEEN["home"] = True
             return self.out(200, b"<h1>Acme</h1>" + overlay, "text/html")
         if path == "/auth":
-            return self.out(200, b"<h1>Sign in</h1>", "text/html")
+            nxt = safe_next(parse_qs(query).get("next", ["/"])[0])
+            if self.who():
+                return self.out(302, b"", "text/html", [("Location", nxt)])
+            return self.out(200, AUTH_PAGE.replace(b"__NEXT__", json.dumps(nxt).replace("<", "\\u003c").encode()), "text/html")
         if path.startswith("/app/"):
             if not self.who():
                 return self.out(302, b"", "text/html", [("Location", "/auth?next=" + path)])
@@ -80,10 +105,12 @@ class H(BaseHTTPRequestHandler):
             return self.err(404, "notFound")
         if path == "/api/products":
             return self.out(200, [{"id": i, "name": n} for i, (t, n) in PRODUCTS.items() if t == who])
-        m = re.fullmatch(r"/api/products/(\d+)", path)
-        if m:
-            row = PRODUCTS.get(int(m.group(1)))
-            return self.out(200, {"id": int(m.group(1)), "name": row[1]}) if row and row[0] == who else self.err(404, "notFound")
+        m = re.fullmatch(r"/api/(products|verification|audit)(?:/(\d+))?", path)
+        if m and m.group(2):
+            row = TABLES[m.group(1)].get(int(m.group(2)))
+            return self.out(200, {"id": int(m.group(2)), VALUE[m.group(1)]: row[1]}) if row and row[0] == who else self.err(404, "notFound")
+        if m and m.group(1) != "products":
+            return self.out(200, [{"id": i, VALUE[m.group(1)]: v} for i, (t, v) in TABLES[m.group(1)].items() if t == who])
         self.out(404, {"status": 404, "detail": None})
 
     def do_POST(self):
@@ -98,14 +125,44 @@ class H(BaseHTTPRequestHandler):
         if path == "/api/auth/verify":
             team = MOBILES.get(data.get("mobile"))
             if team and CODES.get(data["mobile"]) == data.get("code"):
-                return self.out(200, {}, headers=[("Set-Cookie", "sess=%s; Path=/; HttpOnly" % team)])
+                return self.out(200, {"next": safe_next(data.get("next", "/"))}, headers=[("Set-Cookie", "sess=%s; Path=/; HttpOnly" % team)])
             return self.err(404, "notFound")
         who = self.who()
         if path == "/api/products" and who:
-            pid = max(PRODUCTS) + 1
+            pid = NEXT["products"]
+            NEXT["products"] += 1
             PRODUCTS[pid] = (who, str(data.get("name", "")))
+            aid = NEXT["audit"]
+            NEXT["audit"] += 1
+            AUDIT[aid] = (who, "product %d created" % pid)
             return self.out(201, {"id": pid})
+        if path == "/api/verification" and who:
+            vid = NEXT["verification"]
+            NEXT["verification"] += 1
+            VERIFICATIONS[vid] = (who, "pending")
+            return self.out(201, {"id": vid})
         self.err(404, "notFound")
+
+    def do_PUT(self):
+        data = self.body()
+        m = re.fullmatch(r"/api/(products|verification|audit)/(\d+)", self.path.partition("?")[0])
+        who = self.who()
+        if data is None:
+            return self.err(400, "badBody")
+        row = TABLES[m.group(1)].get(int(m.group(2))) if m else None
+        if not (who and row and row[0] == who):
+            return self.err(404, "notFound")
+        TABLES[m.group(1)][int(m.group(2))] = (who, str(data.get(VALUE[m.group(1)], row[1])))
+        self.out(200, {"id": int(m.group(2))})
+
+    def do_DELETE(self):
+        m = re.fullmatch(r"/api/products/(\d+)", self.path.partition("?")[0])
+        who = self.who()
+        row = PRODUCTS.get(int(m.group(1))) if m else None
+        if not (who and row and row[0] == who):
+            return self.err(404, "notFound")
+        del PRODUCTS[int(m.group(1))]
+        self.out(204, b"")
 
 
 def main():

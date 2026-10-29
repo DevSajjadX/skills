@@ -37,6 +37,104 @@
             }
           }
         }
+      },
+      "put": {
+        "responses": {
+          "200": {},
+          "404": {
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      },
+      "delete": {
+        "responses": {
+          "204": {},
+          "404": {
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/verification": {
+      "get": {
+        "responses": {
+          "200": {},
+          "401": {
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "201": {},
+          "400": {
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/verification/{id}": {
+      "get": {
+        "responses": {
+          "200": {},
+          "404": {
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      },
+      "put": {
+        "responses": {
+          "200": {},
+          "404": {
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/audit": {
+      "get": {
+        "responses": {
+          "200": {},
+          "401": {
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/audit/{id}": {
+      "get": {
+        "responses": {
+          "200": {},
+          "404": {
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      },
+      "put": {
+        "responses": {
+          "200": {},
+          "404": {
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
       }
     }
   }
