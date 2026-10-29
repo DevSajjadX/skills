@@ -1,5 +1,5 @@
 # Shopdesk
-Fixture project. Gate: `pnpm gates` (runs lint, tests, format check).
+Fixture project. Gate: `sh gates.sh` (runs lint, tests, format check; no pnpm needed).
 
 ## Document map
 | Document | Owns |

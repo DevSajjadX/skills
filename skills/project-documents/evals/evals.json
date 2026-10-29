@@ -18,7 +18,7 @@
     },
     {
       "id": 2,
-      "prompt": "The order edit form is finished. I ran `pnpm gates | grep -v lint` and all green. Is this done?",
+      "prompt": "The order edit form is finished. I ran `sh gates.sh | grep -v lint` and all green. Is this done?",
       "expected_output": "Walks all 7 Definition of Done items, asks for pasted unfiltered gate output, writes a manual QA script with Setup and 5 to 10 steps, and does not declare done itself.",
       "files": [
         "evals/fixtures/shopdesk"
@@ -27,7 +27,8 @@
         "Loads project-documents",
         "Runs or asks for the gate command named in AGENTS.md and pastes its tail",
         "Refuses to count a gate filtered with grep -v",
-        "Each acceptance criterion names a test or manual section with a reason",
+        "Maps AC-1 and AC-2 in docs/order-edit.md to tests/order_edit_test.sh and AC-3 to a manual QA step, each with a reason",
+        "Reads CONTEXT.md and compares its terms against the change (DoD item 5)",
         "Manual QA script has a Setup line and 5 to 10 steps with exact expected results",
         "Checks glossary, module card and handoffs",
         "Says done is the user's call after the manual script passes"

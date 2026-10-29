@@ -94,7 +94,7 @@ assertion that it passed.** You are the only reviewer this work gets before the 
 4. **Known limits named**: every deliberate cut gets a `// DEBT #N:` comment at the code
    and its `#N label path` line in the debt ledger. Silent debt is the one thing this
    checklist must never allow.
-5. **Sibling docs current**: the glossary for new, renamed or retired terms; the
+5. **Sibling docs current**: read the glossary file and compare its terms against the change (new, renamed or retired terms); the
    architecture doc's "don't have yet" list if a deferred item shipped; an ADR if a new
    invariant exists that code can't express.
 6. **Module card current**: if the change altered what a module or feature owns, its
