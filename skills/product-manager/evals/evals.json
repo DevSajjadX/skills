@@ -313,7 +313,7 @@
       ],
       "expectations": [
         "No file was created, changed or deleted",
-        "It says break down proposes only and the board job writes, and ends with the exact board jobs",
+        "It says break down proposes only and the board job writes, and the last content line of the reply is a board job (no text after the block)",
         "SMS and push are rejected by quoting the bullet in .pm/DO_NOT_DO.md"
       ]
     },
@@ -394,6 +394,8 @@
         "It cites ARCHITECTURE.md's 'No order status history' line (path plus words)",
         "It checks the board first and does not duplicate i2's existing demo or an open handoff",
         "Items are problems with kind, iteration and observable Done-when lines",
+        "Items for the dated status history that i2's demo script does not need are placed in a later iteration or the inbox, not in i2 with a new demo-step proposed to justify them (SKILL.md Break down step 5 placement rule)",
+        "The board-jobs block lists only board jobs, with no caveats or alternatives inside or after it",
         "No file was created"
       ]
     },
