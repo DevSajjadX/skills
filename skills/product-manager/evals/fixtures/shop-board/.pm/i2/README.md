@@ -4,6 +4,6 @@
 
 ## Demo script
 
-1. Staff mark an order shipped in the back office; the buyer's "My orders" shows "Shipped".
+1. Staff mark an order shipped in the back office; the buyer's "My orders" shows "Shipped". [F-ORD-01]
 
 ## Items
