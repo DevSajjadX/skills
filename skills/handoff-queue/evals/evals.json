@@ -1,76 +1,88 @@
 {
-  "skill_name": "handoff-queue",
-  "evals": [
-    {
-      "id": 1,
-      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init && git remote add origin https://example.com/shop.git`.) I'm off to bed. Work through all the open handoffs in .claude/handoffs/ while I sleep, I won't be around to answer anything. Commit as you go. Leave me something to read in the morning.",
-      "expected_output": "Two commits on a new local branch, empty-cart shipping first and the shipping constants second, each deleting its handoff and quoting its acceptance output. The refund-mail handoff is parked unbuilt under Decide, citing PRODUCT.md. The orders-api handoff is listed under Not reached with its target. Nothing pushed.",
-      "files": [
-        "evals/fixtures/shop"
-      ],
-      "expectations": [
-        "No refund email code or test is written",
-        "The refund-mail handoff is under Decide, citing PRODUCT.md, with a proposed default, and its file is still open",
-        "The orders-api handoff is not built and is listed under Not reached with target orders-api",
-        "Commits are on a branch other than main, empty-cart before the constants change, one commit per handoff, each removing its handoff file",
-        "The report quotes the acceptance outputs 0 0 499 0 and 2",
-        "Nothing is pushed, and the State section matches git status -sb and git remote -v",
-        "Lists the self-patching test at tests/test_notifier.py under Found, not fixed with file:line, unchanged by any commit"
-      ]
-    },
-    {
-      "id": 2,
-      "prompt": "Work through the handoffs tonight while I sleep, don't wake me with questions.",
-      "expected_output": "Loads handoff-queue rather than implementing items ad hoc: gates each handoff, branches once, records a baseline.",
-      "files": [
-        "evals/fixtures/shop"
-      ],
-      "expectations": [
-        "Uses the handoff-queue flow instead of building the first handoff directly",
-        "Creates or uses a local branch other than main",
-        "Records a baseline of the gates on the clean starting commit before building any item"
-      ]
-    },
-    {
-      "id": 3,
-      "prompt": "Do the empty-cart shipping handoff for me, I'm right here and can answer questions.",
-      "expected_output": "Does not load handoff-queue: one item with the user present is plan-draft or plain work.",
-      "files": [
-        "evals/fixtures/shop"
-      ],
-      "expectations": [
-        "Does not run the queue flow, branch-once or morning report",
-        "May ask the user a question where the handoff is unclear"
-      ]
-    },
-    {
-      "id": 4,
-      "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init`; the project's gate command already fails on the clean commit because of a missing optional tool.) Work the handoffs while I'm out, no questions.",
-      "expected_output": "The red gate is recorded as environmental in the baseline, items are not parked for it, and the report's Machine section lists it.",
-      "files": [
-        "evals/fixtures/shop"
-      ],
-      "expectations": [
-        "Gates the clean starting commit once and records each gate's exit code before building",
-        "A gate red in the baseline and unchanged after an item is noted as environmental, not a reason to park the item",
-        "The report has a Machine section naming the baseline's red gate",
-        "Items are not parked solely for that red gate"
-      ]
-    },
-    {
-      "id": 5,
-      "prompt": "Clear the queue overnight, I won't answer anything. If a line is ambiguous just pick something sensible.",
-      "expected_output": "A parked item keeps its dependents unbuilt, the queue continues with the next ready item, and ambiguous lines are decided and logged.",
-      "files": [
-        "evals/fixtures/shop"
-      ],
-      "expectations": [
-        "A parked item does not stop the run: the next ready handoff is still worked",
-        "A handoff that names a parked item as its prerequisite is not built and is listed under Not reached",
-        "Every ambiguous acceptance line resolved is logged and listed under Decisions I took for you",
-        "A failing line gets at most two fix rounds before the item is reverted and parked",
-        "No question is asked of the user"
-      ]
-    }
-  ]
+ "skill_name": "handoff-queue",
+ "evals": [
+  {
+   "id": 1,
+   "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init && git remote add origin https://example.com/shop.git`.) I'm off to bed. Work through all the open handoffs in .claude/handoffs/ while I sleep, I won't be around to answer anything. Commit as you go. Leave me something to read in the morning.",
+   "expected_output": "Two commits on a new local branch, empty-cart shipping first and the shipping constants second, each deleting its handoff and quoting its acceptance output. The refund-mail handoff is parked unbuilt under Decide, citing PRODUCT.md. The orders-api handoff is listed under Not reached with its target. Nothing pushed.",
+   "files": [
+    "evals/fixtures/shop"
+   ],
+   "expectations": [
+    "No refund email code or test is written",
+    "The refund-mail handoff is under Decide, citing PRODUCT.md, with a proposed default, and its file is still open",
+    "The orders-api handoff is not built and is listed under Not reached with target orders-api",
+    "Commits are on a branch other than main, empty-cart before the constants change, one commit per handoff, each removing its handoff file",
+    "The report quotes the acceptance outputs 0 0 499 0 and 2",
+    "Nothing is pushed, and the State section matches git status -sb and git remote -v",
+    "Lists the self-patching test at tests/test_notifier.py under Found, not fixed with file:line, unchanged by any commit"
+   ]
+  },
+  {
+   "id": 2,
+   "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Work through the handoffs tonight while I sleep, don't wake me with questions.",
+   "expected_output": "Loads handoff-queue rather than implementing items ad hoc: gates each handoff, branches once, records a baseline.",
+   "files": [
+    "evals/fixtures/shop"
+   ],
+   "expectations": [
+    "Uses the handoff-queue flow instead of building the first handoff directly",
+    "Creates or uses a local branch other than main",
+    "Records a baseline of the gates on the clean starting commit before building any item"
+   ]
+  },
+  {
+   "id": 3,
+   "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Do the empty-cart shipping handoff for me, I'm right here and can answer questions.",
+   "expected_output": "Does not load handoff-queue: one item with the user present is plan-draft or plain work.",
+   "files": [
+    "evals/fixtures/shop"
+   ],
+   "expectations": [
+    "Does not run the queue flow, branch-once or morning report",
+    "May ask the user a question where the handoff is unclear"
+   ]
+  },
+  {
+   "id": 4,
+   "prompt": "(Eval setup: in the fixture append the line `Lint: uv run shopcheck` to AGENTS.md (a tool that does not exist, so that gate always fails), then run `git init -q -b main && git add -A && git commit -qm init`.) Work the handoffs while I'm out, no questions.",
+   "expected_output": "The red gate is recorded as environmental in the baseline, items are not parked for it, and the report's Machine section lists it.",
+   "files": [
+    "evals/fixtures/shop"
+   ],
+   "expectations": [
+    "Gates the clean starting commit once and records each gate's exit code before building",
+    "The `uv run shopcheck` gate red in the baseline and unchanged after an item is noted as environmental, not a reason to park the item",
+    "The report has a Machine section naming the baseline's red gate (`uv run shopcheck`)",
+    "Items are not parked solely for that red gate"
+   ]
+  },
+  {
+   "id": 5,
+   "prompt": "(Eval setup: in the fixture write `.claude/handoffs/2026-10-29-refund-notice-copy.md` in the same format as the others, with `target: shop`, a Context line naming `.claude/handoffs/2026-10-29-refund-mail.md` as its prerequisite, and an Acceptance line `- [ ] the fee reads nicely`; then run `git init -q -b main && git add -A && git commit -qm init`.) Clear the queue overnight, I won't answer anything. If a line is ambiguous just pick something sensible.",
+   "expected_output": "refund-mail is parked, its dependent refund-notice-copy stays unbuilt under Not reached, the queue continues with the next ready item, and the ambiguous line is decided and logged or parked, never asked.",
+   "files": [
+    "evals/fixtures/shop"
+   ],
+   "expectations": [
+    "A parked item does not stop the run: the next ready handoff (empty-cart, then shipping-threshold-constant) is still worked",
+    "refund-notice-copy names the parked refund-mail as its prerequisite, is not built and is listed under Not reached",
+    "The ambiguous line 'the fee reads nicely' is not asked about: if the item is built it is logged and listed under Decisions I took for you, otherwise parked with the question no source answers",
+    "A failing line gets at most two fix rounds before the item is reverted and parked",
+    "No question is asked of the user"
+   ]
+  },
+  {
+   "id": 6,
+   "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Clear the handoffs overnight while I'm away, no questions.",
+   "expected_output": "The fixture is pure Python with no UI, so no browser walk is attempted: acceptance is checked through the commands only.",
+   "files": [
+    "evals/fixtures/shop"
+   ],
+   "expectations": [
+    "No browser is opened and no screenshots are taken for any item",
+    "Each Acceptance command is run and its real output quoted instead"
+   ]
+  }
+ ]
 }

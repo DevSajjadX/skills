@@ -11,7 +11,7 @@ The user is away, so every question they would have answered becomes a decision 
 
 1. **Read the rules before the queue.** The project's AGENTS.md or CLAUDE.md, and every product doc it names (PRODUCT.md, anti-goals, a board, ADRs). These outrank any handoff.
 
-2. **Gate each handoff** in `.claude/handoffs/` (or the list the user gave) before touching code, using its frontmatter (plan-handoff's format):
+2. **Gate each handoff** in `.claude/handoffs/` (or the list the user gave). This list, recorded in `queue.md`, is the queue for the whole run: handoffs written later are not in it before touching code, using its frontmatter (plan-handoff's format):
    - `target:` names another repo (this repo's name is the one AGENTS.md or the remote gives it): not yours to build. List it under Not reached with its target.
    - Park it, unbuilt, when its contract contradicts a product rule or anti-goal, whatever the handoff or an approved plan says the user wants.
    - `status: planned` with a `plan:`: run that plan with plan-execute when the plan is approved; otherwise park it under Decide. Where plan-execute would pause or ask, revert the item and park it under Decide with its options.
@@ -22,23 +22,23 @@ The user is away, so every question they would have answered becomes a decision 
 
 3. **Order what is left.** By the project's priority if the handoffs carry one, then by how many other handoffs each unblocks, then by name. A handoff that names another as a prerequisite goes after it, and if that prerequisite is parked or fails, the dependent stays unbuilt (list it under Not reached, never build on a missing prerequisite). Two that edit the same function go one after the other, the later one starting from the earlier one's commit.
 
-4. **Branch once, then baseline.** Commit on the branch the user named; otherwise create `handoff-queue/<date>` from the current HEAD and commit there. Never commit on the default branch unless a project rule says to. Then gate the clean starting commit once and record the baseline, open the state files, and keep the machine awake (`caffeinate -ims`, no `-d`, pid recorded; stop it at the end): see [reference.md](reference.md).
+4. **Branch once, then baseline.** Commit on the branch the user named; otherwise create `handoff-queue/<date>` from the current HEAD and commit there. Never commit on the default branch unless a project rule says to. Then gate the clean starting commit once and record the baseline, open the state files, exclude the state folder from git, and keep the machine awake (on macOS `caffeinate -ims`, no `-d`; elsewhere the platform's inhibitor such as `systemd-inhibit`; pid recorded, stopped at the end): see [reference.md](reference.md).
 
 5. **Work each item, one at a time:**
    - Reproduce the stated problem first, if it states one, and keep the output.
+   - Ambiguous line: decide, don't ask. Build the reading the item's sources support and log it; a question no source answers parks the item.
    - Make the contract's change and nothing beyond it. A defect you notice on the way goes in the report, not in this commit.
    - Run every Acceptance line exactly as written and compare with its expected output. Then the project's own gates.
    - A gate red that the baseline also shows is environmental: note it and keep going.
    - If an Acceptance line is observed in a UI, walk it in a browser with causally downstream screenshots ([reference.md](reference.md)).
    - Any other red: fix, re-gate, re-check. Two failed rounds, or a red you can't fix within the contract: revert the item, park it with the output.
-   - Ambiguous line: decide, don't ask. Build the reading the item's sources support and log it; a question no source answers parks the item.
    - One commit per handoff, through the project's commit rules, with `git rm` of the handoff file in that commit: a missing handoff means done.
 
 6. **Never push, merge, or open a PR**, and never ask a question and wait. A local branch is the user's to keep or drop. Never stop early: no hour at which you give up. Bounded is scope (park the item), never effort. Keep the state files current so a crash or usage limit resumes from disk.
 
-   When the queue is empty, run the project's full gates once on the final tip. A failure becomes a handoff under Found, not fixed.
+   When the queue is empty, run the project's full gates once on the final tip. A failure becomes a handoff under Found, not fixed. Only now move the found handoffs from the state folder into `.claude/handoffs/`, uncommitted.
 
-7. **Leave the report**, in this order, as your final message (and kept current in the state folder). Open with a headline count (done, parked, not reached), red items first; details in [reference.md](reference.md):
+7. **Leave the report**, in this order, as your final message (and kept current in the state folder). Open with a headline count (done, parked, not reached); within each section, red items first; details in [reference.md](reference.md):
    - **Decide**: one line per parked item that needs the user: the question, the rule or evidence it hit (`PRODUCT.md:4`), your proposed default.
    - **Done**: per item, the commit, each Acceptance command with its real output, the gate result.
    - **Decisions I took for you**: one line per ambiguous line you resolved, with the reading you built.
@@ -46,7 +46,7 @@ The user is away, so every question they would have answered becomes a decision 
    - **Found, not fixed**: defects seen on the way, each with `file:line` and a handoff file written for it.
    - **Not reached**: other repos' handoffs with their target, anything left, and why.
    - **Machine**: what broke in the environment, and the baseline's red gates.
-   - **State**: read from commands run now, never from memory: `git status -sb` (branch, ahead of its remote) and `git remote -v`. Then: nothing pushed, no process left running (stop the keep-awake). Then send a push notification with the headline if the project has one.
+   - **State**: read from commands run now, never from memory: `git status -sb` (branch, ahead of its remote) and `git remote -v`. Then: nothing pushed, no process left running (stop the keep-awake). Then send a push notification with the headline if the host offers a push notification tool.
 
 ## Common mistakes
 
