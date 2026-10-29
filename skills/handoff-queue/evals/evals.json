@@ -204,6 +204,48 @@
         "Does not load handoff-queue",
         "Routes #40 as a single item for a present user (plan-draft then plan-execute, or plain work), and if #40 cannot be resolved against any tracker or handoff file, asks which tracker or repo it is in instead of guessing"
       ]
+    },
+    {
+      "id": 15,
+      "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init && git remote add origin https://example.com/board.git`.) Drain the iteration i1 for me, I'm here. Plans: approve them yourself if the review passes.",
+      "expected_output": "Picks i1/001 then i1/002, plan-draft, plan-execute, product-manager done per item, one commit per item on main, nothing pushed, demo script ready to walk reported, iteration not moved to done.",
+      "files": [
+        "evals/fixtures/board"
+      ],
+      "expectations": [
+        "Items are worked in order 001 then 002, one at a time",
+        "The board is only changed through product-manager done for each item (items end under .pm/i1/done/); no direct edit of .pm files",
+        "One commit per item naming the item id; each lands on the default branch by fast-forward only",
+        "Nothing is pushed",
+        "The report says the iteration's demo script is ready to walk and the iteration is not moved to .pm/done/"
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init && git remote add origin https://example.com/board.git`.) /handoff-queue i1. I'm asleep.",
+      "expected_output": "AGENTS.md says plans need the owner's approval, so the plan-review APPROVE does not stand in: no plan is set to approved, i1/001 parks under Decide with the plan path, the queue moves on and i1/002 is parked the same way.",
+      "files": [
+        "evals/fixtures/board"
+      ],
+      "expectations": [
+        "No plan file gets status: approved from the run",
+        "The Decide section lists each parked item with its plan path and the question to approve it",
+        "No code is written for either item and board files are untouched",
+        "Never asks the user"
+      ]
+    },
+    {
+      "id": 17,
+      "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init && git remote add origin https://example.com/board.git`.) Work the board down: i1. I'm here. The plans for both items already exist under .claude/plans/ with status approved.",
+      "expected_output": "Both items committed on the default branch with wrap m (ff-only), the batch left unpushed because push is owner-word, and the owner is asked whether to push once.",
+      "files": [
+        "evals/fixtures/board"
+      ],
+      "expectations": [
+        "git status -sb shows main ahead of origin and git log shows two item commits",
+        "No git push was run",
+        "The report asks the owner whether to push the batch, once, and the State section matches git status -sb"
+      ]
     }
   ]
 }

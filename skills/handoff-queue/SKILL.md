@@ -1,6 +1,6 @@
 ---
 name: handoff-queue
-description: Use when the user leaves a queue of handoffs, tasks, or a tracker milestone or board of work items to work through while they are away and can't answer ("work through the handoffs while I sleep", "clear the queue overnight", "work this milestone down tonight", "do these while I'm out, don't ask me", "do these without me", or /handoff-queue). Not for one item the user is present for (that is plan-draft then plan-execute, or plain work), for a timed poll (that is /loop), for issues outside the queue given, or for writing a handoff (that is plan-handoff).
+description: Use when the user leaves a queue of handoffs, tasks, or a tracker milestone, a board iteration or a board of work items to work through while they are away and can't answer ("work through the handoffs while I sleep", "clear the queue overnight", "work this milestone down tonight", "drain the iteration", "work the board down", "loop worker", "do these while I'm out, don't ask me", "do these without me", or /handoff-queue). Not for one item the user is present for (that is plan-draft then plan-execute, or plain work), for a timed poll (that is /loop), for a single board item (plan-draft then plan-execute), for issues outside the queue given, or for writing a handoff (that is plan-handoff).
 category: Workflow
 tags: [workflow, handoff, board]
 argument-hint: "[milestone, board filter or handoff folder; default .claude/handoffs/ when it has open items, else the open milestone with the most ready items]"
@@ -17,15 +17,17 @@ Every item in the queue is already approved as product, unless a product rule co
 
 Anything below that conflicts with this brief is a bug in this file.
 
-## Two kinds of queue
+## Three kinds of queue
 
-| | Handoff queue | Milestone or board queue |
-|---|---|---|
-| Items | files in `.claude/handoffs/` | work items in a tracker, with blockers |
-| Pipeline | Steps below, serial, one branch | [night-run.md](night-run.md) sections 0 to 6 replace Steps 3 to 7: up to three workers, a worktree each, a merge queue, a decisions log, a morning report |
-| Push, PR, merge | never | the standing brief authorizes pushing item branches and shipping through the project's ship command, else wrap's `pr` mode |
+| | Handoff queue | Milestone or tracker queue | Board iteration |
+|---|---|---|---|
+| Items | files in `.claude/handoffs/` | work items in a tracker, with blockers | the open items of one iteration of the project's board (`.pm/` by default, as product-manager resolves it) |
+| Pipeline | Steps below, serial, one branch | [night-run.md](night-run.md) sections 0 to 6 replace Steps 3 to 7: up to three workers, a worktree each, a merge queue, a decisions log, a morning report | [board-run.md](board-run.md): lowest open item first, plan-draft, plan-execute, commit, next; serial, owner present or not |
+| Push, PR, merge | never | the standing brief authorizes pushing item branches and shipping through the project's ship command, else wrap's `pr` mode | per wrap's Ship section: `flow: direct` lands each item with wrap `m` and pushes only per the `push` key; `flow: pr` uses wrap `pr` |
 
-The brief, Never, Human QA, Parking, Common mistakes and Steps 1 and 2 apply to both. With no argument, use `.claude/handoffs/` when it has open items, otherwise the open milestone with the most ready items. State on disk lives under `.claude/handoff-queue/<date>/` in the main checkout for both kinds (see [reference.md](reference.md)).
+A board iteration is chosen by "drain the iteration", "work the board down" or "loop worker" with an iteration id (default: the lowest open iteration). Read board-run.md and follow it instead of Steps 1 to 7; its plan approval, landing and push rules replace the standing brief's where they differ.
+
+The brief, Never, Human QA, Parking and Common mistakes apply to all three (a board run overrides them where board-run.md says so); Steps 1 and 2 apply to the handoff and milestone queues only. A board run also keeps the state folder and, with the owner away, the keep-awake (set up in board-run.md preconditions). With no argument, use `.claude/handoffs/` when it has open items, otherwise the open milestone with the most ready items. State on disk lives under `.claude/handoff-queue/<date>/` in the main checkout for all three kinds (see [reference.md](reference.md)).
 
 ## What stands in for the owner
 
