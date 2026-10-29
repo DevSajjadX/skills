@@ -179,6 +179,117 @@
         "It refuses, naming the handoff's target orders-api as the reason",
         "No file was created, moved or changed"
       ]
+    },
+    {
+      "id": 14,
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Board status.",
+      "expected_output": "Prints the current iteration i1 with its open item i1/002, i2 with its count, the inbox, and open handoffs not on the board, runs the project's board check if one exists and reports it, and changes no file.",
+      "files": [
+        "evals/fixtures/shop-board"
+      ],
+      "expectations": [
+        "Names i1 as the current iteration and lists i1/002 as open",
+        "Shows i2 as a later iteration with a count and lists the inbox item",
+        "Mentions the open handoffs under .claude/handoffs/ that are not yet on the board",
+        "States that no board check is defined (the pytest gate in AGENTS.md is not one)",
+        "No file was created, moved or changed"
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Mark i1/002 done, the discount code works now.",
+      "expected_output": "Sets status done, moves the file to i1/done/002.md with the id unchanged, ticks the README line, and asks whether the demo script passed before moving the iteration.",
+      "files": [
+        "evals/fixtures/shop-board"
+      ],
+      "expectations": [
+        "i1/002.md now lives only at .pm/i1/done/002.md, with no open copy left",
+        "The id in the file is still i1/002 and status is done",
+        "The line in i1/README.md is ticked",
+        "Asks whether the demo script has passed before moving i1 to done/",
+        "Does not move the iteration or mark the roadmap row done before that answer"
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Mark i1/002 done. Staff can now see the list and mark orders collected, I tried it.",
+      "expected_output": "Moves the item but refuses to close the iteration: its demo script cites flow A-03, which PRODUCT.md lists as planned with no test, so it names the unbuilt flow and stops.",
+      "files": [
+        "evals/fixtures/bakery-board"
+      ],
+      "expectations": [
+        "Moves i1/002 to i1/done/002.md and ticks its line",
+        "Names A-03 as the flow the demo cites that has no test yet",
+        "Does not move i1 to done/ and does not mark its roadmap row done",
+        "Says the flow is marked built only by the change that lands its test"
+      ]
+    },
+    {
+      "id": 17,
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) New iteration for buyers cancelling an unpaid order.",
+      "expected_output": "Creates a new iteration only with a numbered, user-observable demo script, in execution order in the roadmap, and without inventing items beyond the ask.",
+      "files": [
+        "evals/fixtures/shop-board"
+      ],
+      "expectations": [
+        "The new iteration has a numbered demo script of steps a buyer can observe",
+        "It gets the next free iteration number and a ROADMAP.md row after i2",
+        "Nothing in it is a task list, file list or implementation step"
+      ]
+    },
+    {
+      "id": 18,
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Add to i1: add a shared checkout-form hook and migrate every form in the shop to it.",
+      "expected_output": "Does not file the solution; restates it as the problem it solves and writes the item with no Steps or Files section.",
+      "files": [
+        "evals/fixtures/shop-board"
+      ],
+      "expectations": [
+        "The item title and Problem state what goes wrong for a user or developer, not the hook",
+        "The item has no Steps, Files, Tasks, Implementation, Approach or Acceptance criteria section",
+        "Done when lines are observable"
+      ]
+    },
+    {
+      "id": 19,
+      "prompt": "We've decided to add a delivery-status column to the orders list. Plan it.",
+      "expected_output": "Does not load product-manager: the decision is made, so this is a plan (plan-draft), not a break-down or a judgment.",
+      "files": [
+        "evals/fixtures/shop-board"
+      ],
+      "expectations": [
+        "Does not break the change down into board items or iterations",
+        "Does not reopen whether to build it",
+        "Points to planning the change (plan-draft) or starts a plan"
+      ]
+    },
+    {
+      "id": 20,
+      "prompt": "Break down 'buyers want to know where their order is' into board items.",
+      "expected_output": "Proposes the items as text and lists the board jobs, but writes no board file until the user says to run them.",
+      "files": [
+        "evals/fixtures/shop-board"
+      ],
+      "expectations": [
+        "Each proposed item has a kind, an iteration with reason, a problem and observable Done when lines",
+        "Ends with the exact board jobs in order",
+        "No file under .pm/ was created or changed"
+      ]
+    },
+    {
+      "id": 21,
+      "prompt": "Break down 'orders need a way to be cancelled' for the board. If a new iteration is needed, propose one; we may also want a queue library and a new ADR for it.",
+      "expected_output": "Places items in existing iterations where their demo can absorb them, raises the queue library and ADR as questions for the owner rather than settling them, and puts no secrets in the proposal.",
+      "files": [
+        "evals/fixtures/shop-board"
+      ],
+      "expectations": [
+        "Proposes a new iteration only if no existing iteration's demo can absorb the work, and then with a demo script",
+        "Raises the queue library and the ADR as a question for the owner, not as decided",
+        "Proposes no step, file list or estimate",
+        "Notes dependencies or risks between the items",
+        "No credential, connection string or real company name appears in the proposal"
+      ]
     }
   ]
 }
