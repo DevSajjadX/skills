@@ -1,6 +1,6 @@
 # Routine: duplicate unifier
 
-Shared rules (preconditions, scope, proof standard, gates, branch and commit protocol, budget, STOPs, never-touch, owner table) are in [SKILL.md](SKILL.md). Read it first. This file adds only what is specific to duplicated logic.
+Shared rules (preconditions, scope, proof standard, gates, ship protocol, budget, STOPs, never-touch, owner table) are in [SKILL.md](SKILL.md). Read it first. This file adds only what is specific to duplicated logic.
 
 ## The defect
 
@@ -14,10 +14,10 @@ Look for the same **decision** in two places:
 
 - Two entry points computing the same eligibility, price or status transition.
 - A validator and a handler both enforcing the same rule (the handler's copy is the one that survives a validator refactor, and diverges).
-- A rule enforced in backend code and re-enforced in a hand-written client schema that was supposed to derive from the generated one.
+- A rule enforced in backend code and re-enforced in a hand-written client schema (a zod schema, a form validator) that was supposed to derive from the generated one. Read the feature's card before calling this duplication: a hand-written restatement of a rule the generated schema already carries is the finding.
 - The same query shape written twice with different filters.
 
-Read the scope's `AGENTS.md` first. Several apparent duplicates are deliberate: a function that checks a similar condition on purpose (judged at a different moment, on different data), response shapes callers rely on separately. Those are decisions, not drift.
+Read the scope's `AGENTS.md` first. Several apparent duplicates are deliberate: a function that checks a similar condition on purpose (judged at a different moment, on different data), response shapes callers rely on separately, a form that renders its fields from a schema endpoint but never re-checks a value because one module owns every such rule, and reads that cross tenants on purpose where signed-in code relies on a tenant filter (a project usually keeps an allow-list test naming each, with its reason). Those are decisions, not drift.
 
 ## Prove
 
@@ -30,10 +30,10 @@ If the two copies are **not** actually equivalent (one handles a case the other 
 
 ## Fix
 
-- Put the rule in **one** place and have both call sites call it. Inside a module that means a domain method or a single helper next to the code that owns the data, not a new `helpers/` or `shared/` folder and not a new abstraction layer.
+- Put the rule in **one** place and have both call sites call it. Inside a module that means a domain method on the aggregate or a single private helper in the use case's own file, next to the code that owns the data, not a new `helpers/` or `shared/` folder and not a new abstraction layer.
 - Name the owner after the **question it answers**, not the mechanism: `may_list_product`, not `check_product_stuff`.
 - Do not move the rule to a shared package to unify two modules' copies. That is the cross-module STOP.
-- Keep the commit to the unification. A rename, a reorder and a unification in one commit is three changes nobody can review.
+- Keep the commit to the unification. A rename, a reorder and a unification in one commit is three changes nobody can review. The run's commits share one shipment.
 
 ## Verify
 
@@ -46,11 +46,11 @@ The project's full gate list, plus:
 
 Beyond the universal list:
 
-- **The two copies live in different modules.** Unifying them means a shared interface or package, a boundary design decision, not a cleanup. Write a handoff and leave both copies in place.
+- **The two copies live in different modules.** Unifying them means a shared interface or package, a boundary design decision, not a cleanup. Write a handoff and leave both copies in place (naming the shared-interface or shared-package option, with its cost).
 - **The copies are backend and frontend.** A rule mirrored across the two needs a parity test or a redesign where only one implementation exists, not a routine's judgement call.
 - **One copy is generated.** Generated code is regenerated, never edited.
 - **Unifying would change behaviour in an edge case** neither test pins. Pin it first or stop.
 
 ## Summary
 
-Per the budget block: committed (branch, SHAs), skipped (with the missing proof), or nothing found.
+Per the budget block: shipped (PR and SHA, or branch and SHAs), skipped (with the missing proof), or nothing found.
