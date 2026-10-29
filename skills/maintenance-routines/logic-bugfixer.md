@@ -14,7 +14,7 @@ Code that **provably contradicts its documented intent**. Not code you would hav
 4. **The glossary** (`CONTEXT.md` or equivalent): a term used to mean something it does not.
 5. **Docstrings and comments at the code**: the text that says what the function guarantees.
 
-A gap between code and a doc is not automatically a code bug. When two documents disagree (a docstring against an ADR), the higher one in this list wins. **Code is truth**: when the doc is the stale one, the fix is the doc, which is a documentation change, not a code change. A stale ADR, `AGENTS.md` or `CLAUDE.md` is never-touch: write a handoff that quotes the code and the stale line. Only docstrings, comments and the glossary are fixed here. **Decide which is wrong before you fix either.** Fixing a stale comment is its own finding: it needs no failing test, only the higher-ranked source quoted. The doc fix goes through the project's own documents skill or process when it has one.
+A gap between code and a doc is not automatically a code bug. When two documents disagree (a docstring against an ADR), the higher one in this list wins. **Code is truth**: when the doc is the stale one, the fix is the doc, which is a documentation change, not a code change. A stale ADR, `AGENTS.md` or `CLAUDE.md` is never-touch: write a handoff that quotes the code and the stale line. Only docstrings, comments and the glossary are fixed here. **Decide which is wrong before you fix either.** Fixing a stale comment is its own finding: it needs no failing test, only the higher-ranked source quoted. The doc fix goes through the project's own documents skill (`project-documents` by default) or process.
 
 ## Where to look first
 

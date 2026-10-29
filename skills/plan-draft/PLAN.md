@@ -74,7 +74,7 @@ Files, Change (1 to 2 lines), plus a constraint/ordering note only when load-bea
 
 - [ ] **Z1. Simplify**: the simplify or review skill over the changed code
 - [ ] **Z2. Test coverage**: tests for real behavior and failure modes, not lines
-- [ ] **Z3. Docs surface**: every doc the change touches or makes stale
+- [ ] **Z3. Docs surface**: every doc the change touches or makes stale (`project-documents`)
 
 ## 4. Definition of done
 

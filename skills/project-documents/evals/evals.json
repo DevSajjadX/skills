@@ -1,0 +1,180 @@
+{
+  "skill_name": "project-documents",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We decided product names are always sorted in Postgres with the database collation, never in C#. Where do I write that down?",
+      "expected_output": "Reads the AGENTS.md doc map, routes the rule to docs/conventions with a rule id (next free db- id, keeping existing ids), and not to a new doc, the README or an ADR.",
+      "files": [
+        "evals/fixtures/shopdesk"
+      ],
+      "expectations": [
+        "Reads shopdesk AGENTS.md doc map before choosing a file",
+        "Names docs/conventions/database.md and appends or replaces in place with a stable rule id",
+        "Does not create a new document or put it in README.md",
+        "Mentions bumping the conventions version per its README"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "The order edit form is finished. Is this done?",
+      "expected_output": "Walks all 7 Definition of Done items, asks for pasted unfiltered gate output, writes a manual QA script with Setup and 5 to 10 steps, and does not declare done itself.",
+      "files": [
+        "evals/fixtures/shopdesk"
+      ],
+      "expectations": [
+        "Runs or asks for the gate command named in AGENTS.md and pastes its tail",
+        "Refuses to count a gate filtered with grep -v",
+        "Each acceptance criterion names a test or manual section with a reason",
+        "Manual QA script has a Setup line and 5 to 10 steps with exact expected results",
+        "Checks glossary, module card and handoffs",
+        "Says done is the user's call after the manual script passes"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Rename the local variable x to orderId in api/src/orders.cs.",
+      "expected_output": "Does not load project-documents: no .md touched and nothing declared done.",
+      "files": [
+        "evals/fixtures/shopdesk"
+      ],
+      "expectations": [
+        "Does not load project-documents",
+        "Touches no .md file"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Add an item to i1 for the keyset paging fix.",
+      "expected_output": "Does not load project-documents: the board is written only by the board skill.",
+      "files": [
+        "evals/fixtures/shopdesk"
+      ],
+      "expectations": [
+        "Does not load project-documents",
+        "Routes to the board skill, not a direct .pm/ write"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Move docs/conventions/database.md to docs/rules/database.md.",
+      "expected_output": "Moves the file and greps the whole repo for its old name, fixing every live pointer (AGENTS.md, the ADR, the conventions README) in the same change.",
+      "files": [
+        "evals/fixtures/shopdesk"
+      ],
+      "expectations": [
+        "Greps for the old filename across the repo including .claude/ and docs/adr",
+        "Fixes the pointers in AGENTS.md and docs/adr/0001-money-in-cents.md in the same change",
+        "Leaves no link to the old path"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Add an ADR for the rule that refunds are only issued by the payments worker.",
+      "expected_output": "Writes the ADR under 45 lines with the next free number (0002), append-only, and checks the existing ADR's stale file:line while there.",
+      "files": [
+        "evals/fixtures/shopdesk"
+      ],
+      "expectations": [
+        "Uses number 0002 and does not renumber 0001",
+        "ADR is under 45 lines",
+        "Reports the stale file:line in 0001 as a bug (api/src/money.cs no longer has that line)",
+        "Does not restate code in prose"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "I added a // DEBT #7 comment in api/src/orders.cs for the missing retry. Update the docs.",
+      "expected_output": "Adds one '#7 label path' line to docs/tech-debts.md, keeps the debt body at the code, and notes that #4 in the ledger has no code comment (parity gap).",
+      "files": [
+        "evals/fixtures/shopdesk"
+      ],
+      "expectations": [
+        "Adds only an index line, not the debt body, to the ledger",
+        "Detects the ledger entry #4 with no matching code comment",
+        "Does not copy the comment text into the ledger"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "The plan .claude/plans/refunds.md is approved now. Flip its status. I am working in a git worktree.",
+      "expected_output": "Flips the status in the main checkout, not in the worktree, because a gitignored plan file there evaporates.",
+      "files": [
+        "evals/fixtures/shopdesk"
+      ],
+      "expectations": [
+        "Edits the plan in the main checkout",
+        "Does not edit a copy inside the worktree"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Create a new skill .claude/skills/routine-c for the same family as routine-a and routine-b.",
+      "expected_output": "Links the family's shared contract instead of copying it, sets name equal to the directory, a description with trigger and skip clause, and at least 2 evals.",
+      "files": [
+        "evals/fixtures/shopdesk"
+      ],
+      "expectations": [
+        "Links .claude/skills/routine-shared/contract.md",
+        "name equals directory routine-c",
+        "Description has a trigger and a skip clause",
+        "evals.json has at least 2 entries",
+        "Does not restate the shared contract"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "I introduced the term 'backorder' in this change. Anything to update beyond the code?",
+      "expected_output": "Adds the term to the glossary CONTEXT.md in the same change, with an _Avoid_ line, and checks the architecture doc's don't-have-yet list.",
+      "files": [
+        "evals/fixtures/shopdesk"
+      ],
+      "expectations": [
+        "Edits CONTEXT.md in the same change",
+        "Adds an _Avoid_ synonym line",
+        "Checks ARCHITECTURE.md's don't-have-yet list"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "The README says orders are paginated by offset but the code uses a keyset cursor. Fix the docs.",
+      "expected_output": "Treats code as truth, fixes the README to point at the code with a file path and does not copy the stale claim.",
+      "files": [
+        "evals/fixtures/shopdesk"
+      ],
+      "expectations": [
+        "Verifies against api/src/orders.cs first",
+        "Fixes the doc, not the code",
+        "Replaces the prose with a pointer and intent"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "I want to write down how we handle refunds. This repo has no doc map yet. Where should it go?",
+      "expected_output": "Finds no map in the instruction file, drafts one from the repo, shows it as a table and asks for a yes before adding it to AGENTS.md; meanwhile uses it as a labelled draft.",
+      "files": [
+        "evals/fixtures/bare"
+      ],
+      "expectations": [
+        "Reads AGENTS.md and finds no doc map",
+        "Lists the repo's .md files and assigns roles",
+        "Marks roles with no file as none yet",
+        "Asks for a yes before editing AGENTS.md"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "The export feature is done, can you commit the manual QA results? Step 3 failed in the manual run: the CSV header is in the wrong language.",
+      "expected_output": "Files the failure as a handoff in .claude/handoffs/ (not an inline fix), names it in the reply and does not declare the feature done.",
+      "files": [
+        "evals/fixtures/shopdesk"
+      ],
+      "expectations": [
+        "Writes a handoff file named YYYY-MM-DD-<slug>.md",
+        "Does not fix the header inline",
+        "Names the handoff in the final reply",
+        "Does not declare the feature done"
+      ]
+    }
+  ]
+}

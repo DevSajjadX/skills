@@ -1,0 +1,2 @@
+# Bare
+A tiny app.

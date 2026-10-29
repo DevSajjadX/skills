@@ -175,7 +175,7 @@ transcribe the code itself: the executor reads the file at run time.
 
 - **Simplify**: the user's simplify or review skill (`/simplify` if present) over the changed code.
 - **Test coverage**: tests for real behavior and failure modes, not for lines.
-- **Docs surface**: every doc the change touches or makes stale, per the project's own docs rule if it has one.
+- **Docs surface**: every doc the change touches or makes stale, per its doc map, using the `project-documents` skill (the project's own documents skill wins when it has one).
 
 **6. Define done.**
 Write acceptance criteria as a checklist. For each item, specify exactly how it will be
