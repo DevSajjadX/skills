@@ -24,7 +24,15 @@ for i in $(seq 10); do <the project's test command> || echo "run $i failed"; don
 
 Where the runner has a repeat flag, use it (`pnpm exec playwright test --repeat-each 10`, `pytest --count 10` with pytest-repeat, `go test -count 10`). For a suspect that depends on neighbours (for a backend, the whole solution or test project), run the whole suite rather than one test: order-dependence only shows when the neighbours run too. Also vary what the runner randomizes: hash seeds, test order, parallelism. Note the seed, the order and the machine state of the run that failed. That is the reproduction, and it is what proves the fix.
 
-**Cannot reproduce in ten runs?** Do not fix. Report it: the failing log, what you tried, and what you would need. An unreproduced flake "fixed" by a plausible-looking change is a flake plus a diff.
+**The minimum loop is this exact checklist, and the reply pastes it filled in before declaring a flake not reproduced.** Ten numbered runs, each line giving: run number, hash seed (for example `PYTHONHASHSEED=n`), test order (default, reversed or randomized with its seed), parallelism (serial, or the worker count), and the pasted result output. Across the ten, vary all three: at least three distinct hash seeds, at least one run in a different order, and at least one serial and one parallel run. Fewer than ten filled lines, or lines without output, mean the loop was not run and the flake may not be called not reproduced.
+
+```text
+run 1  seed=<n>  order=<default|reversed|random:<n>>  parallel=<serial|N workers>  -> <output>
+...
+run 10 seed=<n>  order=<...>  parallel=<...>  -> <output>
+```
+
+**Cannot reproduce in ten runs?** Do not fix. Report it: the failing log (assertion and values quoted), the filled checklist above, and what you would need (for example the CI runner's parallelism or seed). An unreproduced flake "fixed" by a plausible-looking change is a flake plus a diff.
 
 ## Categories, in the order worth checking
 
