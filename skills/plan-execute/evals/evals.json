@@ -70,14 +70,15 @@
     },
     {
       "id": 6,
-      "prompt": "Add a null check to the booking handler's slot lookup.",
+      "prompt": "Make is_full in slots.py raise ValueError when booked is negative.",
       "expected_output": "Does not load plan-execute: there is no plan file and the change is one pass. Guards the disable-model-invocation flag: the skill must not self-trigger.",
       "files": [
         "evals/fixtures/bakery-board"
       ],
       "expectations": [
         "Does not look for or require a plan under .claude/plans/",
-        "Makes the change directly"
+        "Edits slots.py directly so is_full raises ValueError for a negative booked count, without opening or executing any plan under .claude/plans/",
+        "Does not load the plan-execute skill"
       ]
     },
     {

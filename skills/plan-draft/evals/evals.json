@@ -38,7 +38,7 @@
         "evals/fixtures/bakery"
       ],
       "expectations": [
-        "Reads .pm/i1/001.md, BRIEF-slot-capacity.md and .pm/i1/README.md",
+        "Plan section 1 names the i1 iteration demo step the item serves (a customer picking a full slot is told to pick another)",
         "Section 4 of the plan carries both Done when lines of the item",
         "Plan frontmatter has from_item: i1/001",
         "Does not re-ask the 12-orders-per-slot decision settled in the brief",

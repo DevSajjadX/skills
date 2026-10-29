@@ -123,7 +123,7 @@ on in §2 as a blocking assumption until the other side lands.
 
 **Drafting FROM a board item.** If the goal is a board id of the form `iN/NNN` (see
 `${CLAUDE_SKILL_DIR}/../product-manager/board.md`), read the item, every `## Design input` brief it names and the
-iteration's `README.md` demo script. The item's `## Problem`, `## Done when` and `## Rules`
+iteration's `README.md` demo script. Name in §1 the demo script step this item makes pass. The item's `## Problem`, `## Done when` and `## Rules`
 are the settled requirement: its `## Done when` becomes §4. Decisions already settled in
 the briefs are not re-opened. The **plan owns the design and the task breakdown**, which
 the item deliberately lacks, so §3 is yours to write; grill only what the item and briefs
