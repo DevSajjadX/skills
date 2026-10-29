@@ -47,16 +47,19 @@ A useless test stays green when the code it covers is wrong. It costs a run on e
 
 ## Stop and hand back
 
-A stop is a handoff, not a failure: write it to `.claude/handoffs/` with the `plan-handoff` skill and name it in the report.
+**Hand off.** Write each to `.claude/handoffs/` with the `plan-handoff` skill and name it in the report:
 
 - The covered code is unreachable: that's dead code, and the test goes when the code goes.
 - The test fails sometimes: it's flaky, not useless.
-- Sabotage turns the whole suite red, so this test's verdict can't be isolated: report it.
-- A repaired assertion fails against the current code: the code has a bug. Don't fix production code in this pass; hand it off and leave the repaired test out, or mark it a known failure per the project's rules.
-- A gate goes red and you can't find the root cause.
+- A repaired assertion fails against the current code: the code has a bug. Don't fix production code in this pass. Keep the original test unchanged (or add the repaired one marked a known failure per the project's rules) and put the repaired assertion in the handoff.
+- Anything else outside this defect class or this scope (provably wrong code, duplicated or convoluted logic): note it and defer, never fix it here.
+
+**Stop and ask or report.** These are not out-of-scope work, so no handoff:
+
+- Sabotage turns the whole suite red, so this test's verdict can't be isolated: report it as skipped.
+- A gate goes red and you can't find the root cause: stop and report.
 - The repair needs a new dependency (new test infrastructure to replace mocks): ask first.
-- The finding conflicts with the project's anti-goals or do-not-do list.
-- Anything else outside this defect class (provably wrong code, duplicated or convoluted logic): note it and defer, never fix it here.
+- The finding conflicts with the project's anti-goals or do-not-do list: ask.
 
 ## Common mistakes
 
