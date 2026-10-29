@@ -33,5 +33,6 @@ section is the whole point of the file: the receiving plan builds to exactly thi
 
 ## Acceptance
 
-- [ ] <how the origin side verifies this handoff is satisfied — test, endpoint probe,
-  generated-client compile, manual check>
+<Each box is a command and the output that proves it, never "works correctly".>
+
+- [ ] `<command>` → `<expected output>`

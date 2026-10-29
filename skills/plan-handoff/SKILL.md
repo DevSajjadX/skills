@@ -1,14 +1,8 @@
 ---
 name: plan-handoff
-description: >-
-  Shared procedure for writing a durable, self-contained handoff file for
-  out-of-scope work — the mechanics behind the root CLAUDE.md rule that
-  handoffs replace spawn_task chips, TaskCreate backlog items, and "want me to
-  also…?" offers. Not invoked directly: plan-draft, plan-execute, and
-  CLAUDE.md's out-of-scope-work rule all point here for the "how".
+description: Use when out-of-scope work turns up mid-task (a bug, a debt, a reproduced QA finding, a change another repo must make) and needs a durable, self-contained file in .claude/handoffs/ instead of a chat offer or a task chip; plan-draft and plan-execute point here for the mechanics. Not for a trivial fix on a line you are already editing, or for work inside the current task's scope.
 category: Workflow
 tags: [workflow, artifacts, handoff]
-disable-model-invocation: true
 allowed-tools: Read, Grep, Glob, Write, Bash(git log:*), Bash(git status:*), Bash(date:*), Bash(ls:*)
 ---
 
@@ -26,7 +20,7 @@ a trivial one-line fix on a line you're already editing for the current task; an
 more becomes this file.
 
 **1. Determine target.**
-Read this repo's local `.claude/CLAUDE.md` for a declared "Multi-repo workspace"
+Read this repo's `AGENTS.md`, `CLAUDE.md` or `.claude/CLAUDE.md` for a declared "Multi-repo workspace"
 table.
 
 - No table declared (this repo's current state) → `target:` is this repo's own name

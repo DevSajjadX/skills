@@ -1,12 +1,11 @@
 ---
 name: plan-draft
-description: Build a reviewed, execution-ready plan (no code) for a change, using Opus. Manually invoked with /plan-draft; writes one self-contained artifact under .claude/plans/ and delegates a cold review to a subagent running the plan-review skill.
+description: Use when a change is too large to start coding without a plan, when the user types /plan-draft, or when a goal arrives as a handoff file path, and a reviewed plan (no code) under .claude/plans/ is wanted; writes the plan and delegates a cold review to plan-review. Not for a change you can make and verify in one pass, for questions, or for running a plan that already exists (that is /plan-execute).
 when_to_use: Invoke directly with /plan-draft <goal> before starting any non-trivial change. Pairs with /plan-execute.
 category: Workflow
 tags: [workflow, artifacts]
 argument-hint: [what you want to build or change]
-allowed-tools: Read, Grep, Glob, Write, Task, Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git branch:*), Bash(ls:*), Bash(find:*)
-disable-model-invocation: true
+allowed-tools: Read, Grep, Glob, Write, Task, Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git branch:*), Bash(ls:*), Bash(find:*), Bash(echo:*), Bash(date:*)
 ---
 
 You are producing an implementation **plan only**. You must not modify, create, or
@@ -42,7 +41,7 @@ itself is throwaway (draft → done → archive); the glossary and ADRs outlive 
 Recent history — orientation only (conventions, in-flight direction). This is NOT the plan's
 scope; ignore it if unrelated to the goal.
 
-- Recent commits: !`git log --oneline -5`
+- Recent commits: !`git log --oneline -5 2>/dev/null || echo "(no git history yet)"`
 - Today's date: !`date +%F`
 
 Goal from the requester: $ARGUMENTS
@@ -55,6 +54,13 @@ Restate the goal in your own words. Define scope explicitly: what is in scope an
 what is out of scope. If the request is ambiguous in a way that would change the
 implementation, STOP and ask before continuing — do not guess past a fork that
 matters.
+
+**Anti-goals bound the goal.** Before investigating, read where the project lists what it
+won't build (an out-of-scope or non-goals section, a do-not-do file, an owner's decisions
+log). A goal that conflicts with one is **refused, not reshaped**: quote the line it hits,
+say why, and stop. Don't offer or recommend a variant that routes around it ("a named
+person collects it" for "no delivery"); the only path forward is the owner lifting the
+anti-goal. If the requester then says the owner has, record that in §2 and plan it.
 
 **2. Investigate the real codebase + domain.**
 Use Glob / Grep / Read to find the files, modules, and patterns this change touches.
@@ -72,7 +78,7 @@ this change — each one names code an agent would otherwise write wrongly, so a
 violates one is a plan that will be built wrong. Honour the canonical terms and the
 invariants in the plan.
 
-**Multi-repo workspaces.** If the loaded context (`CLAUDE.md` / `.claude/CLAUDE.md`)
+**Multi-repo workspaces.** If the loaded context (`AGENTS.md`, `CLAUDE.md` or `.claude/CLAUDE.md`)
 declares sibling repositories and the goal touches one, investigate it too — via a
 codebase-index MCP if one is available, otherwise Read with absolute paths. How the
 change itself gets made is the **workspace's cross-repo policy**, declared in that same

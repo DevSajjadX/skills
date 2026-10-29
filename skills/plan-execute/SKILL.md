@@ -1,6 +1,6 @@
 ---
 name: plan-execute
-description: Execute an approved plan from .claude/plans, walking its task checklist one item at a time with verification. Run on the model/effort the plan's "Run with" line recommends.
+description: Use when the user types /plan-execute on a plan in .claude/plans/ whose status is approved; walks its task checklist one item at a time with verification, on the model and effort its "Run with" line names. Not for a draft plan (it must be approved first), for work with no plan (that is /plan-draft), or for ad-hoc changes.
 when_to_use: Invoke directly with /plan-execute after a plan from /plan-draft has been set to status approved.
 argument-hint: [path to plan, or empty for the latest approved one]
 tags: [workflow, artifacts]
@@ -72,7 +72,7 @@ Keep going until every task is `- [x]` or you hit a blocker. After each task sho
 progress `K/N tasks complete`.
 
 **Cross-repo tasks.** First check the workspace's cross-repo policy in the loaded
-context (`CLAUDE.md` / `.claude/CLAUDE.md`). Under **handoff-only**, a sibling-repo need
+context (`AGENTS.md`, `CLAUDE.md` or `.claude/CLAUDE.md`). Under **handoff-only**, a sibling-repo need
 is never edited from here: write the handoff file the task describes (or, on unplanned
 discovery, treat it as divergence per step 5 and propose a handoff), then continue with
 the tasks that don't depend on it. Under **inline** policy, a task carrying a `Repo:`
