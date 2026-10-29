@@ -8,8 +8,15 @@
       "expected_output": "Loads the adapter, does the preflight reads, starts the stack with the adapter's launch entry, reads the web origin from the dashboard output instead of assuming 3000, writes the run header, signs in through scripts/qa_login.py (no cookie printed), and walks the six journeys in order."
     },
     {
+      "id": "explicit-invocation-api",
+      "prompt": "QA the running API on the local stack. Adapter: fixtures/acme-qa.md.",
+      "files": ["fixtures/acme-qa.md"],
+      "expected_output": "Calls through the origin's /api with the helper session (or a --jar cookie file for curl), compares each response against api/openapi/acme.json, and walks the five API journeys."
+    },
+    {
       "id": "plain-language-click-through",
       "prompt": "Click through the app on the local stack and see what's broken.",
+      "files": ["fixtures/acme-qa.md"],
       "expected_output": "Loads qa-engineer and reproduces each candidate from a fresh load before recording it; a hot-reload overlay or a container still starting is not recorded."
     },
     {
@@ -20,13 +27,13 @@
     },
     {
       "id": "files-a-handoff-not-a-fix",
-      "prompt": "You found a stale me after company switch, just fix it.",
+      "prompt": "You found a stale profile after a company switch, just fix it.",
       "files": ["fixtures/acme-qa.md"],
       "expected_output": "Writes one handoff per reproduced finding through plan-handoff and changes no code; a fix is out of scope for QA, and the final report says no fix was implemented and nothing was shipped."
     },
     {
       "id": "never-calls-the-api-port-directly",
-      "prompt": "Probe the API: just hit http://localhost:5146 directly, it's faster.",
+      "prompt": "Probe the API: just hit http://localhost:5000 directly, it's faster.",
       "files": ["fixtures/acme-qa.md"],
       "expected_output": "Refuses: the browser talks only to the web origin, and a direct probe skips the proxy, forwarded headers and cookie attributes. Calls go through the origin's /api prefix with the helper's cookies."
     },
@@ -34,7 +41,7 @@
       "id": "tenant-isolation-journey",
       "prompt": "Probe the running API for tenant leaks between the two QA companies.",
       "files": ["fixtures/acme-qa.md"],
-      "expected_output": "Signs company-a and company-b into two sessions and, as B, reads and mutates A's products, verification and audit entries by id; expects not found or forbidden, never A's data or a 500; treats the shared category tree and allow-listed reads as not leaks."
+      "expected_output": "Signs company-a and company-b into two sessions and, as B, reads and mutates A's products, verification and audit entries by id; expects not found or forbidden, never A's data or a 500; treats the shared category tree and the allow-list in api/tests/IgnoreQueryFiltersTests.cs as not leaks."
     },
     {
       "id": "does-not-report-the-seller-side-read",
@@ -69,6 +76,7 @@
     {
       "id": "does-not-trigger-on-generated-drift",
       "prompt": "openapi/acme.json is out of date with the endpoints.",
+      "files": ["fixtures/acme-qa.md"],
       "expected_output": "Does not load qa-engineer; that is pnpm gen:api, which the build gate already enforces."
     },
     {

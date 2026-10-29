@@ -38,6 +38,7 @@ Required request headers: <e.g. X-Requested-With: app-web on every non-GET; a 4x
 Proxy: <file that forwards /api/*, the redirect status it must use for signed-out pages (302 or 303, never 307 or 308, which replay a form post), the landing URL pattern such as /auth?next=...>.
 Error shape: <e.g. application/problem+json with a non-null detail and a stable error key, including framework-raised errors (unknown route, unparseable body); where the message catalogs live per language; which test should catch a key missing in one language>.
 Paging: <keyset or offset, cursor documentation, ordering collation the client must not re-sort>.
+Tenant-owned resources: <the resources one tenant must never see of another's, e.g. products, verification, audit entries>.
 Active context: <how a user switches account, workspace or company, and the rule that a save lands in the context its tab shows (decision record)>.
 
 ## Isn't a bug
@@ -63,13 +64,13 @@ Never the board or roadmap directly: <the project's promote command is the only 
 Dedupe sources: <issues, handoffs open and done, board folders including done, briefs, `git log -S`>.
 Evidence folder: <an ignored path, e.g. web/tmp/qa-<date>/>.
 Dry-run switch: <e.g. DRY_RUN=1 suppresses the filing: evidence and a report only>, or none.
-Secret check: <a command that must print nothing or exit 0, e.g. `grep -rliE 'cookie|authorization|password|bearer' <evidence folder>`, or the project's scanner if it takes a folder>.
+Secret check: <the project's secret scanner run over the checkout (it must cover the evidence folder and the handoffs or reports the run wrote), exit 0>. Avoid a keyword grep: it flags every finding that is about cookies.
 Cleanup: <resource prefix qa-<yyyymmdd>-, and anything that must never be touched: pre-existing rows, other tenants, .env>.
 ```
 
 ## Sign-in recipe
 
-JSON read by `scripts/qa_login.py`. `{name}` is a role var or an earlier extract; `{env:NAME}` reads an env var, so a password never sits in the file. Each step's `ok` lists the statuses that count as success (default 2xx); `extract` takes a regex's first group from the body. A step with an `extract` is asked again up to `retries` times (default 5, `retry_delay` 0.5 s) until the pattern matches, since a dev inbox can lag the step that sent the message.
+JSON read by `scripts/qa_login.py`. `{name}` is a role var or an earlier extract; `{env:NAME}` reads an env var, so a password never sits in the file. Each step's `ok` lists the statuses that count as success (default 2xx); `extract` takes a regex's first group from the body. A step with an `extract` is asked again up to `retries` times (default 5, `retry_delay` 0.5 s) while the status is ok and the pattern has not matched, since a dev inbox can lag the step that sent the message. `"dev_read": true` on the inbox step turns a 401 or 404 into exit 5: the sender looks real, stop.
 
 ```json
 {
@@ -77,7 +78,7 @@ JSON read by `scripts/qa_login.py`. `{name}` is a role var or an earlier extract
   "flows": {
     "sms": [
       { "method": "POST", "path": "/api/auth/start", "json": { "mobile": "{mobile}" }, "ok": [200, 202, 429] },
-      { "method": "GET", "path": "/api/dev/sent-sms?mobile={mobile}", "extract": { "code": "\\b(\\d{6})\\b" } },
+      { "method": "GET", "path": "/api/dev/sent-sms?mobile={mobile}", "dev_read": true, "extract": { "code": "\\b(\\d{6})\\b" } },
       { "method": "POST", "path": "/api/auth/verify", "json": { "code": "{code}" } }
     ],
     "password": [
