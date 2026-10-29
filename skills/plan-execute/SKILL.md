@@ -27,7 +27,10 @@ Read the plan. Check frontmatter `status`:
   looks obviously fine.
 
 Then check frontmatter `handoffs:`. If non-empty, look for each listed handoff file. A
-**missing file means done**: the work landed and the handoff was deleted. For any that
+**missing file means done**: the work landed and the handoff was deleted. Except a handoff
+promoted onto the board: first run `grep -rl '<handoff file name>' <its repo>/.pm` (git
+history doesn't show a rename for a single deleted path). A brief whose `promoted:` line names
+it means the work hasn't landed, and this plan is **blocked** until that board item is done. For any that
 still exists (`open` or `planned`), it may simply not have been removed yet — verify
 against ground truth before blocking:
 
@@ -139,7 +142,8 @@ genuinely out of scope, log it and flag it loudly rather than marking the plan d
 **8. Close out.**
 Append an "Execution log" to the plan: files changed, per-task and verify results, any
 divergences and how they were resolved, ADR number if written. Set frontmatter
-`status: done`. If the plan has `from_handoff:` and your verification covered every one
+`status: done`. If the plan has `from_brief:`, leave the brief alone (it stays with its board item) and name the
+board's `done <item>` job for the human to run. If the plan has `from_handoff:` and your verification covered every one
 of its Acceptance boxes, `git rm` that handoff — its absence is what unblocks the origin
 repo's plan; if a box is still unmet, leave it `planned` and say which. (The handoff
 lives in the origin repo's `.claude/handoffs/`; this removal is a sanctioned write

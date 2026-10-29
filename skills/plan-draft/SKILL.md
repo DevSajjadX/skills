@@ -108,7 +108,8 @@ as settled input — do not re-grill what the origin plan already decided (grill
 the handoff leaves open). Set the plan's `from_handoff:` frontmatter to the handoff path,
 and update the handoff's frontmatter: `status: planned`, `plan:` → your plan's path.
 (That status flip is the one sanctioned write outside this repo besides `CONTEXT.md`
-edits here.)
+edits here.) Drafting from a board brief (`BRIEF-<slug>.md`, a promoted handoff): treat its
+Contract the same way, set the plan's `from_brief:` to its path, and leave the brief untouched.
 
 Either way, record the cross-repo contract (API shape, event, schema) this plan depends
 on in §2 as a blocking assumption until the other side lands.

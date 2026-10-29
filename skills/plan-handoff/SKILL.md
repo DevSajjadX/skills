@@ -46,7 +46,7 @@ kebab-case from the issue. Path: `.claude/handoffs/YYYY-MM-DD-<slug>.md`.
 - `date:` today
 - `target:` from step 1
 - `origin_plan:` the plan/session that surfaced this if one exists, else
-  `none — found during <task>` (name the actual task)
+  `none (found during <task>)`, naming the actual task
 - `plan:` leave blank — the target repo's `/plan-draft` fills this in
 - **Context** — what the caller was doing when this surfaced. One or two sentences,
   reference the current task, don't restate a plan that doesn't exist.
