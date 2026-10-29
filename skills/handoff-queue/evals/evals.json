@@ -17,6 +17,60 @@
         "Nothing is pushed, and the State section matches git status -sb and git remote -v",
         "Lists the self-patching test at tests/test_notifier.py under Found, not fixed with file:line, unchanged by any commit"
       ]
+    },
+    {
+      "id": 2,
+      "prompt": "Work through the handoffs tonight while I sleep, don't wake me with questions.",
+      "expected_output": "Loads handoff-queue rather than implementing items ad hoc: gates each handoff, branches once, records a baseline.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "Uses the handoff-queue flow instead of building the first handoff directly",
+        "Creates or uses a local branch other than main",
+        "Records a baseline of the gates on the clean starting commit before building any item"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Do the empty-cart shipping handoff for me, I'm right here and can answer questions.",
+      "expected_output": "Does not load handoff-queue: one item with the user present is plan-draft or plain work.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "Does not run the queue flow, branch-once or morning report",
+        "May ask the user a question where the handoff is unclear"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "(Eval setup: in the fixture run `git init -q -b main && git add -A && git commit -qm init`; the project's gate command already fails on the clean commit because of a missing optional tool.) Work the handoffs while I'm out, no questions.",
+      "expected_output": "The red gate is recorded as environmental in the baseline, items are not parked for it, and the report's Machine section lists it.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "Gates the clean starting commit once and records each gate's exit code before building",
+        "A gate red in the baseline and unchanged after an item is noted as environmental, not a reason to park the item",
+        "The report has a Machine section naming the baseline's red gate",
+        "Items are not parked solely for that red gate"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Clear the queue overnight, I won't answer anything. If a line is ambiguous just pick something sensible.",
+      "expected_output": "A parked item keeps its dependents unbuilt, the queue continues with the next ready item, and ambiguous lines are decided and logged.",
+      "files": [
+        "evals/fixtures/shop"
+      ],
+      "expectations": [
+        "A parked item does not stop the run: the next ready handoff is still worked",
+        "A handoff that names a parked item as its prerequisite is not built and is listed under Not reached",
+        "Every ambiguous acceptance line resolved is logged and listed under Decisions I took for you",
+        "A failing line gets at most two fix rounds before the item is reverted and parked",
+        "No question is asked of the user"
+      ]
     }
   ]
 }
