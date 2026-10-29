@@ -1,6 +1,6 @@
 ---
 name: youtube-video-review
-description: Use when the user pastes one or more YouTube links (or a channel) and wants a video reviewed, summarized, analyzed or compared: "what is this video about", "is it worth watching", "what can I learn from it", "break down this video", "review this channel's latest uploads", "compare these two videos".
+description: Use when the user pastes one or more YouTube links (or a channel) and wants a video reviewed, summarized, analyzed or compared: "what is this video about", "is it worth watching", "what can I learn from it", "break down this video", "review this channel's latest uploads", "compare these two videos". Not for analytics of your own channel (views, retention, CTR).
 ---
 
 # youtube-video-review

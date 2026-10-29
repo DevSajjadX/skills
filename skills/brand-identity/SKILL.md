@@ -1,6 +1,6 @@
 ---
 name: brand-identity
-description: Use when a client or project needs a logo — a new logo, wordmark, brand mark, monogram, logo refresh, or favicon/app-icon set — including one-line briefs like "make me a logo for X", or when the logo portion of a branding effort needs concepts to present.
+description: Use when a client or project needs a logo — a new logo, wordmark, brand mark, monogram, logo refresh, or favicon/app-icon set — including one-line briefs like "make me a logo for X", or when the logo portion of a branding effort needs concepts to present. Not for color, type or imagery systems, full brand boards, banners, or AI-generated raster logo images.
 ---
 
 # Brand identity — logo design

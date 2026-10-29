@@ -1,6 +1,6 @@
 ---
 name: wrap
-description: "Use when the user asks to wrap up, finish or close out the session, or to commit, push, squash/regroup commits, or merge the branch, and before any git commit or push, which go through wrap."
+description: "Use when the user asks to wrap up, finish or close out the session, or to commit, push, squash/regroup commits, or merge the branch, and before any git commit or push, which go through wrap. Not for reviewing a pull request someone else opened (that is a code review)."
 argument-hint: "[c|commit [--p]] [s|squash [--p|--f]] [m|merge [branch] [--p|--f]]"
 ---
 

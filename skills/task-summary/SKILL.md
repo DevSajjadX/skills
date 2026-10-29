@@ -1,6 +1,6 @@
 ---
 name: task-summary
-description: Use when pulling a work item, issue, or task into the session as a reviewable artifact — "pull issue 612", "get the azure item here with its comments/screenshots", "make an artifact of the work item" — or when creating or editing one ("create a work item for this", "log this for the backend team", "update the description of item 616", "add a comment to the issue"), including any request naming a description language ("write it in Turkish too", "German as primary").
+description: Use when pulling a work item, issue, or task into the session as a reviewable artifact — "pull issue 612", "get the azure item here with its comments/screenshots", "make an artifact of the work item" — or when creating or editing one ("create a work item for this", "log this for the backend team", "update the description of item 616", "add a comment to the issue"), including any request naming a description language ("write it in Turkish too", "German as primary"). Not for pull requests (that is pr-summary) or for reviewing code.
 ---
 
 # task-summary

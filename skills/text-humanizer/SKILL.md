@@ -1,6 +1,6 @@
 ---
 name: text-humanizer
-description: Use when the user asks to humanize or de-AI a text, to "make it sound like me", or to check a text for AI tells; when they paste a draft with just "fix this" or "this sounds like ChatGPT"; to draft a reply or post in their voice: blog posts, tweets/X and LinkedIn posts, social or marketing copy, comment replies, emails, docs, release notes, bios; or to write questions with proposed defaults for someone who decides. Also use as the last gate before any text this session wrote goes public.
+description: Use when the user asks to humanize or de-AI a text, to "make it sound like me", or to check a text for AI tells; when they paste a draft with just "fix this" or "this sounds like ChatGPT"; to draft a reply or post in their voice: blog posts, tweets/X and LinkedIn posts, social or marketing copy, comment replies, emails, docs, release notes, bios; or to write questions with proposed defaults for someone who decides. Also use as the last gate before any text this session wrote goes public. Not for interface copy such as buttons, labels and error messages (that is UX writing).
 ---
 
 # Text humanizer
