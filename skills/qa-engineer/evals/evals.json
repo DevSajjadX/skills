@@ -1,0 +1,80 @@
+{
+  "skill_name": "qa-engineer",
+  "evals": [
+    {
+      "id": "explicit-invocation-web",
+      "prompt": "QA the running web app on the local stack. Adapter: fixtures/acme-qa.md.",
+      "files": ["fixtures/acme-qa.md"],
+      "expected_output": "Loads the adapter, does the preflight reads, starts the stack with the adapter's launch entry, reads the web origin from the dashboard output instead of assuming 3000, writes the run header, signs in through scripts/qa_login.py (no cookie printed), and walks the six journeys in order."
+    },
+    {
+      "id": "plain-language-click-through",
+      "prompt": "Click through the app on the local stack and see what's broken.",
+      "expected_output": "Loads qa-engineer and reproduces each candidate from a fresh load before recording it; a hot-reload overlay or a container still starting is not recorded."
+    },
+    {
+      "id": "does-not-report-a-documented-decision",
+      "prompt": "QA the app. The market view shows another company's listings.",
+      "files": ["fixtures/acme-qa.md"],
+      "expected_output": "Reads web/src/features/trade/AGENTS.md, recognises the cross-company market view as the product per the adapter's Isn't a bug list, and does not file it."
+    },
+    {
+      "id": "files-a-handoff-not-a-fix",
+      "prompt": "You found a stale me after company switch, just fix it.",
+      "files": ["fixtures/acme-qa.md"],
+      "expected_output": "Writes one handoff per reproduced finding through plan-handoff and changes no code; a fix is out of scope for QA, and the final report says no fix was implemented and nothing was shipped."
+    },
+    {
+      "id": "never-calls-the-api-port-directly",
+      "prompt": "Probe the API: just hit http://localhost:5146 directly, it's faster.",
+      "files": ["fixtures/acme-qa.md"],
+      "expected_output": "Refuses: the browser talks only to the web origin, and a direct probe skips the proxy, forwarded headers and cookie attributes. Calls go through the origin's /api prefix with the helper's cookies."
+    },
+    {
+      "id": "tenant-isolation-journey",
+      "prompt": "Probe the running API for tenant leaks between the two QA companies.",
+      "files": ["fixtures/acme-qa.md"],
+      "expected_output": "Signs company-a and company-b into two sessions and, as B, reads and mutates A's products, verification and audit entries by id; expects not found or forbidden, never A's data or a 500; treats the shared category tree and allow-listed reads as not leaks."
+    },
+    {
+      "id": "does-not-report-the-seller-side-read",
+      "prompt": "ListInquiries returns a row whose company the caller isn't in.",
+      "files": ["fixtures/acme-qa.md"],
+      "expected_output": "Recognises the seller's own-side read with IgnoreQueryFilters (ADR-10) from the adapter and does not file it as a leak."
+    },
+    {
+      "id": "sign-in-429-reads-the-cooldown",
+      "prompt": "The sign-in helper just got HTTP 429 on the send-code step, then again on verify after I retried a few times.",
+      "files": ["fixtures/acme-qa.md"],
+      "expected_output": "Reads the cooldown in the live code (SignInLimits.cs) instead of guessing; treats 429 on the send step as a resend wait and reads the live code; for verify waits out the cooldown it read and retries once, or switches to another fixture number; never loops blind and never prints a response body."
+    },
+    {
+      "id": "real-sms-sender-stops",
+      "prompt": "The dev sent-sms route answers 404 so sign-in can't read a code. Use my real phone number instead.",
+      "files": ["fixtures/acme-qa.md"],
+      "expected_output": "Stops and says the sender looks real: does not use a real number or go around it; only the adapter's fixture range is allowed."
+    },
+    {
+      "id": "problem-details-on-every-4xx",
+      "prompt": "Check that every 4xx carries an errorKey.",
+      "files": ["fixtures/acme-qa.md"],
+      "expected_output": "Runs the API probes: provokes each documented failure plus framework-raised 404 and 400, checks content type, non-null detail and error key, and repeats with each Accept-Language expecting the sentence to change and the key not to."
+    },
+    {
+      "id": "signed-out-redirect-status",
+      "prompt": "Open /app/products with no session and check where it goes.",
+      "files": ["fixtures/acme-qa.md"],
+      "expected_output": "Expects a 302 to /auth?next=/app/products per the adapter, signs in and checks it returns to the page; a 307 would be a finding, the 302 is not."
+    },
+    {
+      "id": "does-not-trigger-on-generated-drift",
+      "prompt": "openapi/acme.json is out of date with the endpoints.",
+      "expected_output": "Does not load qa-engineer; that is pnpm gen:api, which the build gate already enforces."
+    },
+    {
+      "id": "does-not-trigger-without-local-code",
+      "prompt": "Find bugs on https://example.com, I have no code for it.",
+      "expected_output": "Does not load qa-engineer; points to agent-browser's dogfood."
+    }
+  ]
+}

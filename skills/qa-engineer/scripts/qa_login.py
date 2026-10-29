@@ -195,6 +195,10 @@ def selftest() -> int:
                 return self._send(400)
             if self.path == "/api/start":
                 return self._send(200, cookies=["pending=p1; Path=/; HttpOnly; SameSite=Lax"])
+            if self.path == "/api/start429":
+                return self._send(429, cookies=["pending=p1; Path=/; HttpOnly; SameSite=Lax"])
+            if self.path == "/api/verify429":
+                return self._send(429, b"a sentence for a person")
             if self.path == "/api/verify":
                 if data.get("code") == "123456" and "pending=p1" in (self.headers.get("Cookie") or ""):
                     return self._send(200, cookies=["pending=; Path=/; Max-Age=0", "sess=s3cr3t; Path=/; HttpOnly; SameSite=Strict"])
@@ -209,6 +213,8 @@ def selftest() -> int:
                 # The first read finds an empty inbox, as when the message lands after the start step.
                 inbox = [] if Origin.reads == 1 else [{"text": "Your code is 123456"}]
                 return self._send(200, json.dumps(inbox).encode())
+            if self.path.startswith("/api/dev/real"):
+                return self._send(401)
             self._send(404)
 
     server = ThreadingHTTPServer(("127.0.0.1", 0), Origin)
@@ -254,6 +260,32 @@ def selftest() -> int:
         checks.append(("a refused step stops with exit 3 and no body", False))
     except Fail as e:
         checks.append(("a refused step stops with exit 3 and no body", e.code == 3 and "HTTP 400" in str(e)))
+
+    # A resend wait (429 on the step that sends the code) still signs in with the live code.
+    resend = {**recipe, "flows": {"sms": [{**flow[0], "path": "/api/start429", "ok": [200, 429]}, *flow[1:]]}}
+    checks.append(("a resend wait (429 in ok) still signs in", [m.key for m in sign_in(origin, resend, "a", {})] == ["sess"]))
+    strict = {**recipe, "flows": {"sms": [{**flow[0], "path": "/api/start429"}, *flow[1:]]}}
+    try:
+        sign_in(origin, strict, "a", {})
+        checks.append(("a 429 not listed in ok stops with exit 3", False))
+    except Fail as e:
+        checks.append(("a 429 not listed in ok stops with exit 3", e.code == 3 and "HTTP 429" in str(e)))
+
+    # A rate-limited verify reports the status only, never the body.
+    limited = {**recipe, "flows": {"sms": [*flow[:2], {**flow[2], "path": "/api/verify429"}]}}
+    try:
+        sign_in(origin, limited, "a", {})
+        checks.append(("a rate-limited verify exits 3 with the status only", False))
+    except Fail as e:
+        checks.append(("a rate-limited verify exits 3 with the status only", e.code == 3 and "HTTP 429" in str(e) and "sentence" not in str(e)))
+
+    # A real sender has no dev inbox: the read answers 401 and the run stops rather than going around it.
+    real = {**recipe, "flows": {"sms": [flow[0], {**flow[1], "path": "/api/dev/real", "retries": 0}, flow[2]]}}
+    try:
+        sign_in(origin, real, "a", {})
+        checks.append(("a real sender (no dev inbox) stops with exit 3", False))
+    except Fail as e:
+        checks.append(("a real sender (no dev inbox) stops with exit 3", e.code == 3 and "HTTP 401" in str(e)))
 
     server.shutdown()
     for name, ok in checks:
