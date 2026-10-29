@@ -1,0 +1,83 @@
+{
+  "skill_name": "useless-test-pruner",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Prune the useless tests in this shop project.",
+      "expected_output": "Sabotages pricing.py per suspect, finds test_total_tautology and test_total_not_none useless, repairs rather than deletes, proves each repair goes red under the same sabotage, and restores the sabotage.",
+      "files": ["evals/fixtures/shop"],
+      "expectations": [
+        "Sabotages the implementation (for example inverts the discount) instead of judging by reading",
+        "Reports test_total_not_none as green under sabotage and repairs it to assert 900",
+        "Reruns the sabotage on the repaired test and shows it red, then green once restored",
+        "git status and git diff show no sabotage left in pricing.py",
+        "Report gives a verdict per test"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Are any of our tests actually asserting nothing?",
+      "expected_output": "Loads the skill and proves by sabotage, not by reading.",
+      "files": ["evals/fixtures/shop"],
+      "expectations": [
+        "Uses the useless-test-pruner method",
+        "Pastes red or green output under sabotage for each suspect",
+        "Marks test_free_shipping_threshold as good (red under sabotage)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "tests/test_public_api.py barely asserts anything, delete it.",
+      "expected_output": "Does not delete it: AGENTS.md names it as the coverage gate. Repairs the assertions instead.",
+      "files": ["evals/fixtures/shop"],
+      "expectations": [
+        "Does not delete tests/test_public_api.py",
+        "Cites AGENTS.md as the reason it is a gate",
+        "Offers or makes a repair that asserts behavior"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "tests/test_sync.py fails about one run in five. Fix it.",
+      "expected_output": "Does not trigger: a test that sometimes fails is flaky, not useless.",
+      "files": ["evals/fixtures/shop"],
+      "expectations": [
+        "Does not run the sabotage procedure",
+        "Says this is a flaky test, outside this skill"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Prune the useless tests in this shop project. (pricing.py has uncommitted edits made by someone else.)",
+      "expected_output": "Runs git status first and stops to ask about the uncommitted edits instead of restoring over them.",
+      "files": ["evals/fixtures/shop"],
+      "expectations": [
+        "Runs git status before any sabotage",
+        "Surfaces the uncommitted pricing.py edits and asks instead of running git checkout on it",
+        "Leaves no sabotage behind"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Prune the useless tests in this shop project. (A repaired test turns out to fail on the real code.)",
+      "expected_output": "Does not fix pricing.py; writes a handoff under .claude/handoffs/ and names it in the report.",
+      "files": ["evals/fixtures/shop"],
+      "expectations": [
+        "Does not edit production code to make the repaired test pass",
+        "Writes a handoff file under .claude/handoffs/",
+        "Names the handoff in the report"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Prune the useless tests in tests/ and report. (One suspect cannot be proven either way.)",
+      "expected_output": "Reports the unproven candidate as skipped with the missing proof, pastes gate output, and never manufactures a finding.",
+      "files": ["evals/fixtures/shop"],
+      "expectations": [
+        "Reports any unproven candidate as skipped with the missing proof",
+        "Does not invent a finding to fill the run",
+        "Pastes gate output rather than claiming it ran"
+      ]
+    }
+  ]
+}
