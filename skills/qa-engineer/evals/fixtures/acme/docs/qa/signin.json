@@ -1,0 +1,15 @@
+{
+  "headers": { "X-Requested-With": "acme-web" },
+  "flows": {
+    "sms": [
+      { "method": "POST", "path": "/api/auth/start", "json": { "mobile": "{mobile}" }, "ok": [200, 202, 429] },
+      { "method": "GET", "path": "/api/dev/sent-sms?mobile={mobile}", "dev_read": true, "extract": { "code": "\\b(\\d{6})\\b" } },
+      { "method": "POST", "path": "/api/auth/verify", "json": { "mobile": "{mobile}", "code": "{code}" } }
+    ]
+  },
+  "roles": {
+    "company-a": { "flow": "sms", "vars": { "mobile": "+15550000001" } },
+    "company-b": { "flow": "sms", "vars": { "mobile": "+15550000002" } },
+    "staff": { "flow": "sms", "vars": { "mobile": "+15550000003" } }
+  }
+}

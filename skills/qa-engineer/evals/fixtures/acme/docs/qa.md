@@ -10,13 +10,13 @@ Seed: `ACME_SEED_DEMO=true`, forwarded only when the shell already set it; creat
 - Decision records in `docs/adr/` (ADR-3 origin and proxy, ADR-6 tenancy, ADR-10 seller side, ADR-11 errors).
 
 ## Roles
-company-a (09999000001), company-b (09999000002), staff (09999000003). Recipe `docs/qa/signin.json`.
+company-a (+15550000001), company-b (+15550000002), staff (+15550000003). Recipe `docs/qa/signin.json`.
 Code read from `/api/dev/sent-sms` (mocked sender only).
-Sign-in limits: resend wait 60 s, 5 verify attempts per 10 min (`api/src/Modules/Identity/SignInLimits.cs:14`). A 429 on the send step means the earlier code is live.
+Sign-in limits: defined in `api/src/Modules/Identity/SignInLimits.cs` (read it; the values are not copied here). A 429 on the send step means the earlier code is live.
 
 ## Oracles
 Spec `api/openapi/acme.json`, regenerated with `pnpm gen:api`. Header `X-Requested-With: acme-web` on every non-GET.
-Error shape: `application/problem+json` with non-null `detail` and `errorKey`, including framework 404 and 400. Catalogs `api/src/Modules/<M>/Text/messages.{fa,en}.json`. Languages: fa, en.
+Error shape: `application/problem+json` with non-null `detail` and `errorKey`, including framework 404 and 400. Catalogs `api/src/Modules/<M>/Text/messages.{ar,en}.json`. Languages: ar, en.
 Tenant-owned resources: products, verification, audit entries.
 Proxy `web/src/proxy.ts`: signed-out pages answer 302 to `/auth?next=...`, never 307.
 
@@ -31,4 +31,4 @@ Proxy `web/src/proxy.ts`: signed-out pages answer 302 to `/auth?next=...`, never
 1. Auth and the active company. 2. Catalog. 3. Staff categories. 4. Audit log. 5. Locale and RTL. 6. Narrow viewport (375).
 
 ## Findings go to
-`.claude/handoffs/` via plan-handoff. Evidence `web/tmp/qa-<date>/`. Secret check `gitleaks dir . --redact`. Dry run `DRY_RUN=1`.
+`.claude/handoffs/` via plan-handoff. Evidence `web/tmp/qa-<date>/`. Secret check `<project scanner> dir . --redact`. Dry run `DRY_RUN=1`.

@@ -6,7 +6,11 @@ Send these through the web origin from the signed-in browser, so cookies and the
 agent-browser --session qa-a eval 'fetch("/api/<route>", {headers: {"X-Requested-With": "<value>"}}).then(async r => ({status: r.status, type: r.headers.get("content-type"), body: await r.text()}))'
 ```
 
-Outside a browser (a `curl` for a handoff's Acceptance), still go through the origin with the cookie jar from `qa_login.py --jar <file>` (`curl -b <file>`), and send the adapter's required header on every non-GET: a 4xx without it is the guard working, not a finding.
+Outside a browser (a `curl` for a handoff's Acceptance), still go through the origin with the cookie jar from `qa_login.py --jar <file>` (`curl -b <file>`), and send the adapter's required header on every non-GET: a 4xx without it is the guard working, not a finding, so resend with the header before judging:
+
+```bash
+curl -sS -b <evidence>/<role>.jar -H '<required header>' "<origin>/api/<route>"
+```
 
 The oracle is the adapter's API spec. A live response that disagrees with the spec is a finding; so is a spec that disagrees with the code, though that usually means someone skipped regenerating it and the project's build or generation gate would have caught it: drift that gate already catches is not a QA finding.
 

@@ -1,0 +1,1 @@
+{ "version": "0.0.1", "configurations": [ { "name": "acme", "runtimeExecutable": "acme", "runtimeArgs": ["run", "--isolated"], "port": 0 } ] }

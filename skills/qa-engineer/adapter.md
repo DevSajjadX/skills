@@ -10,7 +10,7 @@ One file per project, `docs/qa.md` by default, plus its sign-in recipe. The skil
 ## Start the app
 <command, e.g. the launch config entry>; the web origin is <where to read it: a log line, a dashboard, a fixed port>.
 Ports: <fixed, or "random per run (isolated mode): read the origin from the output, never assume a default; another agent session may hold the usual ports">.
-Seed: <env flag or command that loads test data, how it must be passed to the launcher (e.g. only forwarded when the shell already set it), what it creates (e.g. two tenants with one admin each), and whether it is idempotent>, or "none".
+Seed: <env flag or command that loads test data, how it must be passed to the launcher (e.g. only forwarded when the shell already set it), what it creates (e.g. two tenants with one admin each, and a platform staff account if the product has staff-only areas), and whether it is idempotent>, or "none".
 Stop only what you started: <how>.
 
 ## Read first (preflight)
@@ -25,7 +25,7 @@ Stop only what you started: <how>.
 | <company-b> | <a second tenant: makes isolation journeys possible> | company-b |
 | <staff> | <platform staff, if any> | staff |
 
-Recipe: `docs/qa/signin.json`. Test accounts come only from <the fixture range, e.g. mobiles starting 09999, the seed's constants file>; they are not secret and have no real person behind them.
+Recipe: `docs/qa/signin.json`. Test accounts come only from <the fixture range, e.g. mobiles starting +1555000, the seed's constants file>; they are not secret and have no real person behind them.
 Dev sign-in code: <where a dev OTP or magic link is read, or none>. How the code is read: <dev inbox or dev route, the route itself, and "exists only beside a mocked sender">. A 401 or 404 there means a real sender: stop.
 Secrets the recipe reads from env: <QA_ADMIN_PASSWORD, where it is set>, or none.
 Sign-in rate limits: <the limiter's window, resend wait and attempt cap, with the file:line that defines them; whether a 429 on the request step means "the code sent earlier is still live">. Recipe steps that may answer 429 and still be read: <which, listed in that step's `ok`>.
@@ -86,7 +86,7 @@ JSON read by `scripts/qa_login.py`. `{name}` is a role var or an earlier extract
     ]
   },
   "roles": {
-    "company-a": { "flow": "sms", "vars": { "mobile": "09999000001" } },
+    "company-a": { "flow": "sms", "vars": { "mobile": "+15550000001" } },
     "admin": { "flow": "password", "vars": { "user": "qa-admin" } }
   }
 }

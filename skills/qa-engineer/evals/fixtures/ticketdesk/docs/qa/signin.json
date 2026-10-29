@@ -3,7 +3,7 @@
   "flows": {
     "email": [
       { "method": "POST", "path": "/api/auth/start", "json": { "email": "{email}" }, "ok": [200, 202] },
-      { "method": "GET", "path": "/api/dev/sent-sms?email={email}", "extract": { "code": "\\b(\\d{6})\\b" } },
+      { "method": "GET", "path": "/api/dev/sent-sms?email={email}", "dev_read": true, "extract": { "code": "\\b(\\d{6})\\b" } },
       { "method": "POST", "path": "/api/auth/verify", "json": { "email": "{email}", "code": "{code}" } }
     ]
   },

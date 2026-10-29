@@ -9,7 +9,7 @@ Repro: exact route and numbered actions; result on repeat
 Expected / Actual: observable values and states
 Evidence: verified artifact paths; sanitized request/response or console line
 Root cause: file:line and mechanism, or "cause unverified"
-Fix: the target behavior and the owning module (not the patch)
+Fix: the target behavior and the owning module or feature (not the patch)
 Blast radius: callers searched, routes affected, the working control
 Adjacent states: loading, empty, denied, expired session, network failure, right-to-left, other locale
 Dedupe: what was searched, and the result (an existing item, or deployment lag)
@@ -21,7 +21,7 @@ Evidence goes in the adapter's ignored folder, dated. Verify every cited artifac
 
 ## Filing
 
-Send each finding to the adapter's sink (a handoff file, an issue through task-summary, or a report). With none named: in a git repo, one handoff per finding through plan-handoff (`.claude/handoffs/`), mapped like this: Environment and Repro become Context; Expected/Actual and Root cause become Problem (with the `file:line` evidence); Fix becomes Contract (the target behavior and owning module, never a fix design); the rerun commands become Acceptance, each a command with checkable output (a runnable `curl` or test for an API finding). A human promotes the handoff onto the board later (the project's promote command), so the board can promote it or a queue run can pick it up; QA never writes the board. Outside a git repo, one dated report in `./tmp/`. In a dry run nothing is filed: local evidence and a report only.
+Send each finding to the adapter's sink (a handoff file, an issue through task-summary, or a report). With none named: in a git repo, one handoff per finding through plan-handoff (`.claude/handoffs/`), mapped like this: Environment and Repro become Context; Expected/Actual and Root cause become Problem (with the `file:line` evidence); Fix becomes Contract (the target behavior and owning module, never a fix design); the rerun commands become Acceptance, each a command with checkable output (a runnable `curl` or test for an API finding). A human promotes it onto the board later (the project's promote command), or a queue run picks it up; QA never writes the board. Outside a git repo, one dated report in `./tmp/`. In a dry run nothing is filed: local evidence and a report only.
 
 ## Cleanup
 

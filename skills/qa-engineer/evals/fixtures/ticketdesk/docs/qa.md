@@ -11,6 +11,7 @@ Seed: `SEED_DEMO=1 make dev` loads two teams.
 | team-b | files tickets for team B | team-b |
 
 Dev sign-in code: read from `GET /api/dev/sent-sms?email=...` (the mock inbox).
+Sign-in rate limits: none in this fixture; the recipe steps need no 429 in `ok`.
 Recipe: `docs/qa/signin.json`. Test accounts come only from `qa-*@example.test`.
 
 ## Oracles
