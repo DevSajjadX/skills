@@ -31,6 +31,7 @@ A project's machine gate is the copy of these. Any line failing means the write 
 - no item carries a plan heading (`## Steps`, `## Files`, `## Tasks`, `## Implementation`, `## Approach`, `## Acceptance criteria`);
 - every iteration has `## Demo script` and `## Items`, and its item checkboxes agree with the folders (`[x]` exactly for the items under `done/`);
 - where the project keeps a flow catalog: every demo step cites a flow id that exists in it, and an iteration under `done/` cites only `built` flows;
+- an iteration outside `done/` whose items are all `[x]` fails until it is moved to `done/iN/` (after its staging demo passes);
 - the roadmap names every open iteration.
 
 A status that disagrees with this check is worthless.
@@ -50,7 +51,7 @@ A status that disagrees with this check is worthless.
 
 ## Rules
 
-- **An item states the problem, never the solution:** who hits it, what is wrong or missing, why it matters now, what becomes observable when it is solved, which product rules apply. No steps, files to touch, class or test names, estimates, or `## Steps`, `## Files`, `## Tasks`, `## Implementation`, `## Approach` sections. Code evidence that the problem exists is the one `file:line` an item carries.
+- **An item states the problem, never the solution:** who hits it, what is wrong or missing, why it matters now, what becomes observable when it is solved, which product rules apply. No steps, files to touch, class or test names, estimates, or `## Steps`, `## Files`, `## Tasks`, `## Implementation`, `## Approach`, `## Acceptance criteria` sections. A `file:line` is allowed only as evidence that the problem exists.
 - **"Done when" is observable:** each line names something a user, staff member or failing check can see; never "works correctly" or "is improved".
 - **Kinds:** `feature` (the user gains something), `bug` (the product does the wrong thing), `task` (needed work with no product change: a deploy, a removal), `debt` (a structural risk that makes the product wrong or slow to change).
 - **Placement:** an item goes in the **first iteration whose demo needs it**. A prerequisite belongs to the iteration that first depends on it, never earlier "because it's foundational". If an iteration's demo script cannot be walked without the item, the item belongs there.
@@ -58,7 +59,7 @@ A status that disagrees with this check is worthless.
 - **Every iteration is demoable:** its `## Demo script` is numbered steps a user walks (on staging, or the project's demo environment), each observable. An iteration with no user-visible step is rejected as an anti-goal, even when the project has not written that line down.
 - **Every demo step cites its flows** when the project keeps a catalog of flows or acceptance checks: a step ends with `[F-AREA-NN]` (several as `[F-AAA-01, F-BBB-02]`), each an id in the catalog (find it the way Judge step 2 finds product truth; the id format is the catalog's own). A step with no fitting flow gets a new `planned` row in the catalog in the same change. The board job never flips a row to `built`: the change that lands the flow's tagged end-to-end test does. An iteration whose steps cite a `planned` flow cannot move to `done/`.
 - **The id is the item, the folder is its state:** `id:` is the path under `.pm/` without the extension and without any `done/` segment, so `i1/done/003.md` and `done/i1/done/003.md` both carry `id: i1/003`, and moving an item to done never rewrites its id. `place` is the one move that assigns a new id (`inbox/004` becomes `i2/007`); it says so and repoints every reference.
-- **`status:` is `open` or `done`.** Work in flight is an open item on a branch.
+- **`status:` is `open` or `done`.** There is no third value. Work in flight is an open item on a branch.
 - **Done work leaves the open tree:** a done item goes to `iN/done/NNN.md`; an iteration whose items are all done goes to `done/iN/`, and only once its demo script has passed on staging (the roadmap's own "when an iteration is done" rule, if it has one). Use `git mv`, so history follows.
 - **Numbering:** scan the whole tree, every `done/` included, and take the next free zero-padded number in that folder. Never reuse one.
 - **No secrets** and no real customer data in any board file: no credential, token, connection string or real company name, not even in a repro. A secret scanner that gates the push (gitleaks, Betterleaks) catches it too late: a leaked string outlives the topic.
@@ -71,9 +72,9 @@ The default is `status`. Every write job ends with `git status --short` showing 
 
 - **`status`:** read the whole tree (every `.md` under the board), the roadmap and the anti-goals. Print the current iteration (the lowest open `iN`) with its open items, later iterations with open counts, the inbox, and open handoffs not yet on the board. Then flag: items against an anti-goal, items that describe a solution, "Done when" lines that aren't observable, demo steps no item covers. Writes nothing. Finish by running the project's board check (or the self-check above) and reporting its result.
 - **`add <idea>`:** the next free `inbox/NNN.md` from the inbox template, the idea restated as a problem. An idea that arrives as a solution ("add a Redis cache", "one-click reorder") gets one question: what goes wrong without it? File the answer as the problem; when the problem is already clear from the idea, restate it and say you did.
-- **`place <inbox/NNN> <iN>`:** `git mv` to the next free `iN/NNN.md`, rewrite `id:`, add `## Done when` if the note lacks it, add its line under the iteration's `## Items`, repoint every reference to the old id. The item is not given a demo step automatically: when it makes a step observable, the report names that step and the exact `demo-step` job that adds it (see `demo-step`).
-- **`add-item <iN> <title>`:** the next free `iN/NNN.md` from the item template and its `- [ ] iN/NNN · <title>` line under `## Items`. As with `place`, an observable step the item adds is named in the report with its `demo-step` job, not written unasked.
-- **`demo-step <iN> <step>`:** append a numbered, observable step to the iteration's `## Demo script`. Cite the flow it exercises (and add a `planned` catalog row when none fits, per the demo-step rule above). Only when the user asked for it, or the iteration's demo can't be walked without it; say which. Why `place` and `add-item` do not add steps themselves: a step written to justify the item's placement makes the placement circular, and the demo script is what the user walks, so changing it is its own decision.
+- **`place <inbox/NNN> <iN>`:** `git mv` to the next free `iN/NNN.md`, rewrite `id:`, add `## Done when` if the note lacks it, add its line under the iteration's `## Items`, repoint every reference to the old id. Add the demo-script step the item makes observable, citing a flow (a new `planned` catalog row when none fits), and name that step in the report.
+- **`add-item <iN> <title>`:** the next free `iN/NNN.md` from the item template and its `- [ ] iN/NNN · <title>` line under `## Items`. Add the demo-script step the item makes observable, as `place` does, and name it in the report.
+- **`demo-step <iN> <step>`:** append a numbered, observable step to the iteration's `## Demo script`. Cite the flow it exercises (and add a `planned` catalog row when none fits, per the demo-step rule above). Only when the user asked for it, or the iteration's demo can't be walked without it; say which.
 - **`anti-goal <line>`:** append it to `DO_NOT_DO.md` with its date and who decided it. Only on the owner's explicit yes (Judge's "Record it" proposes these).
 - **`promote <handoff> <iN>`:** turns a `.claude/handoffs/` file into board work. Refuse, saying why, when it isn't in this repo's own `.claude/handoffs/`, its `target:` is another repo, its `status:` isn't `open` (a `planned` handoff is already in flight), or a plan lists it (`grep -rl <file name> .claude/plans`).
   Design input may also arrive as a commit: when the user names one (or the handoff cites it), the item's `## Design input` points at it as `git show <sha>:<path>`, never copied in.
@@ -82,7 +83,7 @@ The default is `status`. Every write job ends with `git status --short` showing 
   3. Its **Contract** is design: it stays in the brief, never in the item.
   4. `git mv` the handoff to `iN/BRIEF-<slug>.md` (the slug is its name without the date). Drop its `status:` and `plan:` lines and add `promoted: <date> to .pm/iN/NNN (was <old path>)`.
   5. The item's `## Design input` points at the brief; repoint every other reference to the old path. A promoted handoff no longer sits in `.claude/handoffs/`, so no queue run builds it twice. Moving it out of `.claude/handoffs/` and adding a `planned` flow row to the catalog (when a demo step needs one) are the only writes outside the board this job makes.
-- **`new iteration <title>`:** the next free `iN/README.md` and its `ROADMAP.md` row, in execution order. An iteration exists only when its demo script can already be written.
+- **`new iteration <title>`:** create it from the iteration template: the next free `iN/README.md` and its `ROADMAP.md` row, in execution order. An iteration exists only when its demo script can already be written. Without a demo script from the user, propose one and wait for the go.
 - **`done <iN/NNN>`:**
   1. Set `status: done` and `git mv` the item to `iN/done/NNN.md`. The `id:` does not change.
   2. Tick `- [x]` on its line in `iN/README.md`.
@@ -120,7 +121,7 @@ status: open
 
 ## Problem
 
-<who hits it, what happens today (code evidence as `file:line` if there is one), why it matters now>
+<who hits it, what happens today (code evidence as `file:line` if there is one), why it matters now, which demo step or later iteration depends on it>
 
 ## Done when
 

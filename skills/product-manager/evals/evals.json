@@ -128,7 +128,7 @@
     },
     {
       "id": 10,
-      "prompt": "Break down 'buyers want to know where their order is' into board items for us. Some buyers asked for SMS updates and live courier tracking.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Break down 'buyers want to know where their order is' into board items for us. Some buyers asked for SMS updates and live courier tracking.",
       "expected_output": "A text-only proposal: status items placed in i2 because its demo needs them, SMS/push and courier tracking rejected by quoting .pm/DO_NOT_DO.md, no duplicate of existing board work, ending with a priority summary and the exact board jobs to materialize it.",
       "files": [
         "evals/fixtures/shop-board"
@@ -198,21 +198,21 @@
     },
     {
       "id": 15,
-      "prompt": "/pm add-item i1 Add a DiscountCode class in pricing.py and migrate checkout to call it",
-      "expected_output": "Does not file the solution: asks what goes wrong without it (or restates the problem the code at pricing.py shows) and writes the item as that problem, with no Steps or Files section and no class name.",
+      "prompt": "On the board: add-item i1 Add a DiscountCode class in pricing.py and migrate checkout to call it",
+      "expected_output": "Does not file the solution: restates the problem (discount codes are not applied at checkout), recognises it as the existing i1/002, files no duplicate and says so.",
       "files": [
         "evals/fixtures/shop-board"
       ],
       "expectations": [
-        "The item is stated as a problem (e.g. discount codes are not applied at checkout), not as the class or the migration",
-        "The reply asks what goes wrong without it, or says it restated the problem and which one",
-        "The new item has kind, Problem and Done when, and no Steps, Files, Tasks, Implementation or Approach section",
-        "It checks the idea against i1/002 and notes the overlap rather than filing a duplicate"
+        "The reply states the problem rather than the class or the migration, and asks what goes wrong without it or says it restated the problem",
+        "It names i1/002 as the existing item for this problem",
+        "No new item file is created and `git status` shows no board change",
+        "No Steps, Files, Tasks, Implementation or Approach section is written anywhere"
       ]
     },
     {
       "id": 16,
-      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) /pm done i1/002",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Mark i1/002 done on the board",
       "expected_output": "i1/002 is moved to .pm/i1/done/002.md with status done and its id unchanged, its line in i1/README.md is ticked, no open item remains and F-SHIP-01 and F-SHIP-02 are built, so it asks whether the demo script has passed on staging before moving i1, and reports the self-check result.",
       "files": [
         "evals/fixtures/shop-board"
@@ -226,7 +226,7 @@
     },
     {
       "id": 17,
-      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) (Also run `perl -pi -e 's/F-SHIP-02/F-ORD-01/' .pm/i1/README.md && git commit -qam planned-flow`.) /pm done i1/002",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) (Also run `perl -pi -e 's/F-SHIP-02/F-ORD-01/' .pm/i1/README.md && git commit -qam planned-flow`.) Mark i1/002 done on the board",
       "expected_output": "The item is done and ticked, but i1's demo cites F-ORD-01, which is planned, so it names that flow and stops: no staging question, no iteration move.",
       "files": [
         "evals/fixtures/shop-board"
@@ -253,7 +253,7 @@
     },
     {
       "id": 19,
-      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) (Also run `printf 'shipping_cents returns 0 for totals <= 0; callers keep the 499 fee otherwise\\n' > design-notes.md && git add design-notes.md && git commit -qm design`.) File an item in i1 for the empty-cart shipping problem. The earlier design is in the latest commit, design-notes.md.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) (Also run `printf 'shipping_cents returns 0 for totals <= 0; callers keep the 499 fee otherwise\\n' > design-notes.md && git add design-notes.md && git commit -qm design`.) (Also run `git rm -q .claude/handoffs/2026-10-29-empty-cart-shipping.md && git commit -qm rm`.) File an item in i1 for the empty-cart shipping problem. The earlier design is in the latest commit, design-notes.md.",
       "expected_output": "A new i1 item stating the problem, with its Design input pointing at the commit as `git show <sha>:design-notes.md` and none of the design text copied into the item.",
       "files": [
         "evals/fixtures/shop-board"
@@ -266,20 +266,21 @@
     },
     {
       "id": 20,
-      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) /pm add-item i2 Buyers see the shipped date on My orders",
-      "expected_output": "Creates i2/001.md and its unchecked line, does not edit the demo script, and names the demo step the item makes observable with the exact demo-step job that would add it.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) On the board: add-item i2 Buyers see the shipped date on My orders",
+      "expected_output": "Creates i2/001.md and its unchecked line, adds the demo step the item makes observable with a cited flow, and names the step.",
       "files": [
         "evals/fixtures/shop-board"
       ],
       "expectations": [
         "A new .pm/i2/001.md exists with a Problem and observable Done when lines",
-        "i2/README.md gained the unchecked item line and its Demo script section is unchanged",
-        "The reply names the observable step the item adds and the exact `demo-step i2 ...` job, instead of writing it"
+        "i2/README.md gained the unchecked item line and its Demo script gained a numbered step that cites a flow id",
+        "PRODUCT.md gains a `planned` flow row when no existing flow fits",
+        "The reply names the step it added"
       ]
     },
     {
       "id": 21,
-      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) /pm demo-step i2 A buyer sees the shipped date next to the status on My orders",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Board: demo-step i2 A buyer sees the shipped date next to the status on My orders",
       "expected_output": "Appends a numbered step to i2's demo script that cites a flow; no catalog row fits, so a new planned row is added to PRODUCT.md's flow catalog, never built.",
       "files": [
         "evals/fixtures/shop-board"
@@ -293,7 +294,7 @@
     },
     {
       "id": 22,
-      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) /pm new iteration Returns",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Board: new iteration Returns",
       "expected_output": "Refuses to create it yet: an iteration exists only when its demo script can already be written, so it asks for the user-visible steps (or proposes them) before writing anything.",
       "files": [
         "evals/fixtures/shop-board"
@@ -305,7 +306,7 @@
     },
     {
       "id": 23,
-      "prompt": "Break down 'notify buyers when their order ships' for the board, and go ahead and create the items for me.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Break down 'notify buyers when their order ships' for the board, and go ahead and create the items for me.",
       "expected_output": "Emits the proposal and the board jobs and declines to create anything itself; push and SMS channels are rejected by quoting DO_NOT_DO.md.",
       "files": [
         "evals/fixtures/shop-board"
@@ -318,7 +319,7 @@
     },
     {
       "id": 24,
-      "prompt": "Break down 'push notification to the buyer when the order ships'.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Break down 'push notification to the buyer when the order ships'.",
       "expected_output": "Rejected by name: quotes the DO_NOT_DO bullet about SMS or push in v1, says why it applies, and does not offer an email-or-in-app reshaping that slips past it.",
       "files": [
         "evals/fixtures/shop-board"
@@ -331,7 +332,7 @@
     },
     {
       "id": 25,
-      "prompt": "Break down paging for the \"My orders\" list.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Break down paging for the \"My orders\" list.",
       "expected_output": "Items state the problem and observable Done-when lines only: no steps, files, class names, estimates or sizing, and no generated-code work.",
       "files": [
         "evals/fixtures/shop-board"
@@ -344,7 +345,7 @@
     },
     {
       "id": 26,
-      "prompt": "Break down an iteration for returns and refunds.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Break down an iteration for returns and refunds.",
       "expected_output": "Proposes a new iteration only with a numbered, user-observable demo script, noting that refunds are by phone per PRODUCT.md, and ends with `new iteration <title>` before its items.",
       "files": [
         "evals/fixtures/shop-board"
@@ -358,7 +359,7 @@
     },
     {
       "id": 27,
-      "prompt": "We've decided to add paging to My orders. Plan how to build it.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) We've decided to add paging to My orders. Plan how to build it.",
       "expected_output": "Not a product-manager job: the decision is made and the ask is how to build it, so this does not break down or judge; it belongs to planning.",
       "files": [
         "evals/fixtures/shop-board"
@@ -370,7 +371,7 @@
     },
     {
       "id": 28,
-      "prompt": "Break down a retry queue so the Paid email is never lost.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Break down a retry queue so the Paid email is never lost.",
       "expected_output": "Reads docs/adr/0001-send-email-inline.md and says the ask is a change to that accepted decision, not an item: proposes it as a question for the decision's owner, not as settled work.",
       "files": [
         "evals/fixtures/shop-board"
@@ -384,7 +385,7 @@
     },
     {
       "id": 29,
-      "prompt": "Break down order history for buyers.",
+      "prompt": "(Eval setup, before the run: in the fixture run `git init -q -b main && git add -A && git commit -qm init`.) Break down order history for buyers.",
       "expected_output": "Reads ARCHITECTURE.md's 'What we deliberately don't have yet' list and uses 'No order status history' as the honest backlog source, proposing items against it with observable Done-when lines.",
       "files": [
         "evals/fixtures/shop-board"

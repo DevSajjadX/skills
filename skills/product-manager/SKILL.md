@@ -50,7 +50,7 @@ Does a PM's three jobs on this project: **judge** a product question, **break do
 
 The divergent half of the pair: think a topic through, **propose** items, and hand materialization to the board job. **Hard rule: break down writes, creates, moves or deletes nothing**: not the board, not a handoff, not a plan. Its output is text. The urge to create a file is the signal that the proposal is ready for the board job, not a reason to reach for a write tool.
 
-How a project enforces it: where the agent runtime lets a skill declare its tools (Claude Code's `allowed-tools`), the break-down entry point gets read tools and read-only shell only (`Read`, `ls`, `find`, `cat`, `git fetch`, `git status`) and no `Write` or `Edit`, so the rule holds even when the user says "go ahead and create it". Without such a control, the rule is the instruction alone: decline the write, emit the proposal and the board jobs, and name the board job as the way to write it.
+How a project enforces it: wrap break-down in its own command or agent with only read tools (`Read`, `ls`, `find`, `cat`, `git fetch`, `git status`) and check that the runtime really withholds `Write` and `Edit` there (a skill's `allowed-tools` pre-approves tools and is not shown to remove any). Otherwise the rule is the instruction alone, which holds even when the user says "go ahead and create it": decline the write, emit the proposal and the board jobs, and name the board job as the way to write it.
 
 1. **Read the canon and the constraints:** `board.md`, the board's roadmap and anti-goals, and the product truth (Judge step 2). A candidate that hits an anti-goal is rejected by name, with the quote; never quietly reshaped into something that slips past. If the user wants it anyway after hearing the refusal, overturning the line is theirs to state.
 2. **Sync before you read the board:** `git fetch` the main branch, then `git status`. Behind with a clean tree: say so and ask before pulling, since another session may be mid-task in this worktree. Dirty tree or diverged: report it and proceed against what is on disk, flagging that the board may be stale.
@@ -67,14 +67,14 @@ How a project enforces it: where the agent runtime lets a skill declare its tool
 7. **A new iteration only with a demo script.** Propose one only when no existing iteration's demo could absorb the candidates, and write its numbered, user-observable demo script in the proposal (one cited flow per step where the project keeps a flow catalog). An iteration with no user-visible step is rejected.
 8. **Emit the proposal as text, and nothing after the board jobs.** Detail first: for each item its kind, the iteration it belongs in and why, the problem, and its "Done when" lines; then any proposed new iteration with its demo script; then each inbox note; all numbered in proposed priority order. Then rejected candidates, each with the anti-goal it hit. Then:
    - **Summary (priority order):** a numbered list reusing the numbers above, one line each: `N. <title> (iN, kind): one-line outcome`.
-   - **To put it on the board:** the exact board jobs in order (`new iteration <title>` first, then `add-item iN <title>`, `demo-step iN <step>`, `add <idea>`, `promote <handoff> iN`). Run them only when the user says so. No trailing analysis and no caveats after this block.
+   - **To put it on the board:** the exact board jobs in order (`new iteration <title>` first, then `add-item iN <title>`, `demo-step iN <step>`, `add <idea>`, `promote <handoff> iN`). Never run them in the same turn as the break-down. After the proposal, a later explicit go from the user starts the Board job, which reads `board.md` and runs each job with its checks. No trailing analysis and no caveats after this block.
 
 **Never, in a break-down:**
 - Write, create, move or delete any file (see the hard rule above).
 - Propose steps, files to touch, tasks, estimates or sizing for an item: that is the plan's job.
 - Propose work that lands in generated code (an API client or spec generated from a schema), or edits any file marked generated.
 - Settle a new module, dependency, decision record or tool-server as decided: it is a question for the human, so propose it as a question.
-- Put a secret, credential, connection string or real company name in the proposal.
+- Put a secret, credential, connection string or real company name in the proposal, since a secret scanner catches it only at push and a leaked string outlives the topic.
 
 A commit (`git show <sha>`) is accepted as design input for a candidate that already has earlier design behind it: the item's "Design input" cites it as `<sha>:<path>`, the same as a brief, and the proposal's `promote` or `add-item` line names it.
 
