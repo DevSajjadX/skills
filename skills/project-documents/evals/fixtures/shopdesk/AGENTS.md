@@ -8,7 +8,7 @@ Fixture project. Gate: `pnpm gates` (runs lint, tests, format check).
 | README.md | humans: what and how to run |
 | CONTEXT.md | glossary |
 | ARCHITECTURE.md | current shape and "don't have yet" |
-| docs/conventions/*.md | every code rule with ids (`db-`, `fe-`) |
+| docs/conventions/*.md | every code rule with ids (`db-`, `fe-`); database rules in docs/conventions/database.md |
 | docs/adr/NNNN-*.md | invariants code cannot express |
 | docs/tech-debts.md | debt index |
 | .claude/handoffs/ | out-of-scope work |

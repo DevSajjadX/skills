@@ -76,7 +76,7 @@ Each stage has one front door.
 
 - Out-of-scope work found during any stage becomes a handoff, not a side fix, a task chip or a "want me to also...?" offer (a one-line fix on a line you're already editing is fine). Another session picks it up with `/plan-draft <handoff>` or a queue run. Its lifecycle is plan-handoff's.
 - A QA run never fixes and never writes the board: it files. The board job promotes what should be planned.
-- Any .md touch, and any claim that work is done, goes through project-documents: plan-draft's docs-surface task and logic-bugfixer's doc fixes route there.
+- Any .md touch outside the board, and any claim that a feature is done to the user, goes through project-documents: plan-draft's docs-surface task and logic-bugfixer's doc fixes route there.
 - Session commits and every push go through wrap; handoff-queue commits per item and, on a handoff queue, never pushes.
 
 To make this the rule in your project, copy the table into its AGENTS.md or CLAUDE.md and add your own gate and ship commands.
