@@ -73,7 +73,7 @@ Beyond the universal list. **Hand off** (write to `.claude/handoffs/` through `p
 
 **Report as skipped** (no handoff needed: the finding is fully described in the summary):
 
-- **Sabotage turns the whole suite red**, so this test's verdict cannot be isolated (a module every test imports, a shared fixture or config is the usual cause): report it as skipped, with the file restored exactly.
+- **Sabotage turns the whole suite red**, so this test's verdict cannot be isolated (a module every test imports, a shared fixture or config is the usual cause): report it as skipped, with the file restored exactly. Its summary row still carries the pasted result line of that run (for example `7 errors`).
 - **The only test on a path is the useless one and no real assertion can be written** (the behaviour needs a live service): report it, do not delete it.
 
 **Anything else outside this defect class or this scope** (provably wrong code, duplicated or convoluted logic): note it in the summary and defer it to its row in the owner table in [SKILL.md](SKILL.md), never fix it here, and write no handoff for it.
@@ -93,4 +93,4 @@ Beyond the universal list. **Hand off** (write to `.claude/handoffs/` through `p
 
 ## Summary
 
-Per the budget block: shipped (PR and SHA, or branch and SHAs, with the red-then-green evidence per repair), skipped (with the missing proof), or nothing found. Report as a table, one row per suspect, in the reply itself: verdict (good, repaired, deleted, skipped), the sabotage used, and the pasted test output under sabotage, red or green, under that row (the result line at minimum) (for example `1 failed, 1 passed` or `3 passed`); for a repair, both the red and the green result lines. A prose "it went red" is not the proof. A candidate you could not prove is skipped, stating which proof was missing.
+Per the budget block: shipped (PR and SHA, or branch and SHAs, with the red-then-green evidence per repair), skipped (with the missing proof), or nothing found. Report as a table, one row per suspect, in the reply itself: verdict (good, repaired, deleted, skipped), the sabotage used, and the pasted test output under sabotage, red or green, under that row (the result line at minimum) (for example `1 failed, 1 passed` or `3 passed`); for a repair, both the red and the green result lines. A prose "it went red" is not the proof. A candidate you could not prove is skipped, stating which proof was missing, and its row still carries the pasted result line of the run that stopped it (for example `7 errors`, the whole-suite-red case included).
