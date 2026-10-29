@@ -18,3 +18,12 @@ jobs:
       - run: uv run skills/qa-engineer/scripts/qa_login.py selftest
       - run: uv run tests/skill-lint.py selftest
       - run: uv run tests/skill-lint.py
+  usage-band-scan:
+    # the scan runs on the user's macOS awk, dd and od
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node --experimental-strip-types mods/usage-band/bench/turns.mjs

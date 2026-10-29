@@ -5,27 +5,33 @@ import type { Scan } from '../types'
 // to the notification that it finished (W: work between turns), each compaction (B), the token usage of each assistant message once (streaming repeats a
 // message over several lines), and the compaction boundaries. Quotes inside message text are
 // escaped in JSONL, so an unescaped key match is structural; the top-level timestamp is a line's last.
+// A turn starts at a prompt line (promptSource) or at the first user line of a new promptId: a slash command
+// (/goal, /compact) has no prompt line, and without the promptId its turn and the idle hours before it would join
+// the turn before. A resume can append earlier lines again with their original timestamps: a line older than
+// the latest turn start is such a copy and is skipped, or it would reopen a turn that ended days ago.
 // shortcut: a background task counts only once its notification lands (a running one, or one with no tool-use-id such as a
 // Monitor event, adds nothing yet); track open launches from their "running in background" results if a live tick matters.
 // shortcut: subagent transcripts live in their own files and are not counted; read subagents/*.jsonl too if their tokens matter.
-// Resumable: the state file (ST in, NEW out) keeps the transcript it was read from (P), the bytes already read (O),
+// Resumable: the state file (ST in, NEW out) keeps its format and the transcript it was read from (P), the bytes already read (O),
 // the open turn and counters (V), the lines printed so far (E), launches (L) and each message's usage (M: a
 // message id recurs thousands of lines later, so every id is kept, not only the last). Without a state file it is
 // one pass over the whole file. A line the writer has not finished (no newline yet) is left for the next scan.
 export const SCAN_AWK = String.raw`function num(s, k) { if (match(s, "\"" k "\":[0-9]+")) return substr(s, RSTART + length(k) + 3, RLENGTH - length(k) - 3) + 0; return 0 }
 function keep(x) { kept[++nk] = x; print x }
-function scan(line,   pre, s, ts, tail, k, id, u) {
+function pidOf(pre) { return match(pre, /"promptId":"[^"]*"/) ? substr(pre, RSTART + 12, RLENGTH - 13) : "" }
+function scan(line,   pre, s, ts, tail, k, id, u, p) {
   n++
   pre = substr(line, 1, 400)
   if (index(pre, "\"isSidechain\":true")) return
-  if (index(line, "\"subtype\":\"compact_boundary\"")) { c++; keep("B") }
   s = line; ts = ""; tail = ""
   while (match(s, /"timestamp":"[^"]*"/)) { ts = substr(s, RSTART + 13, RLENGTH - 14); tail = substr(s, RSTART + RLENGTH); s = tail }
+  if (ts != "" && ts < last) return
+  if (index(line, "\"subtype\":\"compact_boundary\"")) { c++; keep("B") }
   if (ts == "") return
   if (index(tail, "\"promptSource\":")) {
     if (start != "") keep("T " start " " end " " (tc + 0))
     if (index(line, "<task-notification>") && match(line, /<tool-use-id>toolu_[A-Za-z0-9]+/)) { k = substr(line, RSTART + 13, RLENGTH - 13); if (k in launch) keep("W " launch[k] " " ts) }
-    start = ts; end = ts; tc = 0; return
+    start = ts; end = ts; tc = 0; last = ts; pid = pidOf(pre); return
   }
   if (index(pre, "\"role\":\"assistant\"")) {
     end = ts
@@ -36,12 +42,19 @@ function scan(line,   pre, s, ts, tail, k, id, u) {
     while (match(u, /"usage":\{/)) u = substr(u, RSTART + RLENGTH)
     ui[id] = num(u, "input_tokens"); uo[id] = num(u, "output_tokens"); ur[id] = num(u, "cache_read_input_tokens"); uw[id] = num(u, "cache_creation_input_tokens")
     tc = ui[id] + ur[id] + uw[id]
-  } else if (index(pre, "\"role\":\"user\"")) end = ts
+  } else if (index(pre, "\"role\":\"user\"")) {
+    p = pidOf(pre)
+    if (p != "" && p != pid) {
+      if (start != "") keep("T " start " " end " " (tc + 0))
+      start = ts; tc = 0; last = ts; pid = p
+    }
+    end = ts
+  }
 }
 BEGIN {
   while ((getline rec < ST) > 0) {
     split(rec, f, " ")
-    if (f[1] == "V") { c = f[2]; n = f[3]; start = f[4] == "-" ? "" : f[4]; end = f[5] == "-" ? "" : f[5]; tc = f[6] }
+    if (f[1] == "V") { c = f[2]; n = f[3]; start = f[4] == "-" ? "" : f[4]; end = f[5] == "-" ? "" : f[5]; tc = f[6]; pid = f[7] == "-" ? "" : f[7]; last = f[8] == "-" ? "" : f[8] }
     else if (f[1] == "E") keep(substr(rec, 3))
     else if (f[1] == "L") launch[f[2]] = f[3]
     else if (f[1] == "M") { ui[f[2]] = f[3]; uo[f[2]] = f[4]; ur[f[2]] = f[5]; uw[f[2]] = f[6] }
@@ -55,9 +68,9 @@ END {
   for (k in ui) { i += ui[k]; o += uo[k]; r += ur[k]; w += uw[k] }
   print "U", i + 0, o + 0, r + 0, w + 0
   print "C", c + 0
-  print "P " ENVIRON["SCAN_PATH"] > NEW
+  print "P 2 " ENVIRON["SCAN_PATH"] > NEW
   print "O", BASE + used > NEW
-  print "V", c + 0, n + 0, (start == "" ? "-" : start), (end == "" ? "-" : end), tc + 0 > NEW
+  print "V", c + 0, n + 0, (start == "" ? "-" : start), (end == "" ? "-" : end), tc + 0, (pid == "" ? "-" : pid), (last == "" ? "-" : last) > NEW
   for (j = 1; j <= nk; j++) print "E", kept[j] > NEW
   for (k in launch) print "L", k, launch[k] > NEW
   for (k in ui) print "M", k, ui[k], uo[k], ur[k], uw[k] > NEW
@@ -66,14 +79,15 @@ END {
 
 // Runs SCAN_AWK over the bytes past the state's offset: $1 transcript, $2 state file, $3 the awk program.
 // dd seeks to the offset (macOS tail -c +N reads every byte before it: 2.7 s at 96 MB); a shrunk file starts over.
-// The state's first line names the transcript it was read from: one session id can have several transcripts
-// (copies under other project folders), and an offset into one means nothing in another.
+// The state's first line names its format and the transcript it was read from: one session id can have several
+// transcripts (copies under other project folders), and an offset into one means nothing in another. Bump the format
+// when the kept lines change meaning, so states written by an older scan are read again from the start.
 // With no new bytes head is skipped: macOS head rejects -c 0.
 export const SCAN_SH = String.raw`f=$1 st=$2 prog=$3
 mkdir -p "$(dirname "$st")"
 size=$(wc -c < "$f" | tr -d ' ')
 off=0
-[ -f "$st" ] && [ "$(head -n 1 "$st")" = "P $f" ] && off=$(sed -n 's/^O //p' "$st")
+[ -f "$st" ] && [ "$(head -n 1 "$st")" = "P 2 $f" ] && off=$(sed -n 's/^O //p' "$st")
 case $off in ''|*[!0-9]*) off=0 ;; esac
 if [ "$off" -gt "$size" ]; then off=0; fi
 [ "$off" -eq 0 ] && rm -f "$st"
